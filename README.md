@@ -1,4 +1,4 @@
-# gbtorch
+# GBTorch
 
 GBTorch is a lightning fast gradient boosting library designed to **avoid manual tuning** and **cross-validation** by utilizing an information theoretic approach.
 This makes the algorithm **adaptive** to the dataset at hand; it is **completely automatic**, and with **minimal worries of overfitting**.
@@ -8,7 +8,8 @@ Consequently, the speed-ups relative to state-of-the-art implementations are in 
 ## Dependencies
 
 - [My research](https://berentlunde.netlify.com/) 
-- [Eigen](http://eigen.tuxfamily.org/index.php?title=Main_Page)
+- [Eigen](http://eigen.tuxfamily.org/index.php?title=Main_Page) Linear algebra
+- [Rcpp](https://github.com/RcppCore/Rcpp) for the R-package
 
 ## Scheduled updates
 
@@ -27,5 +28,9 @@ are coming.
 
 Any help on the following subjects are especially welcome:
 
-- Paralellizatin (CPU and/or GPU)
-- Distribution (Python, Java, Scala, ...)
+- Utilizing sparsity (possibly Eigen sparsity).
+- Paralellizatin (CPU and/or GPU).
+- Distribution (Python, Java, Scala, ...),
+- good ideas and coding best-practices in general.
+
+Please note that the priority is to work on and push the above mentioned scheduled updates. Patience is a virtue. :)
