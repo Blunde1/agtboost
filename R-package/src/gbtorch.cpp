@@ -65,7 +65,7 @@ Rcpp::List ENSEMBLE::get_param(){
 
 double ENSEMBLE::initial_prediction(Tvec<double> &y, std::string loss_function){
     
-    double pred;
+    double pred=0;
     int n = y.size();
     
     if(loss_function=="mse"){
