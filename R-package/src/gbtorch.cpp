@@ -82,10 +82,7 @@ double ENSEMBLE::initial_prediction(Tvec<double> &y, std::string loss_function){
 void ENSEMBLE::train(Tvec<double> &y, Tmat<double> &X){
     // Set init -- mean
     int MAXITER = param["nrounds"];
-    //int NUM_BINTREE_CONSECUTIVE = 0;
-    //double MAX_NUM_BINTREE_CONSECUTIVE = 2 / learning_rate; // Logic: if learning_rate=1 and bintree, then should be no more splits
-    //int NUM_LEAVES;
-    int n = y.size();
+    int n = y.size(); 
     //int m = X.size();
     double EPS = -1E-12;
     double expected_loss;
