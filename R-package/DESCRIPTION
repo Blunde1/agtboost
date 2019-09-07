@@ -1,0 +1,16 @@
+Package: gbtorch
+Type: Package
+Title: Adaptive and automatic gradient boosting computations.
+Version: 1.0
+Date: 2019-09-07
+Author: Berent Lunde
+Maintainer: Berent Lunde <berent.a.lunde@uis.no>
+Description: GBTorch is a lightning fast gradient boosting library designed to avoid manual tuning and cross-validation by utilizing an information theoretic approach. This makes the algorithm adaptive to the dataset at hand; it is completely automatic, and with minimal worries of overfitting. Consequently, the speed-ups relative to state-of-the-art implementations are in the thousands while mathematical and technical knowledge required on the user are minimized.
+License: MIT + file LICENSE
+Encoding: UTF-8
+LazyData: true
+Depends: Rcpp (>= 1.0.1), RcppEigen (>= 0.3.3.5.0)
+Imports: Rcpp (>= 1.0.1), RcppEigen (>= 0.3.3.5.0)
+LinkingTo: Rcpp, RcppEigen
+RcppModules: MyModule
+RoxygenNote: 6.1.1
