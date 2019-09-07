@@ -1,11 +1,11 @@
+// ensemble.hpp
 
-/*
- * gbtorch: Adaptive and automatic gradient boosting computations.
- * Berent Lunde
- * 07.09.2019
- */
+#ifndef __ENSEMBLE_HPP_INCLUDED__
+#define __ENSEMBLE_HPP_INCLUDED__
 
-#include "gbtorch.hpp"
+
+#include "tree.hpp"
+#include "loss_functions.hpp"
 
 
 
@@ -35,7 +35,6 @@ public:
 };
 
 
-// ---------------- ENSEMBLE ----------------
 ENSEMBLE::ENSEMBLE(){
     this->learning_rate=0.01;
     this->param = Rcpp::List::create(
@@ -82,9 +81,9 @@ double ENSEMBLE::initial_prediction(Tvec<double> &y, std::string loss_function){
 void ENSEMBLE::train(Tvec<double> &y, Tmat<double> &X){
     // Set init -- mean
     int MAXITER = param["nrounds"];
-    //int NUM_BINTREE_CONSECUTIVE = 0;
-    //double MAX_NUM_BINTREE_CONSECUTIVE = 2 / learning_rate; // Logic: if learning_rate=1 and bintree, then should be no more splits
-    //int NUM_LEAVES;
+    int NUM_BINTREE_CONSECUTIVE = 0;
+    double MAX_NUM_BINTREE_CONSECUTIVE = 2 / learning_rate; // Logic: if learning_rate=1 and bintree, then should be no more splits
+    int NUM_LEAVES;
     int n = y.size();
     //int m = X.size();
     double EPS = -1E-12;
@@ -233,20 +232,6 @@ int ENSEMBLE::get_num_trees(){
     return num_trees;
 }
 
-// Expose the classes
-RCPP_MODULE(MyModule) {
-    using namespace Rcpp;
-    
-    class_<ENSEMBLE>("ENSEMBLE")
-        .default_constructor("Default constructor")
-        .constructor<double>()
-        .field("initialPred", &ENSEMBLE::initialPred)
-        .method("set_param", &ENSEMBLE::set_param)
-        .method("get_param", &ENSEMBLE::get_param)
-        .method("train", &ENSEMBLE::train)
-        .method("predict", &ENSEMBLE::predict)
-        .method("predict2", &ENSEMBLE::predict2)
-        .method("get_ensemble_bias", &ENSEMBLE::get_ensemble_bias)
-        .method("get_num_trees", &ENSEMBLE::get_num_trees)
-    ;
-}
+
+
+#endif
