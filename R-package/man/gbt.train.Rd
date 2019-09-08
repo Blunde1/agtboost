@@ -69,7 +69,7 @@ points(x.test, y.pred, col="red")
 
 }
 \references{
-B. Lunde, T. S. Kleppe and H. J. Skaug, "An information criterion for gradient boosted trees"
+B. Å. S. Lunde, T. S. Kleppe and H. J. Skaug, "An information criterion for gradient boosted trees"
 publishing details, \url{}
 }
 \seealso{

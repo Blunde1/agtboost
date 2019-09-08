@@ -25,5 +25,5 @@ Important functions:
 See individual function documentation for usage.
 }
 \author{
-Berent Lunde
+Berent Ånund Strømnes Lunde
 }
