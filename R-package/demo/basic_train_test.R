@@ -47,3 +47,9 @@ mod2$set_param(param)
 mod2$train(y.train, x.train2)
 pred.test2 <- mod2$predict(x.test2)
 points(age.test, pred.test2, col=3)
+
+# compare with a linear model
+library(scales)
+mod.lm <- lm(y~., data=data.frame(y=y.train, x.train2))
+pred.test.lm <- predict(mod.lm, newdata = data.frame(y=y.test, x.test2))
+points(age.test, pred.test.lm, col=alpha("blue",0.3))
