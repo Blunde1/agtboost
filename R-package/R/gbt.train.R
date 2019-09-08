@@ -26,7 +26,7 @@
 #' @param x design matrix for training. Must be of type \code{matrix}.
 #'
 #' @details
-#' These are the training functions for \code{xgboost}.
+#' These are the training functions for \code{gbtorch}.
 #' 
 #' Explain the philosophy and the algorithm and a little math
 #'

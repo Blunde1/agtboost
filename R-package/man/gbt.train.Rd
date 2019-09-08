@@ -48,7 +48,7 @@ An object of class \code{ENSEMBLE} with the following elements:
 \code{gbt.train} is an interface for training a \code{gbtorch} model.
 }
 \details{
-These are the training functions for \code{xgboost}.
+These are the training functions for \code{gbtorch}.
 
 Explain the philosophy and the algorithm and a little math
 }
