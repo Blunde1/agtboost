@@ -29,6 +29,13 @@
 #' These are the training functions for \code{gbtorch}.
 #' 
 #' Explain the philosophy and the algorithm and a little math
+#' 
+#' \code{gbt.train} learn trees with adaptive complexity given by an information criterion, 
+#' until the same (but scaled) information criterion tells the algorithm to stop. The data used 
+#' for training at each boosting iteration stems from a second order Taylor expansion to the loss 
+#' function, evaluated at predictions given by ensemble at the previous boosting iteration.
+#' 
+#' Formally, ....
 #'
 #' @return
 #' An object of class \code{ENSEMBLE} with the following elements:
@@ -61,7 +68,7 @@
 #' 
 #' param <- list("learning_rate" = 0.03, "loss_function" = "mse", "nrounds"=2000)
 #' mod <- gbt.train(param, y, as.matrix(x))
-#' y.pred <- mod$predict( as.matrix( x.test ) )
+#' y.pred <- predict( mod, as.matrix( x.test ) )
 #' 
 #' plot(x.test, y.test)
 #' points(x.test, y.pred, col="red")

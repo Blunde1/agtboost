@@ -18,8 +18,8 @@ on the user are minimized.
 Important functions:
 
 \itemize{
-\item \code{gtb.train}: function for training a \code{gbtorch} ensemble
-\item \code{gtb.pred}: function for predicting from a \code{gbtorch} ensemble
+\item \code{\link{gbt.train}}: function for training a \code{gbtorch} ensemble
+\item \code{\link{gbt.pred}}: function for predicting from a \code{gbtorch} ensemble
 }
 
 See individual function documentation for usage.
