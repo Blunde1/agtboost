@@ -19,13 +19,10 @@ x.test <- as.matrix(age.test, ncol=1)
 y.test <- generateY(n, age.test, groups, sd)
 
 # train model
-mod <- new(ENSEMBLE)
 param <- list("learning_rate" = 0.03, "loss_function" = "mse", "nrounds"=2000)
+mod <- gbt.train(param, y.train, x.train )
 mod$get_param()
-mod$set_param(param)
-mod$get_param()
-mod$train(y.train, x.train)
-pred.test <- mod$predict(x.test)
+pred.test <- predict( mod, x.test)
 plot(age.test,y.test, main="Predictions on test-data")
 points(age.test,pred.test,col=2)
 
@@ -42,14 +39,12 @@ x.test2 <- as.matrix(df.test)
 dim(x.train2); dim(x.test2)
 
 # build model on multidim designmatrix
-mod2 <- new(ENSEMBLE)
-mod2$set_param(param)
-mod2$train(y.train, x.train2)
-pred.test2 <- mod2$predict(x.test2)
+mod2 <- gbt.train(param, y.train, x.train2)
+pred.test2 <- predict( mod2, x.test2 )
 points(age.test, pred.test2, col=3)
 
 # compare with a linear model
 library(scales)
 mod.lm <- lm(y~., data=data.frame(y=y.train, x.train2))
 pred.test.lm <- predict(mod.lm, newdata = data.frame(y=y.test, x.test2))
-points(age.test, pred.test.lm, col=alpha("blue",0.3))
+points(age.test, pred.test.lm, col=alpha("blue",0.5))
