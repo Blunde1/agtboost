@@ -26,6 +26,11 @@ pred.test <- predict( mod, x.test)
 plot(age.test,y.test, main="Predictions on test-data")
 points(age.test,pred.test,col=2)
 
+# compare with a linear model that potentially holds the truth model
+mod.lm <- lm(y~., data=data.frame(y=y.train, x=x.train))
+pred.test.lm <- predict(mod.lm, newdata = data.frame(y=y.test, x=x.test))
+points(age.test, pred.test.lm, col="blue")
+
 # multidim and noisy
 ndim = 99
 df <- data.frame(age=age)
@@ -43,8 +48,8 @@ mod2 <- gbt.train(param, y.train, x.train2)
 pred.test2 <- predict( mod2, x.test2 )
 points(age.test, pred.test2, col=3)
 
-# compare with a linear model
+# compare with a second linear model that potentially holds the truth model
 library(scales)
-mod.lm <- lm(y~., data=data.frame(y=y.train, x.train2))
-pred.test.lm <- predict(mod.lm, newdata = data.frame(y=y.test, x.test2))
-points(age.test, pred.test.lm, col=alpha("blue",0.5))
+mod.lm2 <- lm(y~., data=data.frame(y=y.train, x.train2))
+pred.test.lm2 <- predict(mod.lm2, newdata = data.frame(y=y.test, x.test2))
+points(age.test, pred.test.lm2, col=alpha("blue",0.5))
