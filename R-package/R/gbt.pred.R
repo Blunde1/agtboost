@@ -62,9 +62,6 @@ gbt.pred <- function(object, newdata){
         if(object$get_num_trees()==0)
             error_messages <- c(error_messages, error_messages_type[2])
     }
-        
-    
-    if(object$get_num_trees())
     
     # check x
     if(!is.matrix(newdata))
