@@ -78,8 +78,72 @@
 #' @export
 gbt.train <- function(param = list(), y, x){
     
-    # checks...
-    # param, y, x
+    error_messages <- c()
+    error_messages_type <- c(
+        "Error: y must be a vector of type numeric or matrix with dimension 1 \n",
+        "Error: x must be a matrix \n",
+        "Error: length of y must correspond to the number of rows in x \n",
+        "Error: param must be provided as a list \n",
+        "Error: learning_rate in param must be a number between 0 and 1 \n",
+        "Error: loss_function in param must be a valid loss function. See documentation for valid parameters \n",
+        "Error: nrounds in param must be an integer >= 1 \n"
+    )
+    # Check y, x
+    if(!is.vector(y, mode="numeric")){
+        if(is.matrix(y) && ncol(y)>1 ){
+            error_messages <- c(error_messages, error_messages_type[1])
+        }
+    }
+    if(!is.matrix(x))
+        error_messages <- c(error_messages, error_messages_type[2])
+    # dimensions
+    if(length(y) != nrow(x))
+        error_messages <- c(error_messages, error_messages_type[3])
+    
+    # Check param else default
+    if(!is.list(param))
+        error_messages <- c(error_messages, error_messages_type[4])
+    
+    if("learning_rate" %in% names(param)){
+        if(is.numeric(param$learning_rate) && length(param$learning_rate) == 1){
+            if(0 < param$learning_rate && param$learning_rate <=1){}else{
+                error_messages <- c(error_messages, error_messages_type[5])
+            }   
+        }else{
+            error_messages <- c(error_messages, error_messages_type[5])
+        }
+    }else{
+        error_messages <- c(error_messages, error_messages_type[5])
+    }
+    
+    if("loss_function" %in% names(param)){
+        if(is.character(param$loss_function) && length(param$loss_function) == 1){
+            if(
+                param$loss_function %in% c("mse", "logloss")
+            ){}else{
+                error_messages <- c(error_messages, error_messages_type[6])
+            }   
+        }else{
+            error_messages <- c(error_messages, error_messages_type[6])
+        }
+    }else{
+        error_messages <- c(error_messages, error_messages_type[6])
+    }
+    
+    
+    if("nrounds" %in% names(param)){
+        if(is.integer(param$nrounds) && length(param$nrounds) == 1){
+            if(param$nrounds >= 1){}else{
+                error_messages <- c(error_messages, error_messages_type[7])
+            }   
+        }else{
+            error_messages <- c(error_messages, error_messages_type[7])
+        }
+    }else{
+        error_messages <- c(error_messages, error_messages_type[7])
+    }
+    if(length(error_messages)>0)
+        stop(error_messages)
     
     # create gbtorch ensemble object
     mod <- new(ENSEMBLE)
