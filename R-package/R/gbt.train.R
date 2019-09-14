@@ -132,7 +132,7 @@ gbt.train <- function(param = list(), y, x){
     
     
     if("nrounds" %in% names(param)){
-        if(is.integer(param$nrounds) && length(param$nrounds) == 1){
+        if(is.numeric(param$nrounds) && length(param$nrounds) == 1){
             if(param$nrounds >= 1){}else{
                 error_messages <- c(error_messages, error_messages_type[7])
             }   
@@ -142,6 +142,8 @@ gbt.train <- function(param = list(), y, x){
     }else{
         error_messages <- c(error_messages, error_messages_type[7])
     }
+    
+    # Any error messages?
     if(length(error_messages)>0)
         stop(error_messages)
     
