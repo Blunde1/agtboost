@@ -4,3 +4,5 @@ language: R
 cache: packages
 before_install:
  - cd R-package
+ 
+warnings_are_errors: false
