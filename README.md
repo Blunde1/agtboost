@@ -12,6 +12,15 @@ This makes the algorithm **adaptive** to the dataset at hand; it is **completely
 Consequently, the speed-ups relative to state-of-the-art implementations are in the thousands while mathematical and technical knowledge required on the user are minimized.
 
 
+## Installation
+
+**R**: Install the development version from GitHub
+```r
+devtools::install_github("Blunde1/gbtorch/R-package")
+```
+
+
+
 ## Dependencies
 
 - [My research](https://berentlunde.netlify.com/) 
