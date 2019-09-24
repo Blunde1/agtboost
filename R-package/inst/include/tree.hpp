@@ -20,7 +20,9 @@ public:
     GBTREE();
     
     node* getRoot();
-    void train(Tvec<double> &g, Tvec<double> &h, Tmat<double> &X, int maxDepth=1);
+    void train(Tvec<double> &g, Tvec<double> &h, Tmat<double> &X, 
+               bool greedy_complexities, double learning_rate,
+               int maxDepth=1);
     double predict_obs(Tvec<double> &x);
     Tvec<double> predict_data(Tmat<double> &X);
     double getTreeScore();
@@ -43,7 +45,9 @@ node* GBTREE::getRoot(){
 }
 
 
-void GBTREE::train(Tvec<double> &g, Tvec<double> &h, Tmat<double> &X, int maxDepth)
+void GBTREE::train(Tvec<double> &g, Tvec<double> &h, Tmat<double> &X,
+                   bool greedy_complexities, double learning_rate, 
+                   int maxDepth)
 {
     // Check if root exists 
     // Else create root
@@ -58,11 +62,11 @@ void GBTREE::train(Tvec<double> &g, Tvec<double> &h, Tmat<double> &X, int maxDep
             gxh += g[i]*h[i];
         }
         double C = (G2 - 2.0*gxh*(G/H) + G*G*H2/(H*H)) / (H*n);
-        root = root->createLeaf(-G/H, -G*G/(2*H), C);
+        root = root->createLeaf(-G/H, -G*G/(2*H), C, 1.0);
         
     }
     
-    root->split_node(g, h, X, root, n, 1.0,  0, maxDepth);
+    root->split_node(g, h, X, root, n, 1.0, 0.0, greedy_complexities, learning_rate, 0, maxDepth);
     
 }
 

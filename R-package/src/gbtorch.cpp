@@ -27,7 +27,7 @@ public:
     void set_param(Rcpp::List par_list);
     Rcpp::List get_param();
     double initial_prediction(Tvec<double> &y, std::string loss_function);
-    void train(Tvec<double> &y, Tmat<double> &X, bool verbose);
+    void train(Tvec<double> &y, Tmat<double> &X, bool verbose, bool greedy_complexities);
     Tvec<double> predict(Tmat<double> &X);
     Tvec<double> predict2(Tmat<double> &X, int num_trees);
     double get_ensemble_bias(int num_trees);
@@ -79,7 +79,7 @@ double ENSEMBLE::initial_prediction(Tvec<double> &y, std::string loss_function){
 }
 
 
-void ENSEMBLE::train(Tvec<double> &y, Tmat<double> &X, bool verbose){
+void ENSEMBLE::train(Tvec<double> &y, Tmat<double> &X, bool verbose, bool greedy_complexities){
     // Set init -- mean
     int MAXITER = param["nrounds"];
     int n = y.size(); 
@@ -98,7 +98,7 @@ void ENSEMBLE::train(Tvec<double> &y, Tmat<double> &X, bool verbose){
     g = dloss(y, pred, param["loss_function"]);
     h = ddloss(y, pred, param["loss_function"]);
     this->first_tree = new GBTREE;
-    this->first_tree->train(g, h, X);
+    this->first_tree->train(g, h, X, greedy_complexities, learning_rate_set);
     GBTREE* current_tree = this->first_tree;
     pred = pred + learning_rate * (this->first_tree->predict_data(X)); // POSSIBLY SCALED
     expected_loss = (current_tree->getTreeScore()) * (-2)*learning_rate_set*(learning_rate_set/2 - 1) + 
@@ -123,7 +123,7 @@ void ENSEMBLE::train(Tvec<double> &y, Tmat<double> &X, bool verbose){
         GBTREE* new_tree = new GBTREE();
         g = dloss(y, pred, param["loss_function"]);
         h = ddloss(y, pred, param["loss_function"]);
-        new_tree->train(g, h, X);
+        new_tree->train(g, h, X, greedy_complexities, learning_rate_set);
         
         // EXPECTED LOSS
         expected_loss = (new_tree->getTreeScore()) * (-2)*learning_rate_set*(learning_rate_set/2 - 1) + 
