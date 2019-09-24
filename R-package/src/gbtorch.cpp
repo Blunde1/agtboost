@@ -128,7 +128,10 @@ void ENSEMBLE::train(Tvec<double> &y, Tmat<double> &X, bool verbose){
         // EXPECTED LOSS
         expected_loss = (new_tree->getTreeScore()) * (-2)*learning_rate_set*(learning_rate_set/2 - 1) + 
             learning_rate_set * new_tree->getTreeBiasFullEXM();
-
+        
+        // Update preds -- if should not be updated for last iter, it does not matter much computationally
+        pred = pred + learning_rate * (current_tree->predict_data(X));
+            
         // iter: i | num leaves: T | iter train loss: itl | iter generalization loss: igl | mod train loss: mtl | mod gen loss: mgl "\n"
         if(verbose){
             std::cout <<
@@ -137,15 +140,13 @@ void ENSEMBLE::train(Tvec<double> &y, Tmat<double> &X, bool verbose){
                 "  |  reduction tr: " << (current_tree->getTreeScore()) * (-2)*learning_rate_set*(learning_rate_set/2 - 1) <<
                 "  |  reduction gen: " << expected_loss <<
                 "  |  tr loss: " << loss(y, pred, param["loss_function"]) <<
-                "  |  gen loss: " << this->get_ensemble_bias(i) << 
+                "  |  gen loss: " << this->get_ensemble_bias(i-1) + expected_loss << 
                 std::endl;
         }
         
         
         if(expected_loss < EPS){ // && NUM_BINTREE_CONSECUTIVE < MAX_NUM_BINTREE_CONSECUTIVE){
-            //if(new_tree->getNumLeaves() == 1){
             current_tree->next_tree = new_tree;
-            pred = pred + learning_rate * (current_tree->predict_data(X)); // POSSIBLY SCALED
             current_tree = new_tree;
         }else{
             break;
