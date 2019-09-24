@@ -24,6 +24,7 @@
 #'
 #' @param y response vector for training. Must correspond to the design matrix \code{x}.
 #' @param x design matrix for training. Must be of type \code{matrix}.
+#' @param verbose Boolean: Enable boosting tracing information? Default: \code{TRUE}.
 #'
 #' @details
 #' These are the training functions for \code{gbtorch}.
@@ -76,7 +77,7 @@
 #'
 #' @rdname gbt.train
 #' @export
-gbt.train <- function(param = list(), y, x){
+gbt.train <- function(param = list(), y, x, verbose=TRUE){
     
     error_messages <- c()
     error_messages_type <- c(
@@ -152,7 +153,7 @@ gbt.train <- function(param = list(), y, x){
     mod$set_param(param)
     
     # train ensemble
-    mod$train(y,x)
+    mod$train(y,x, verbose)
     
     # return trained gbtorch ensemble
     return(mod)

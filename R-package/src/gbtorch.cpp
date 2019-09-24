@@ -27,7 +27,7 @@ public:
     void set_param(Rcpp::List par_list);
     Rcpp::List get_param();
     double initial_prediction(Tvec<double> &y, std::string loss_function);
-    void train(Tvec<double> &y, Tmat<double> &X);
+    void train(Tvec<double> &y, Tmat<double> &X, bool verbose);
     Tvec<double> predict(Tmat<double> &X);
     Tvec<double> predict2(Tmat<double> &X, int num_trees);
     double get_ensemble_bias(int num_trees);
@@ -79,7 +79,7 @@ double ENSEMBLE::initial_prediction(Tvec<double> &y, std::string loss_function){
 }
 
 
-void ENSEMBLE::train(Tvec<double> &y, Tmat<double> &X){
+void ENSEMBLE::train(Tvec<double> &y, Tmat<double> &X, bool verbose){
     // Set init -- mean
     int MAXITER = param["nrounds"];
     int n = y.size(); 
@@ -103,13 +103,17 @@ void ENSEMBLE::train(Tvec<double> &y, Tmat<double> &X){
     pred = pred + learning_rate * (this->first_tree->predict_data(X)); // POSSIBLY SCALED
     expected_loss = (current_tree->getTreeScore()) * (-2)*learning_rate_set*(learning_rate_set/2 - 1) + 
         learning_rate_set * current_tree->getTreeBiasFullEXM();
-    //( std::max(1.0, log(m+1e-4)) * current_tree->getTreeBiasFull() + current_tree->getTreeBias());// obs_loss + bias -- POSSIBLY SCALED
-    
-    // COUT
-    // std::cout<< "learning rate: " << learning_rate << "\n" <<
-    //     "initial prediction: " << (this->initialPred) << "\n" <<
-    //         "iteration: " << 1 << "\n" << 
-    //             "expected_loss: " << expected_loss << "\n" << std::endl;
+
+    if(verbose){
+        std::cout << 
+            std::setprecision(4) <<
+            "iter: " << 1 << 
+            "  |  reduction tr: " << (current_tree->getTreeScore()) * (-2)*learning_rate_set*(learning_rate_set/2 - 1) <<
+            "  |  reduction gen: " << expected_loss <<
+            "  |  tr loss: " << loss(y, pred, param["loss_function"]) <<
+            "  |  gen loss: " << this->get_ensemble_bias(1) << 
+             std::endl;
+    }
     
     
     
@@ -124,20 +128,18 @@ void ENSEMBLE::train(Tvec<double> &y, Tmat<double> &X){
         // EXPECTED LOSS
         expected_loss = (new_tree->getTreeScore()) * (-2)*learning_rate_set*(learning_rate_set/2 - 1) + 
             learning_rate_set * new_tree->getTreeBiasFullEXM();
-        //(new_tree->getTreeBiasFull() * std::max(1.0, log(m+1e-4)) + new_tree->getTreeBias());// obs_loss + bias -- POSSIBLY SCALED
-        
-        // // CHECKING IF BINARY TREE
-        // NUM_LEAVES = new_tree->getNumLeaves();
-        // if(NUM_LEAVES < 3){
-        //     NUM_BINTREE_CONSECUTIVE++;
-        // }else{
-        //     NUM_BINTREE_CONSECUTIVE = 0;
-        // }
-        
-        // std::cout << "iteration " << 
-        //     i << "\n" << 
-        //     "Num leaves: " << new_tree->getNumLeaves() << "\n" <<
-        //         "expected_loss: " << expected_loss << "\n" << std::endl;
+
+        // iter: i | num leaves: T | iter train loss: itl | iter generalization loss: igl | mod train loss: mtl | mod gen loss: mgl "\n"
+        if(verbose){
+            std::cout <<
+                std::setprecision(4) <<
+                "iter: " << i << 
+                "  |  reduction tr: " << (current_tree->getTreeScore()) * (-2)*learning_rate_set*(learning_rate_set/2 - 1) <<
+                "  |  reduction gen: " << expected_loss <<
+                "  |  tr loss: " << loss(y, pred, param["loss_function"]) <<
+                "  |  gen loss: " << this->get_ensemble_bias(i) << 
+                std::endl;
+        }
         
         
         if(expected_loss < EPS){ // && NUM_BINTREE_CONSECUTIVE < MAX_NUM_BINTREE_CONSECUTIVE){

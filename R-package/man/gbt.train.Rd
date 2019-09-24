@@ -4,7 +4,7 @@
 \alias{gbt.train}
 \title{GBTorch Training.}
 \usage{
-gbt.train(param = list(), y, x)
+gbt.train(param = list(), y, x, verbose = TRUE)
 }
 \arguments{
 \item{param}{the list of parameters:
@@ -29,6 +29,8 @@ gbt.train(param = list(), y, x)
 \item{y}{response vector for training. Must correspond to the design matrix \code{x}.}
 
 \item{x}{design matrix for training. Must be of type \code{matrix}.}
+
+\item{verbose}{Boolean: Enable boosting tracing information? Default: \code{TRUE}.}
 }
 \value{
 An object of class \code{ENSEMBLE} with the following elements:
