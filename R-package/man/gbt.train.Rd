@@ -4,7 +4,8 @@
 \alias{gbt.train}
 \title{GBTorch Training.}
 \usage{
-gbt.train(param = list(), y, x, verbose = TRUE)
+gbt.train(param = list(), y, x, verbose = TRUE,
+  greedy_complexities = TRUE)
 }
 \arguments{
 \item{param}{the list of parameters:
@@ -31,6 +32,8 @@ gbt.train(param = list(), y, x, verbose = TRUE)
 \item{x}{design matrix for training. Must be of type \code{matrix}.}
 
 \item{verbose}{Boolean: Enable boosting tracing information? Default: \code{TRUE}.}
+
+\item{greedy_complexities}{Boolean: \code{FALSE} means standard GTB, \code{TRUE} means greedy complexity tree-building. Default: \code{TRUE}.}
 }
 \value{
 An object of class \code{ENSEMBLE} with the following elements:
