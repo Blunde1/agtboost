@@ -136,9 +136,10 @@ void ENSEMBLE::train(Tvec<double> &y, Tmat<double> &X, bool verbose){
         if(verbose){
             std::cout <<
                 std::setprecision(4) <<
-                "iter: " << i << 
-                "  |  reduction tr: " << (current_tree->getTreeScore()) * (-2)*learning_rate_set*(learning_rate_set/2 - 1) <<
-                "  |  reduction gen: " << expected_loss <<
+                "it: " << i << 
+                "  |  n-leaves: " << current_tree->getNumLeaves() << 
+                "  |  reduct tr: " << (current_tree->getTreeScore()) * (-2)*learning_rate_set*(learning_rate_set/2 - 1) <<
+                "  |  reduct gen: " << expected_loss <<
                 "  |  tr loss: " << loss(y, pred, param["loss_function"]) <<
                 "  |  gen loss: " << this->get_ensemble_bias(i-1) + expected_loss << 
                 std::endl;
