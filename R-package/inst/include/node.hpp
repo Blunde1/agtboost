@@ -14,6 +14,7 @@ class node
 public:
     int split_feature;
     int num_features;
+    double prob_node; // Probability of being in node
     double split_value;
     double node_prediction;
     double score;
@@ -26,10 +27,11 @@ public:
             //double split_value,
             double node_prediction,
             double score,
-            double bias);
+            double bias,
+            double prob_node);
     
-    void setLeft(double node_prediction, double score, double bias);
-    void setRight(double node_prediction, double score, double bias);
+    void setLeft(double node_prediction, double score, double bias, double prob_left);
+    void setRight(double node_prediction, double score, double bias, double prob_right);
     node* getLeft();
     node* getRight();
     
@@ -41,12 +43,13 @@ public:
 
 // --------------- NODE FUNCTIONS -----------
 
-node* node::createLeaf(double node_prediction, double score, double bias)
+node* node::createLeaf(double node_prediction, double score, double bias, double prob_node)
 {
     node* n = new node;
     n->node_prediction = node_prediction;
     n->score = score; 
     n->bias = bias;
+    n->prob_node = prob_node;
     n->left = NULL;
     n->right = NULL;
     n->sibling = NULL;
@@ -54,12 +57,12 @@ node* node::createLeaf(double node_prediction, double score, double bias)
     return n;
 }
 
-void node::setLeft(double node_prediction, double score, double bias){
-    this->left = createLeaf(node_prediction, score, bias);
+void node::setLeft(double node_prediction, double score, double bias, double prob_left){
+    this->left = createLeaf(node_prediction, score, bias, prob_left);
 }
 
-void node::setRight(double node_prediction, double score, double bias){
-    this->right = createLeaf(node_prediction, score, bias);
+void node::setRight(double node_prediction, double score, double bias, double prob_right){
+    this->right = createLeaf(node_prediction, score, bias, prob_right);
 }
 node* node::getLeft(){
     return this->left;
@@ -157,10 +160,10 @@ void node::split_node(Tvec<double> &g, Tvec<double> &h, Tmat<double> &X, node* n
             nptr->num_features=m;
             
             // Create left leaf node
-            nptr->left = createLeaf(pred_left, score_left, bias_left);
+            nptr->left = createLeaf(pred_left, score_left, bias_left, prob_left);
             
             // Create right leaf node
-            nptr->right = createLeaf(pred_right, score_right, bias_right);
+            nptr->right = createLeaf(pred_right, score_right, bias_right, prob_right);
             
             // Set siblings -- perhaps do this somewhere else
             nptr->left->sibling = nptr->right;

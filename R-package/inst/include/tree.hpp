@@ -58,7 +58,7 @@ void GBTREE::train(Tvec<double> &g, Tvec<double> &h, Tmat<double> &X, int maxDep
             gxh += g[i]*h[i];
         }
         double C = (G2 - 2.0*gxh*(G/H) + G*G*H2/(H*H)) / (H*n);
-        root = root->createLeaf(-G/H, -G*G/(2*H), C);
+        root = root->createLeaf(-G/H, -G*G/(2*H), C, 1.0);
         
     }
     
