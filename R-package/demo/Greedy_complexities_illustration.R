@@ -44,8 +44,9 @@ mean((y.test - y.pred)^2)
 # Greedy tree algorithm
 plot(x,y)
 k1 <- greedy_tree_mod$get_num_trees()
-for(k in seq(1,k1, length.out = 10)){
+for(k in ceiling(seq(1,k1, length.out = 10))){
     # pred
+    cat("Predictions from the ", k, " first trees in the ensemble \n")
     preds <- greedy_tree_mod$predict2(x, k)
     points(x,preds, col=k)
     Sys.sleep(1)
@@ -54,8 +55,9 @@ for(k in seq(1,k1, length.out = 10)){
 # Greedy complexities algorithm
 plot(x,y)
 k2 <- greedy_complexities_mod$get_num_trees()
-for(k in seq(1,k2, length.out = 10)){
+for(k in ceiling(seq(1,k2, length.out = 10))){
     # pred
+    cat("Predictions from the ", k, " first trees in the ensemble \n")
     preds <- greedy_complexities_mod$predict2(x, k)
     points(x,preds, col=k)
     Sys.sleep(1)
