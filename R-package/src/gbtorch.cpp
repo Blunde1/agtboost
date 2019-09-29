@@ -28,6 +28,7 @@ public:
     Rcpp::List get_param();
     double initial_prediction(Tvec<double> &y, std::string loss_function);
     void train(Tvec<double> &y, Tmat<double> &X, bool verbose, bool greedy_complexities);
+    void train_from_preds(Tvec<double> &pred, Tvec<double> &y, Tmat<double> &X, bool verbose, bool greedy_complexities);
     Tvec<double> predict(Tmat<double> &X);
     Tvec<double> predict2(Tmat<double> &X, int num_trees);
     double get_ensemble_bias(int num_trees);
@@ -155,6 +156,84 @@ void ENSEMBLE::train(Tvec<double> &y, Tmat<double> &X, bool verbose, bool greedy
     }
 }
 
+void ENSEMBLE::train_from_preds(Tvec<double> &pred, Tvec<double> &y, Tmat<double> &X, bool verbose, bool greedy_complexities){
+    // Set init -- mean
+    int MAXITER = param["nrounds"];
+    int n = y.size(); 
+    //int m = X.size();
+    double EPS = -1E-12;
+    double expected_loss;
+    double learning_rate_set = this->learning_rate;
+    Tvec<double> g(n), h(n);
+    
+    // Initial prediction
+    g = dloss(y, pred, param["loss_function"]);
+    h = ddloss(y, pred, param["loss_function"]);
+    this->initialPred = - g.sum() / h.sum();
+    pred = pred.array() + this->initialPred;
+    this->initial_score = loss(y, pred, param["loss_function"]); //(y - pred).squaredNorm() / n;
+    
+    // First tree
+    g = dloss(y, pred, param["loss_function"]);
+    h = ddloss(y, pred, param["loss_function"]);
+    this->first_tree = new GBTREE;
+    this->first_tree->train(g, h, X, greedy_complexities, learning_rate_set);
+    GBTREE* current_tree = this->first_tree;
+    pred = pred + learning_rate * (this->first_tree->predict_data(X)); // POSSIBLY SCALED
+    expected_loss = (current_tree->getTreeScore()) * (-2)*learning_rate_set*(learning_rate_set/2 - 1) + 
+        learning_rate_set * current_tree->getTreeBiasFullEXM();
+    
+    if(verbose){
+        std::cout << 
+            std::setprecision(4) <<
+                "iter: " << 1 << 
+                    "  |  reduction tr: " << (current_tree->getTreeScore()) * (-2)*learning_rate_set*(learning_rate_set/2 - 1) <<
+                        "  |  reduction gen: " << expected_loss <<
+                            "  |  tr loss: " << loss(y, pred, param["loss_function"]) <<
+                                "  |  gen loss: " << this->get_ensemble_bias(1) << 
+                                    std::endl;
+    }
+    
+    
+    
+    for(int i=2; i<(MAXITER+1); i++){
+        
+        // TRAINING
+        GBTREE* new_tree = new GBTREE();
+        g = dloss(y, pred, param["loss_function"]);
+        h = ddloss(y, pred, param["loss_function"]);
+        new_tree->train(g, h, X, greedy_complexities, learning_rate_set);
+        
+        // EXPECTED LOSS
+        expected_loss = (new_tree->getTreeScore()) * (-2)*learning_rate_set*(learning_rate_set/2 - 1) + 
+            learning_rate_set * new_tree->getTreeBiasFullEXM();
+        
+        // Update preds -- if should not be updated for last iter, it does not matter much computationally
+        pred = pred + learning_rate * (current_tree->predict_data(X));
+        
+        // iter: i | num leaves: T | iter train loss: itl | iter generalization loss: igl | mod train loss: mtl | mod gen loss: mgl "\n"
+        if(verbose){
+            std::cout <<
+                std::setprecision(4) <<
+                    "it: " << i << 
+                        "  |  n-leaves: " << current_tree->getNumLeaves() << 
+                            "  |  reduct tr: " << (current_tree->getTreeScore()) * (-2)*learning_rate_set*(learning_rate_set/2 - 1) <<
+                                "  |  reduct gen: " << expected_loss <<
+                                    "  |  tr loss: " << loss(y, pred, param["loss_function"]) <<
+                                        "  |  gen loss: " << this->get_ensemble_bias(i-1) + expected_loss << 
+                                            std::endl;
+        }
+        
+        
+        if(expected_loss < EPS){ // && NUM_BINTREE_CONSECUTIVE < MAX_NUM_BINTREE_CONSECUTIVE){
+            current_tree->next_tree = new_tree;
+            current_tree = new_tree;
+        }else{
+            break;
+        }
+    }
+}
+
 Tvec<double> ENSEMBLE::predict(Tmat<double> &X){
     int n = X.rows();
     Tvec<double> pred(n);
@@ -245,6 +324,7 @@ RCPP_MODULE(MyModule) {
         .method("set_param", &ENSEMBLE::set_param)
         .method("get_param", &ENSEMBLE::get_param)
         .method("train", &ENSEMBLE::train)
+        .method("train_from_preds", &ENSEMBLE::train_from_preds)
         .method("predict", &ENSEMBLE::predict)
         .method("predict2", &ENSEMBLE::predict2)
         .method("get_ensemble_bias", &ENSEMBLE::get_ensemble_bias)

@@ -5,7 +5,7 @@
 \title{GBTorch Training.}
 \usage{
 gbt.train(param = list(), y, x, verbose = TRUE,
-  greedy_complexities = TRUE)
+  greedy_complexities = TRUE, previous_pred = NULL)
 }
 \arguments{
 \item{param}{the list of parameters:
@@ -34,6 +34,8 @@ gbt.train(param = list(), y, x, verbose = TRUE,
 \item{verbose}{Boolean: Enable boosting tracing information? Default: \code{TRUE}.}
 
 \item{greedy_complexities}{Boolean: \code{FALSE} means standard GTB, \code{TRUE} means greedy complexity tree-building. Default: \code{TRUE}.}
+
+\item{previous_pred}{prediction vector for training. Boosted training given predictions from another model.}
 }
 \value{
 An object of class \code{ENSEMBLE} with the following elements:

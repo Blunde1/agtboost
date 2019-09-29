@@ -26,6 +26,7 @@
 #' @param x design matrix for training. Must be of type \code{matrix}.
 #' @param verbose Boolean: Enable boosting tracing information? Default: \code{TRUE}.
 #' @param greedy_complexities Boolean: \code{FALSE} means standard GTB, \code{TRUE} means greedy complexity tree-building. Default: \code{TRUE}.
+#' @param previous_pred prediction vector for training. Boosted training given predictions from another model.
 #'
 #' @details
 #' These are the training functions for \code{gbtorch}.
@@ -78,7 +79,8 @@
 #'
 #' @rdname gbt.train
 #' @export
-gbt.train <- function(param = list(), y, x, verbose=TRUE, greedy_complexities=TRUE){
+gbt.train <- function(param = list(), y, x, verbose=TRUE, greedy_complexities=TRUE, 
+                      previous_pred=NULL){
     
     error_messages <- c()
     error_messages_type <- c(
@@ -88,7 +90,9 @@ gbt.train <- function(param = list(), y, x, verbose=TRUE, greedy_complexities=TR
         "Error: param must be provided as a list \n",
         "Error: learning_rate in param must be a number between 0 and 1 \n",
         "Error: loss_function in param must be a valid loss function. See documentation for valid parameters \n",
-        "Error: nrounds in param must be an integer >= 1 \n"
+        "Error: nrounds in param must be an integer >= 1 \n",
+        "Error: previous_pred must be a vector of type numeric",
+        "Error: previous_pred must correspond to length of y"
     )
     # Check y, x
     if(!is.vector(y, mode="numeric")){
@@ -145,6 +149,17 @@ gbt.train <- function(param = list(), y, x, verbose=TRUE, greedy_complexities=TR
         error_messages <- c(error_messages, error_messages_type[7])
     }
     
+    if(!is.null(previous_pred)){
+        if(!is.vector(y, mode="numeric")){
+            if(is.matrix(y) && ncol(y)>1 ){
+                error_messages <- c(error_messages, error_messages_type[8])
+            }
+        }
+        # dimensions
+        if(length(previous_pred) != nrow(x))
+            error_messages <- c(error_messages, error_messages_type[9])
+    }
+    
     # Any error messages?
     if(length(error_messages)>0)
         stop(error_messages)
@@ -154,7 +169,15 @@ gbt.train <- function(param = list(), y, x, verbose=TRUE, greedy_complexities=TR
     mod$set_param(param)
     
     # train ensemble
-    mod$train(y,x, verbose, greedy_complexities)
+    if(is.null(previous_pred)){
+        
+        # train from scratch
+        mod$train(y,x, verbose, greedy_complexities)   
+    }else{
+        
+        # train from previous predictions
+        mod$train_from_preds(previous_pred,y,x, verbose, greedy_complexities)
+    }
     
     # return trained gbtorch ensemble
     return(mod)
