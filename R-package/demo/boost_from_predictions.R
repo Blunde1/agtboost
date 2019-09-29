@@ -41,3 +41,8 @@ mod2$get_num_trees() # Smaller than boosting iterations for mod -- less added co
 
 y.pred2 <- predict( mod2, as.matrix(x.test))
 points(x.test, preds.test + y.pred2, col=4)
+
+# MSE comparisons
+mean((y.test - y.pred)^2)
+mean((y.test - preds.test)^2)
+mean((y.test - (preds.test + y.pred2))^2)
