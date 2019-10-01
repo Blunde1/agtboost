@@ -11,13 +11,12 @@ test_that("gbt.train throws appropriate errors", {
     # Example
     x <- as.matrix(runif(500, 0, 4))
     y <- rnorm(500, x, 1)
-    param <- list("learning_rate" = 0.03, "loss_function" = "mse", "nrounds"=2000)
-    
+
     # x not a matrix
-    expect_error( gbt.train( y, "hello" ) )
+    expect_error( gbt.train( y, "not a matrix" ) )
     
     # y not a vector or 1-d matrix
-    expect_error( gbt.train( "hello", x ) )
+    expect_error( gbt.train( "not a vector", x ) )
     
     # x y different dim
     expect_error( gbt.train( rep(0, nrow(x)+1), x ) )

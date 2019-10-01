@@ -29,8 +29,7 @@
 #' x.test <- runif(500, 0, 4)
 #' y.test <- rnorm(500, x.test, 1)
 #' 
-#' param <- list("learning_rate" = 0.03, "loss_function" = "mse", "nrounds"=2000)
-#' mod <- gbt.train(param, y, as.matrix(x))
+#' mod <- gbt.train(y, as.matrix(x))
 #' y.pred.1 <- gbt.pred( mod, as.matrix( x.test ) )
 #' 
 #' ## predict i overloaded
