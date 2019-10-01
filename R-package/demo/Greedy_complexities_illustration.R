@@ -22,22 +22,21 @@ y.test <- rnorm(500, 5* x.test, 1)
 
 
 # -- Train models --
-param <- list("learning_rate" = 0.01, "loss_function" = "mse", "nrounds"=2000)
-greedy_tree_mod <- gbt.train(param, y, x, verbose=T, greedy_complexities=F)
-greedy_complexities_mod <- gbt.train(param, y, x, verbose=T, greedy_complexities=T)
+greedy_tree_mod <- gbt.train(y, x, verbose=T, greedy_complexities=F)
+greedy_complexities_mod <- gbt.train(y, x, verbose=T, greedy_complexities=T)
 
 
 # -- Predict on test --
 # greedy tree
-y.pred <- predict( greedy_tree_mod, as.matrix( x.test ) )
+y.pred.vanilla <- predict( greedy_tree_mod, as.matrix( x.test ) )
 plot(x.test, y.test)
-points(x.test, y.pred, col="red")
-mean((y.test - y.pred)^2)
+points(x.test, y.pred.vanilla, col="red")
+mean((y.test - y.pred.vanilla)^2)
 # greedy complexities
-y.pred <- predict( greedy_complexities_mod, as.matrix( x.test ) )
-plot(x.test, y.test)
-points(x.test, y.pred, col="red")
-mean((y.test - y.pred)^2)
+y.pred.modified <- predict( greedy_complexities_mod, as.matrix( x.test ) )
+#plot(x.test, y.test)
+points(x.test, y.pred.modified, col="blue")
+mean((y.test - y.pred.modified)^2)
 
 
 # -- ILLUSTRATION --

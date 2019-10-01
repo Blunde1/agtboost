@@ -19,9 +19,8 @@ x.test <- as.matrix(age.test, ncol=1)
 y.test <- generateY(n, age.test, groups, sd)
 
 # train model
-param <- list("learning_rate" = 0.03, "loss_function" = "mse", "nrounds"=2000)
-mod <- gbt.train(param, y.train, x.train )
-mod$get_param()
+mod <- gbt.train(y.train, x.train, verbose=F, greedy_complexities=F)
+mod$get_param() # standard parameters
 pred.test <- predict( mod, x.test)
 plot(age.test,y.test, main="Predictions on test-data")
 points(age.test,pred.test,col=2)
@@ -31,6 +30,7 @@ mod.lm <- lm(y~., data=data.frame(y=y.train, x=x.train))
 pred.test.lm <- predict(mod.lm, newdata = data.frame(y=y.test, x=x.test))
 points(age.test, pred.test.lm, col="blue")
 
+# But what happens if we add 99 noise features?
 # multidim and noisy
 ndim = 99
 df <- data.frame(age=age)
@@ -44,7 +44,7 @@ x.test2 <- as.matrix(df.test)
 dim(x.train2); dim(x.test2)
 
 # build model on multidim designmatrix
-mod2 <- gbt.train(param, y.train, x.train2)
+mod2 <- gbt.train(y.train, x.train2, verbose=F, greedy_complexities=F)
 pred.test2 <- predict( mod2, x.test2 )
 points(age.test, pred.test2, col=3)
 
