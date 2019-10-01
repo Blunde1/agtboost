@@ -4,34 +4,26 @@
 \alias{gbt.train}
 \title{GBTorch Training.}
 \usage{
-gbt.train(param = list(), y, x, verbose = TRUE,
-  greedy_complexities = TRUE, previous_pred = NULL)
+gbt.train(y, x, learning_rate = 0.01, loss_function = "mse",
+  nrounds = 50000, verbose = FALSE, greedy_complexities = TRUE,
+  previous_pred = NULL)
 }
 \arguments{
-\item{param}{the list of parameters:
-
-1. Task Parameters
-
-\itemize{
-  \item \code{loss_function} specify the learning objective (loss function). Only pre-specified loss functions are currently supported.
-  \itemize{
-  \item \code{mse} regression with squared error loss (Default).
-  \item \code{logloss} logistic regression for binary classification, output score before logistic transformation.
-  }
-}
-
-2. Tree Booster Parameters
-
-\itemize{
-  \item \code{learning_rate} control the learning rate: scale the contribution of each tree by a factor of \code{0 < learning_rate < 1} when it is added to the current approximation. Lower value for \code{learning_rate} implies an increase in the number of boosting iterations: low \code{learning_rate} value means model more robust to overfitting but slower to compute. Default: 0.01
-  \item \code{nrounds} a just-in-case max number of boosting iterations. Default: 5000
-}}
-
 \item{y}{response vector for training. Must correspond to the design matrix \code{x}.}
 
 \item{x}{design matrix for training. Must be of type \code{matrix}.}
 
-\item{verbose}{Boolean: Enable boosting tracing information? Default: \code{TRUE}.}
+\item{learning_rate}{control the learning rate: scale the contribution of each tree by a factor of \code{0 < learning_rate < 1} when it is added to the current approximation. Lower value for \code{learning_rate} implies an increase in the number of boosting iterations: low \code{learning_rate} value means model more robust to overfitting but slower to compute. Default: 0.01}
+
+\item{loss_function}{specify the learning objective (loss function). Only pre-specified loss functions are currently supported.
+\itemize{
+\item \code{mse} regression with squared error loss (Default).
+\item \code{logloss} logistic regression for binary classification, output score before logistic transformation.
+}}
+
+\item{nrounds}{a just-in-case max number of boosting iterations. Default: 50000}
+
+\item{verbose}{Boolean: Enable boosting tracing information? Default: \code{FALSE}.}
 
 \item{greedy_complexities}{Boolean: \code{FALSE} means standard GTB, \code{TRUE} means greedy complexity tree-building. Default: \code{TRUE}.}
 
@@ -73,8 +65,7 @@ y <- rnorm(500, x, 1)
 x.test <- runif(500, 0, 4)
 y.test <- rnorm(500, x.test, 1)
 
-param <- list("learning_rate" = 0.03, "loss_function" = "mse", "nrounds"=2000)
-mod <- gbt.train(param, y, as.matrix(x))
+mod <- gbt.train(y, as.matrix(x))
 y.pred <- predict( mod, as.matrix( x.test ) )
 
 plot(x.test, y.test)

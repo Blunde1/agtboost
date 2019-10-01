@@ -2,29 +2,16 @@
 #'
 #' \code{gbt.train} is an interface for training a \code{gbtorch} model.
 #'
-#' @param param the list of parameters:
-#'
-#' 1. Task Parameters
-#'
-#' \itemize{
-#'   \item \code{loss_function} specify the learning objective (loss function). Only pre-specified loss functions are currently supported.
+#' @param y response vector for training. Must correspond to the design matrix \code{x}.
+#' @param x design matrix for training. Must be of type \code{matrix}.
+#' @param learning_rate control the learning rate: scale the contribution of each tree by a factor of \code{0 < learning_rate < 1} when it is added to the current approximation. Lower value for \code{learning_rate} implies an increase in the number of boosting iterations: low \code{learning_rate} value means model more robust to overfitting but slower to compute. Default: 0.01
+#' @param loss_function specify the learning objective (loss function). Only pre-specified loss functions are currently supported.
 #'   \itemize{
 #'   \item \code{mse} regression with squared error loss (Default).
 #'   \item \code{logloss} logistic regression for binary classification, output score before logistic transformation.
 #'   }
-#' }
-#'
-#' 2. Tree Booster Parameters
-#'
-#' \itemize{
-#'   \item \code{learning_rate} control the learning rate: scale the contribution of each tree by a factor of \code{0 < learning_rate < 1} when it is added to the current approximation. Lower value for \code{learning_rate} implies an increase in the number of boosting iterations: low \code{learning_rate} value means model more robust to overfitting but slower to compute. Default: 0.01
-#'   \item \code{nrounds} a just-in-case max number of boosting iterations. Default: 5000
-#' }
-#'
-#'
-#' @param y response vector for training. Must correspond to the design matrix \code{x}.
-#' @param x design matrix for training. Must be of type \code{matrix}.
-#' @param verbose Boolean: Enable boosting tracing information? Default: \code{TRUE}.
+#' @param nrounds a just-in-case max number of boosting iterations. Default: 50000
+#' @param verbose Boolean: Enable boosting tracing information? Default: \code{FALSE}.
 #' @param greedy_complexities Boolean: \code{FALSE} means standard GTB, \code{TRUE} means greedy complexity tree-building. Default: \code{TRUE}.
 #' @param previous_pred prediction vector for training. Boosted training given predictions from another model.
 #'
@@ -69,8 +56,7 @@
 #' x.test <- runif(500, 0, 4)
 #' y.test <- rnorm(500, x.test, 1)
 #' 
-#' param <- list("learning_rate" = 0.03, "loss_function" = "mse", "nrounds"=2000)
-#' mod <- gbt.train(param, y, as.matrix(x))
+#' mod <- gbt.train(y, as.matrix(x))
 #' y.pred <- predict( mod, as.matrix( x.test ) )
 #' 
 #' plot(x.test, y.test)
@@ -79,20 +65,24 @@
 #'
 #' @rdname gbt.train
 #' @export
-gbt.train <- function(param = list(), y, x, verbose=TRUE, greedy_complexities=TRUE, 
+gbt.train <- function(y, x, learning_rate = 0.01,
+                      loss_function = "mse", nrounds = 50000,
+                      verbose=FALSE, greedy_complexities=TRUE, 
                       previous_pred=NULL){
     
     error_messages <- c()
     error_messages_type <- c(
-        "Error: y must be a vector of type numeric or matrix with dimension 1 \n",
-        "Error: x must be a matrix \n",
-        "Error: length of y must correspond to the number of rows in x \n",
-        "Error: param must be provided as a list \n",
-        "Error: learning_rate in param must be a number between 0 and 1 \n",
-        "Error: loss_function in param must be a valid loss function. See documentation for valid parameters \n",
-        "Error: nrounds in param must be an integer >= 1 \n",
-        "Error: previous_pred must be a vector of type numeric",
-        "Error: previous_pred must correspond to length of y"
+        "\n Error: y must be a vector of type numeric or matrix with dimension 1",
+        "\n Error: x must be a matrix",
+        "\n Error: length of y must correspond to the number of rows in x \n",
+        #"Error: param must be provided as a list \n",
+        "\n Error: learning_rate must be a number between 0 and 1 \n",
+        "\n Error: loss_function must be a valid loss function. See documentation for valid parameters \n",
+        "\n Error: nrounds must be an integer >= 1 \n",
+        "\n Error: verbose must be of type logical with length 1",
+        "\n Error: greedy_complexities must be of type logical with length 1",
+        "\n Error: previous_pred must be a vector of type numeric",
+        "\n Error: previous_pred must correspond to length of y"
     )
     # Check y, x
     if(!is.vector(y, mode="numeric")){
@@ -106,58 +96,66 @@ gbt.train <- function(param = list(), y, x, verbose=TRUE, greedy_complexities=TR
     if(length(y) != nrow(x))
         error_messages <- c(error_messages, error_messages_type[3])
     
-    # Check param else default
-    if(!is.list(param))
-        error_messages <- c(error_messages, error_messages_type[4])
-    
-    if("learning_rate" %in% names(param)){
-        if(is.numeric(param$learning_rate) && length(param$learning_rate) == 1){
-            if(0 < param$learning_rate && param$learning_rate <=1){}else{
-                error_messages <- c(error_messages, error_messages_type[5])
-            }   
+    # learning_rate
+    if(is.numeric(learning_rate) && length(learning_rate)==1){
+        # ok
+        if(0 < learning_rate && learning_rate <=1){
+            #ok
         }else{
-            error_messages <- c(error_messages, error_messages_type[5])
+            #error
+            error_messages <- c(error_messages, error_messages_type[4])
         }
+    }else{
+        #error
+        error_messages <- c(error_messages, error_messages_type[4])
+    }
+    
+    # loss function
+    if(is.character(loss_function) && length(loss_function) == 1){
+        if(
+            loss_function %in% c("mse", "logloss")
+        ){}else{
+            error_messages <- c(error_messages, error_messages_type[5])
+        }   
     }else{
         error_messages <- c(error_messages, error_messages_type[5])
     }
     
-    if("loss_function" %in% names(param)){
-        if(is.character(param$loss_function) && length(param$loss_function) == 1){
-            if(
-                param$loss_function %in% c("mse", "logloss")
-            ){}else{
-                error_messages <- c(error_messages, error_messages_type[6])
-            }   
-        }else{
+    # nrounds
+    if(is.numeric(nrounds) && length(nrounds) == 1){
+        if(nrounds >= 1){}else{
             error_messages <- c(error_messages, error_messages_type[6])
-        }
+        }   
     }else{
         error_messages <- c(error_messages, error_messages_type[6])
     }
     
     
-    if("nrounds" %in% names(param)){
-        if(is.numeric(param$nrounds) && length(param$nrounds) == 1){
-            if(param$nrounds >= 1){}else{
-                error_messages <- c(error_messages, error_messages_type[7])
-            }   
-        }else{
-            error_messages <- c(error_messages, error_messages_type[7])
-        }
+    # verbose
+    if(is.logical(verbose) && length(verbose)==1){
+        # ok
     }else{
+        # error
         error_messages <- c(error_messages, error_messages_type[7])
+    }
+    
+    # greedy_complexities
+    if(is.logical(greedy_complexities) && length(greedy_complexities)==1){
+        #ok
+    }else{
+        # error
+        error_messages <- c(error_messages, error_messages_type[8])
     }
     
     if(!is.null(previous_pred)){
         if(!is.vector(y, mode="numeric")){
             if(is.matrix(y) && ncol(y)>1 ){
-                error_messages <- c(error_messages, error_messages_type[8])
+                error_messages <- c(error_messages, error_messages_type[9])
             }
         }
         # dimensions
         if(length(previous_pred) != nrow(x))
-            error_messages <- c(error_messages, error_messages_type[9])
+            error_messages <- c(error_messages, error_messages_type[10])
     }
     
     # Any error messages?
@@ -166,6 +164,9 @@ gbt.train <- function(param = list(), y, x, verbose=TRUE, greedy_complexities=TR
     
     # create gbtorch ensemble object
     mod <- new(ENSEMBLE)
+    param <- list("learning_rate" = learning_rate, 
+                  "loss_function" = loss_function, 
+                  "nrounds"=nrounds)
     mod$set_param(param)
     
     # train ensemble
