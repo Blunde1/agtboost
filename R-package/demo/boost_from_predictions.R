@@ -17,8 +17,7 @@ x.test <- runif(500, 0, 4)
 y.test <- rnorm(500, x.test, 1)
 
 # First do standard boosting
-param <- list("learning_rate" = 0.03, "loss_function" = "mse", "nrounds"=2000)
-mod <- gbt.train(param, y, as.matrix(x), F, T)
+mod <- gbt.train(y, as.matrix(x), verbose=F)
 mod$get_num_trees()
 y.pred <- predict( mod, as.matrix( x.test ) )
 
@@ -28,15 +27,16 @@ points(x.test, y.pred, col=2)
 # Train a linear model
 lm.mod <- lm(y~., data.frame(y=y, x=x))
 
-# Assume L2 regularized with some strength --> preds scaled with 0.5
-preds <- 0.7* predict(lm.mod, data.frame(x))
-preds.test <- 0.7* predict(lm.mod, newdata=data.frame(x=x.test))
+# Assume L2 regularized with some strength --> preds scaled with 0.7
+lm.mod$coefficients["x"] <- lm.mod$coefficients["x"] * 0.7
+preds <- predict(lm.mod, data.frame(x))
+preds.test <- predict(lm.mod, newdata=data.frame(x=x.test))
 
 # How does this look like?
 points(x.test, preds.test, col=3)
 
 # Train from regularized linear model
-mod2 <- gbt.train(param, y, as.matrix(x), F, T, preds)
+mod2 <- gbt.train(y, as.matrix(x), verbose=F, previous_pred = preds)
 mod2$get_num_trees() # Smaller than boosting iterations for mod -- less added complexity needed
 
 y.pred2 <- predict( mod2, as.matrix(x.test))
