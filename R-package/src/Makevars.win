@@ -15,7 +15,7 @@
 #	cp -r ../../inst/include .
 
 #PKG_CPPFLAGS = -I$(PKGROOT)/inst/include 
-PKG_CPPFLAGS = -I../../inst/include -I../inst/include
+PKG_CPPFLAGS = -I../../inst/include -I../inst/include -I../include
 
 PKG_CXXFLAGS = -std=c++11
 

@@ -7,7 +7,7 @@
 #CXX_STD = CXX11
 
 # old, works locally
-PKG_CPPFLAGS = -I../inst/include
+PKG_CPPFLAGS = -I../inst/include -I../include
 
 #PKGROOT=../../
 
