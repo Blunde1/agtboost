@@ -11,14 +11,8 @@
 #PKG_CXXFLAGS = -std=c++11
 
 
-PKGROOT=./
+PKGROOT=../../
 
-gbtlib:
-	cp -r ../../inst/include .
-
-PKG_CPPFLAGS = -I$(PKGROOT)/inst/include 
-## -I../../inst/include
+PKG_CPPFLAGS=  -I$(PKGROOT)/inst/include## -I../../inst/include
 
 PKG_CXXFLAGS = -std=c++11
-
-$(OBJECTS) : gbtlib
