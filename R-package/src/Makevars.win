@@ -5,16 +5,18 @@
 ## With R 3.1.0 or later, you can uncomment the following line to tell R to 
 ## enable compilation with C++11 (or even C++14) where available
 #CXX_STD = CXX11
-PKGROOT=./
 
-gbtlib:
-	cp -r ../../inst/include .
-	
+#PKGROOT=./
 
+#.PHONY: all gbtlib
+#all: $(SHLIB)
+#$(SHLIB): gbtlib
+#gbtlib:
+#	cp -r ../../inst/include .
 
-PKG_CPPFLAGS = -I$(PKGROOT)/inst/include 
-## -I../../inst/include
+#PKG_CPPFLAGS = -I$(PKGROOT)/inst/include 
+PKG_CPPFLAGS = -I../../inst/include -I../inst/include
 
 PKG_CXXFLAGS = -std=c++11
 
-$(OBJECTS) : gbtlib
+#$(OBJECTS) : gbtlib

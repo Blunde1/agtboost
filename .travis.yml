@@ -3,6 +3,7 @@
 language: R
 cache: packages
 before_install:
+ - cp -r inst/include R-package/include
  - cd R-package
  
 warnings_are_errors: false

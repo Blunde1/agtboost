@@ -7,12 +7,10 @@
 #CXX_STD = CXX11
 
 # old, works locally
-#PKG_CPPFLAGS = -I../../inst/include
-#PKG_CXXFLAGS = -std=c++11
+PKG_CPPFLAGS = -I../inst/include
 
+#PKGROOT=../../
 
-PKGROOT=../../
-
-PKG_CPPFLAGS=  -I$(PKGROOT)/inst/include## -I../../inst/include
+#PKG_CPPFLAGS=  -I$(PKGROOT)/inst/include## -I../../inst/include
 
 PKG_CXXFLAGS = -std=c++11
