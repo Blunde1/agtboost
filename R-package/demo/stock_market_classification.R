@@ -14,11 +14,12 @@ data("Smarket")
 
 # Remove return today and year
 dim(Smarket)
-Smarket <- subset(Smarket, select=-c(Today, Year))
 
-# Sample training indices
-set.seed(321)
-ind_train <- sample(nrow(Smarket), 0.7*nrow(Smarket))
+# Out of time validation
+ind_train <- which(Smarket$Year <= 2004)
+
+# Remove all-knowing features
+Smarket <- subset(Smarket, select=-c(Today, Year))
 
 # One-hot encoding
 data <- model.matrix(Direction~., data=Smarket)[,-1]
@@ -33,7 +34,6 @@ y.test <<- as.matrix(ifelse(Smarket[-ind_train, "Direction"]=="Up", 1, 0))
 
 # -- Model building --
 # gbtorch
-param <- list("learning_rate"=0.01, "loss_function"="logloss", "nrounds" = 5000)
 gbt.mod <- gbt.train(y.train, x.train, learning_rate = 0.01, loss_function = "logloss")
 gbt.mod$get_num_trees()
 
