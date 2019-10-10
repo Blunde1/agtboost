@@ -33,7 +33,7 @@
   Springer-Verlag, New York
 }
 \examples{
-summary(Caravan)
-plot(Caravan$Purchase)
+summary(caravan.train)
+summary(caravan.test)
 }
 \keyword{datasets}
