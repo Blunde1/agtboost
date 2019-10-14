@@ -1,0 +1,151 @@
+
+\section{Implementation and notes on future developments} 
+% gbtorch project
+% automatic and adaptive deterministic frequentist GTB
+% Optimal and automatic deterministic frequentist GTB
+% Optimal and automatic deterministic GTB
+% Optimal and automatic GTB (goal)
+% works as a summary and why I am excited
+
+
+\begin{frame}[fragile]{GBTorch package}
+	\begin{itemize}
+		\item Algorithm implemented in the \texttt{GBTorch} project on Github: \url{https://github.com/Blunde1/gbtorch}
+		\item Install the \texttt{R}-package from GitHub:
+		\begin{lstlisting}[language=R]
+		devtools::install_github("Blunde1/gbtorch/R-package")
+		\end{lstlisting}
+		\item Implemented in \texttt{C++}, depends upon \texttt{Eigen} for linear algebra
+		\item Depends on \texttt{Rcpp} for the \texttt{R}-package
+		\item<2-> Designed to be super easy:
+		\begin{lstlisting}[language=R]
+			x <- runif( 500, 0, 4 )
+			y <- rnorm( 500, x, 1 )
+			x.test <- runif( 500, 0, 4 )
+			y.test <- rnorm( 500, x.test, 1 )
+			# Train gbtorch ensemble
+			mod <- gbt.train( y, as.matrix(x) )
+			y.pred <- predict( mod, as.matrix( x.test ) )
+			# Plot predictions on test data
+			plot( x.test, y.test )
+			points( x.test, y.pred, col="red" )
+		\end{lstlisting}
+	\end{itemize}
+	
+\end{frame}
+
+\begin{frame}{Future development \#1}
+	
+	\small\begin{myblock}{There are additional techniques for improvement}{bg=blue!5,fg=black}{bg=blue!10, fg=black}
+		Most notably...
+		\begin{itemize}
+			%	\item<2-> Most notably...
+			\item<1-> L1-L2 regularization
+			\item<1-> Stochastic sampling of both rows and columns
+			\item<1-> \colorbox{red!20}{Our trees are optimal if they all were the last (unscaled) tree}
+		\end{itemize}
+	\end{myblock}
+
+	
+
+	\begin{myblock}{Solved!}{bg=green!05,fg=black}{bg=green!20, fg=black}
+		\begin{itemize}
+		\item Philosophy from LARS / FS\_0: Only add as much complexity in a certain direction as it deserves...
+		\item Modifies the standard greedy recursive binary splitting procedure...
+		\item Implemented in GBTorch: \colorbox{yellow}{\lstinline[language=R]{gbt.train(y, x, greedy_complexities=T)}}
+		\item Better results than XGB on ISLR / ESL data!
+		
+		0.941 0.794 1.02 0.984 1.1 0.975 0.989 0.996 0.914 0.964 0.998 0.991
+	\end{itemize}
+
+	\end{myblock}
+
+	%smarket funny mention
+\end{frame}
+
+\begin{frame}{Future development \#2}
+	
+	\begin{myblock}{There are additional techniques for improvement}{bg=blue!5,fg=black}{bg=blue!10, fg=black}
+	
+		Most notably...
+		\begin{itemize}
+			%	\item<2-> Most notably...
+			\item<1-> \colorbox{red!20}{L1-L2 regularization}
+			\item<1-> Stochastic sampling of both rows and columns
+			\item<1-> Our trees are optimal if they all were the last (unscaled) tree
+		\end{itemize}
+	\end{myblock}
+\visible<1->{
+	\begin{myblock}{Hmm!}{bg=green!05,fg=black}{bg=green!20, fg=black}
+	\begin{itemize}
+		\item Can we automatically tune this?
+		\item Weights, $\mathbf{w}$ resulting from a L-2 regularized objective are still M-estimators... 
+	\end{itemize}
+	\end{myblock}}
+\end{frame}
+
+\begin{frame}{Future development \#2}
+		Around Christmas 2018 I was thinking about this problem in general: %Is it possible to do gradient descent on L1-L2 regularization parameters for a typical...
+		\begin{itemize}
+			\item Given trainin data, how can we automatically know how strongly we should believe in a prior about some $H_0$?
+		\end{itemize}
+		\begin{myblock}{Solution}{bg=green!05,fg=black}{bg=green!20, fg=black}
+		\begin{itemize}
+			\item Create an information criterion, taking into account the alternation between the regularized and un-regularized objectives.
+			\item Make it differentiable...
+			\item Gradient descent: $\nabla_\lambda \left[ l(y,f(x;\hat{\theta}(\lambda))) + \tr(Q(\lambda)H(\lambda)^\intercal) \right]$
+			%\item Extremely computationally expensive... but works:
+		\end{itemize}
+		\end{myblock}
+	%c
+	
+		
+		
+%			Alternating objectives criterion
+%		Gradient descent on $\lambda$ belief in prior!
+%		Ridge implementation
+%		But very computationally costly: grad of trace hessian...
+%		
+%		What is locally constant and the building block of our method?... 
+%		Another quantile: log loglog..
+	
+\end{frame}
+
+\begin{frame}{Future development \#2}
+	
+%	\begin{itemize}
+%	\item Gradient descent: $\nabla_\lambda \left[ l(y,f(x;\hat{\theta}(\lambda))) + \tr(Q(\lambda)H(\lambda)^\intercal) \right]$
+%	\end{itemize}
+	\begin{figure}
+				\caption{	Hitters data: dimensions $263\times 20$}
+		\centering
+		\includegraphics<1->[height=3.5cm,width=7cm]{figures/grad_altobj.pdf}			
+	\end{figure}
+	\begin{itemize}
+		%\item Test error for ridge regression trained with our approach and CV in GLMNET, and ordinary linear regression. 
+			\item Gradient descent: $\nabla_\lambda \left[ l(y,f(x;\hat{\theta}(\lambda))) + \tr(Q(\lambda)H(\lambda)^\intercal) \right]$
+		\item Equivalent results to GLMNET for ridge regression.
+		\item Extremely computationally expensive... 
+		\item<2-> But, what is locally constant and the base-learners of choice?
+	\end{itemize}
+
+
+
+\end{frame}
+
+
+\begin{frame}{We could make this even better!}
+	
+	When this project has matured... 
+	\begin{myblock}{any help on the following subjects are welcome:}{bg=yellow!05,fg=black}{bg=yellow!20, fg=black}
+			\begin{itemize}
+			\item Utilizing sparsity (possibly Eigen sparsity)
+			\item Parallelisation (CPU and/or GPU)
+			\item Distribution (Python, Java, Scala, ...)
+			\end{itemize}
+	\end{myblock}
+
+	
+\end{frame}
+
+

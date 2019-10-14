@@ -1,0 +1,277 @@
+\documentclass[10pt, serif, professionalfonts, usenames,dvipsnames]{beamer}
+
+% There are many different themes available for Beamer. A comprehensive
+% list with examples is given here:
+% http://deic.uab.es/~iblanes/beamer_gallery/index_by_theme.html
+% You can uncomment the themes below if you would like to use a different
+% one:
+%\usetheme{AnnArbor}
+%\usetheme{Antibes}
+%\usetheme{Bergen}
+%\usetheme{Berkeley}
+%\usetheme{Berlin}
+%\usetheme{Boadilla}
+%\usetheme{boxes}
+%\usetheme{CambridgeUS}
+%\usetheme{Copenhagen}
+%\usetheme{Darmstadt}
+\usetheme{default}
+%\usetheme{Frankfurt}
+%\usetheme{Goettingen}
+%\usetheme{Hannover}
+%\usetheme{Ilmenau}
+%\usetheme{JuanLesPins}
+%\usetheme{Luebeck}
+%\usetheme{Madrid}
+%\usetheme{Malmoe}
+%\usetheme{Marburg}
+%\usetheme{Montpellier}
+%\usetheme{PaloAlto}
+%\usetheme{Pittsburgh}
+%\usetheme{Rochester}
+%\usetheme{Singapore}
+%\usetheme{Szeged}
+%\usetheme{Warsaw}
+
+\usepackage{tikz}
+\usetikzlibrary{shadings}
+\definecolor{secinhead}{RGB}{249,196,95}
+\definecolor{shadowbg}{RGB}{51,51,51}
+\usetikzlibrary{intersections}
+\usepackage{pgfplots}
+\pgfplotsset{compat=1.16}
+\usepgfplotslibrary{fillbetween}
+\tikzset{
+	invisible/.style={opacity=0},
+	visible on/.style={alt={#1{}{invisible}}},
+	alt/.code args={<#1>#2#3}{%
+		\alt<#1>{\pgfkeysalso{#2}}{\pgfkeysalso{#3}} % \pgfkeysalso doesn't change the path
+	},
+}
+
+
+\setbeamercolor{secsubsec}{fg=secinhead,bg=black}
+\setbeamercolor{shadow}{fg=secinhead,bg=shadowbg}
+
+
+\setbeamertemplate{navigation symbols}{}
+
+\usepackage{amsmath}
+\usepackage{amsfonts}
+\usepackage{amsthm}
+\usepackage{amssymb}
+\usepackage{commath}
+\usepackage[utf8]{inputenc}
+\usepackage[english]{babel}
+%\usepackage[authoryear]{natbib}  % 
+
+\usepackage{graphicx}
+\DeclareGraphicsRule{.ai}{pdf}{.ai}{} 
+\usepackage{epstopdf}
+\usepackage{bm}
+\usepackage{multirow}
+
+\usepackage{tikz}
+\usetikzlibrary{arrows,shapes}
+\usetikzlibrary{positioning,arrows.meta}
+
+\usepackage{longtable}
+\usepackage{booktabs}
+\usepackage{adjustbox}
+\usepackage{geometry}
+\usepackage{graphics}
+\usepackage{multimedia} % for movies and sound
+\usepackage{times}
+\usepackage{xcolor,colortbl}
+%\definecolor{green}{rgb}{0.1,0.1,0.1}
+\newcommand{\done}{\cellcolor{teal}done}  %{0.9}
+\newcommand{\hcyan}[1]{{\color{teal} #1}}
+\usepackage{caption}
+\usepackage{subcaption}
+%\usepackage{subfig}
+
+\usepackage{listings}
+%\usepackage[usenames,dvipsnames]{color}    
+\lstset{ 
+	language=R,                     % the language of the code
+	basicstyle=\scriptsize\ttfamily, % the size of the fonts that are used for the code
+	numbers=left,                   % where to put the line-numbers
+	numberstyle=\scriptsize\color{Blue},  % the style that is used for the line-numbers
+	stepnumber=1,                   % the step between two line-numbers. If it is 1, each line
+	% will be numbered
+	numbersep=5pt,                  % how far the line-numbers are from the code
+	backgroundcolor=\color{gray!05},  % choose the background color. You must add \usepackage{color}
+	showspaces=false,               % show spaces adding particular underscores
+	showstringspaces=false,         % underline spaces within strings
+	showtabs=false,                 % show tabs within strings adding particular underscores
+	frame=single,                   % adds a frame around the code
+	rulecolor=\color{black},        % if not set, the frame-color may be changed on line-breaks within not-black text (e.g. commens (green here))
+	tabsize=2,                      % sets default tabsize to 2 spaces
+	captionpos=b,                   % sets the caption-position to bottom
+	breaklines=true,                % sets automatic line breaking
+	breakatwhitespace=false,        % sets if automatic breaks should only happen at whitespace
+	keywordstyle=\color{RoyalBlue},      % keyword style
+	commentstyle=\color{YellowGreen},   % comment style
+	stringstyle=\color{ForestGreen}      % string literal style
+} 
+
+%\newtheorem{theorem}{Theorem}[section]
+%\newtheorem{corollary}{Corollary}[theorem]
+%\newtheorem{lemma}[theorem]{Lemma}
+
+%algorithm
+\providecommand{\tabularnewline}{\\}
+%\floatstyle{ruled}
+%\newfloat{algorithm}{tbp}{loa}
+\providecommand{\algorithmname}{Algorithm}
+%\floatname{algorithm}{\protect\algorithmname}
+
+% NEWCOMMANDS
+\newcommand{\loss}{\ensuremath{l}}
+\newcommand{\response}{\ensuremath{y}}
+\newcommand{\features}{\ensuremath{\mathbf{x}}}
+\newcommand{\pred}{\ensuremath{\hat{y}}}
+\newcommand{\data}{\ensuremath{\mathcal{D}}}
+%\newcommand{\E}{\ensuremath{\mathbb{E}}}
+\newcommand{\E}{\ensuremath{E}}
+\newcommand{\Var}{\mathrm{Var}}
+\newcommand{\Cov}{\mathrm{Cov}}
+\newcommand{\tr}{\mathrm{tr}}
+\newcommand{\Prob}{\ensuremath{\mathbb{P}}}
+\newcommand{\setleafnodes}{\ensuremath{\mathcal{L}}}
+
+\usepackage{mathtools}
+\DeclarePairedDelimiter{\ceil}{\lceil}{\rceil}
+
+\usepackage{lmodern}
+\setbeamertemplate{blocks}[shadow=false]
+%\beamertemplatenavigationsymbolsempty
+\usecolortheme{rose}
+\useinnertheme{circles}
+
+\newenvironment{myblock}[3]{%
+	\setbeamercolor{block body}{#2}
+	\setbeamercolor{block title}{#3}
+	\begin{block}{#1}}{\end{block}}
+
+%\setbeamercovered{dynamic}
+
+
+%\title{Adaptive computations in gradient tree boosting}
+\title{An information criterion for gradient boosted trees}
+%\subtitle{Adaptive tree-size and early stopping}
+
+
+\author{Berent Ånund Strømnes Lunde\inst{1} \\
+	\and Tore Selland Kleppe\inst{1} \and Hans Julius Skaug\inst{2}}
+% - Give the names in the same order as the appear in the paper.
+% - Use the \inst{?} command only if the authors have different
+%   affiliation.
+
+\institute[]
+{
+	\inst{1}   
+	Department of Mathematics and Physics\\
+	University of Stavanger
+	\and
+	\inst{2}
+	Department of Mathematics\\
+	University of Bergen
+}
+% - Use the \inst command only if there are several affiliations.
+% - Keep it simple, no one is interested in your street address.
+
+% logo of my university
+%\titlegraphic{\includegraphics[height=1.4cm]{figures/UiS_main_logo_positive_CMYK_English.ai}}
+
+\date{BigInsight - Wednesday Lunch\\
+	UiO, Oslo\\
+	9th October 2019}
+% - Either use conference name or its abbreviation.
+% - Not really informative to the audience, more for people (including
+%   yourself) who are reading the slides online
+
+
+% the beginning of each subsection:
+\AtBeginSection{
+\begin{frame}
+	\tableofcontents[currentsection]
+\end{frame}
+}
+
+%\AtBeginSubsection[]
+%{
+%  \begin{frame}<beamer>{Outline}
+%    \tableofcontents[currentsection,currentsubsection]
+%  \end{frame}
+%}
+
+% Let's get started
+\begin{document}	
+	
+\tikzstyle{every picture}+=[remember picture]
+	
+\addtobeamertemplate{frametitle}{}{%
+\begin{tikzpicture}[remember picture,overlay]
+	\tikz\draw[draw=none,top color=gray,bottom color=shadowbg!10] (1,0) rectangle (1.1\paperwidth,0.1);
+	%\node[anchor=south west,yshift=0pt, xshift=3pt] at (current page.south west){\includegraphics[height=1.4cm]{figures/UiS_main_logo_positive_CMYK_English.ai}};
+	\node[anchor=south, yshift=0pt, xshift=4pt] at (current page.south){\small{\textcolor{black}{Berent Å. S. Lunde}    \textcolor{brown}{An information criterion for gradient boosted trees}}};
+\end{tikzpicture}}
+
+\begin{frame}
+  \titlepage
+\end{frame}
+
+\begin{frame}
+	\frametitle{Outline}
+	\tableofcontents
+\end{frame}
+
+
+\input{background.tex}	
+\input{information_approach.tex}
+\input{applications_boosting.tex}
+\input{gbtorch_implementation.tex}
+
+
+\begin{frame}
+\frametitle{Conclusion}
+		
+	\begin{columns}[T]
+		\begin{column}{0.48\textwidth}
+	\begin{myblock}{Work being done}{bg=blue!5,fg=black}{bg=blue!10, fg=black}
+	\begin{itemize}
+		\item Writing a paper on the work presented
+		\item Robustness of theory
+		\item Will continue development after submission
+		\item And write more papers on future developments
+	\end{itemize}
+	\end{myblock}
+		\end{column}
+	\visible<2->{
+	\begin{column}{0.48\textwidth}
+			\begin{myblock}{Why I'm excited}{bg=green!05,fg=black}{bg=green!20, fg=black}
+			\begin{itemize}
+				\item Tree-boosting is very popular!
+				\item Removing manual tuning may potentially help quite a few people...
+				\item and opens up for new applications
+				\item Training a highly competitive model will be computationally trivial
+			\end{itemize}
+		\end{myblock}
+	\end{column}
+}
+	\end{columns}
+		
+\end{frame}
+
+
+\begin{frame}{Bibliography}
+	\bibliographystyle{apalike}
+	\scriptsize\bibliography{Bibliography}   % name your BibTeX data base
+\end{frame}
+
+
+
+\end{document}
+
+
