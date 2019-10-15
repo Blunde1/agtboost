@@ -27,8 +27,8 @@ public:
     void set_param(Rcpp::List par_list);
     Rcpp::List get_param();
     double initial_prediction(Tvec<double> &y, std::string loss_function);
-    void train(Tvec<double> &y, Tmat<double> &X, bool verbose, bool greedy_complexities);
-    void train_from_preds(Tvec<double> &pred, Tvec<double> &y, Tmat<double> &X, bool verbose, bool greedy_complexities);
+    void train(Tvec<double> &y, Tmat<double> &X, int verbose, bool greedy_complexities);
+    void train_from_preds(Tvec<double> &pred, Tvec<double> &y, Tmat<double> &X, int verbose, bool greedy_complexities);
     Tvec<double> predict(Tmat<double> &X);
     Tvec<double> predict2(Tmat<double> &X, int num_trees);
     double get_ensemble_bias(int num_trees);
@@ -80,7 +80,7 @@ double ENSEMBLE::initial_prediction(Tvec<double> &y, std::string loss_function){
 }
 
 
-void ENSEMBLE::train(Tvec<double> &y, Tmat<double> &X, bool verbose, bool greedy_complexities){
+void ENSEMBLE::train(Tvec<double> &y, Tmat<double> &X, int verbose, bool greedy_complexities){
     // Set init -- mean
     int MAXITER = param["nrounds"];
     int n = y.size(); 
@@ -105,8 +105,8 @@ void ENSEMBLE::train(Tvec<double> &y, Tmat<double> &X, bool verbose, bool greedy
     expected_loss = (current_tree->getTreeScore()) * (-2)*learning_rate_set*(learning_rate_set/2 - 1) + 
         learning_rate_set * current_tree->getTreeBiasFullEXM();
 
-    if(verbose){
-        std::cout << 
+    if(verbose>0){
+        Rcpp::Rcout  <<
             std::setprecision(4) <<
             "iter: " << 1 << 
             "  |  reduction tr: " << (current_tree->getTreeScore()) * (-2)*learning_rate_set*(learning_rate_set/2 - 1) <<
@@ -134,16 +134,19 @@ void ENSEMBLE::train(Tvec<double> &y, Tmat<double> &X, bool verbose, bool greedy
         pred = pred + learning_rate * (current_tree->predict_data(X));
             
         // iter: i | num leaves: T | iter train loss: itl | iter generalization loss: igl | mod train loss: mtl | mod gen loss: mgl "\n"
-        if(verbose){
-            std::cout <<
-                std::setprecision(4) <<
-                "it: " << i << 
-                "  |  n-leaves: " << current_tree->getNumLeaves() << 
-                "  |  reduct tr: " << (current_tree->getTreeScore()) * (-2)*learning_rate_set*(learning_rate_set/2 - 1) <<
-                "  |  reduct gen: " << expected_loss <<
-                "  |  tr loss: " << loss(y, pred, param["loss_function"]) <<
-                "  |  gen loss: " << this->get_ensemble_bias(i-1) + expected_loss << 
-                std::endl;
+        if(verbose>0){
+            if(i % verbose == 0){
+                Rcpp::Rcout  <<
+                    std::setprecision(4) <<
+                        "it: " << i << 
+                        "  |  n-leaves: " << current_tree->getNumLeaves() << 
+                       // "  |  reduct tr: " << (current_tree->getTreeScore()) * (-2)*learning_rate_set*(learning_rate_set/2 - 1) <<
+                        //"  |  reduct gen: " << expected_loss <<
+                        "  |  tr loss: " << loss(y, pred, param["loss_function"]) <<
+                        "  |  gen loss: " << this->get_ensemble_bias(i-1) + expected_loss << 
+                        std::endl;
+                
+            }
         }
         
         
@@ -156,7 +159,7 @@ void ENSEMBLE::train(Tvec<double> &y, Tmat<double> &X, bool verbose, bool greedy
     }
 }
 
-void ENSEMBLE::train_from_preds(Tvec<double> &pred, Tvec<double> &y, Tmat<double> &X, bool verbose, bool greedy_complexities){
+void ENSEMBLE::train_from_preds(Tvec<double> &pred, Tvec<double> &y, Tmat<double> &X, int verbose, bool greedy_complexities){
     // Set init -- mean
     int MAXITER = param["nrounds"];
     int n = y.size(); 
@@ -183,8 +186,8 @@ void ENSEMBLE::train_from_preds(Tvec<double> &pred, Tvec<double> &y, Tmat<double
     expected_loss = (current_tree->getTreeScore()) * (-2)*learning_rate_set*(learning_rate_set/2 - 1) + 
         learning_rate_set * current_tree->getTreeBiasFullEXM();
     
-    if(verbose){
-        std::cout << 
+    if(verbose > 0){
+        Rcpp::Rcout  <<
             std::setprecision(4) <<
                 "iter: " << 1 << 
                     "  |  reduction tr: " << (current_tree->getTreeScore()) * (-2)*learning_rate_set*(learning_rate_set/2 - 1) <<
@@ -212,8 +215,9 @@ void ENSEMBLE::train_from_preds(Tvec<double> &pred, Tvec<double> &y, Tmat<double
         pred = pred + learning_rate * (current_tree->predict_data(X));
         
         // iter: i | num leaves: T | iter train loss: itl | iter generalization loss: igl | mod train loss: mtl | mod gen loss: mgl "\n"
-        if(verbose){
-            std::cout <<
+        if(verbose>0){
+            if(i % verbose == 0){
+                Rcpp::Rcout  <<
                 std::setprecision(4) <<
                     "it: " << i << 
                         "  |  n-leaves: " << current_tree->getNumLeaves() << 
@@ -222,6 +226,7 @@ void ENSEMBLE::train_from_preds(Tvec<double> &pred, Tvec<double> &y, Tmat<double
                                     "  |  tr loss: " << loss(y, pred, param["loss_function"]) <<
                                         "  |  gen loss: " << this->get_ensemble_bias(i-1) + expected_loss << 
                                             std::endl;
+            }
         }
         
         

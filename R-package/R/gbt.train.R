@@ -11,7 +11,7 @@
 #'   \item \code{logloss} logistic regression for binary classification, output score before logistic transformation.
 #'   }
 #' @param nrounds a just-in-case max number of boosting iterations. Default: 50000
-#' @param verbose Boolean: Enable boosting tracing information? Default: \code{FALSE}.
+#' @param verbose Enable boosting tracing information at i-th iteration? Default: \code{0}.
 #' @param greedy_complexities Boolean: \code{FALSE} means standard GTB, \code{TRUE} means greedy complexity tree-building. Default: \code{TRUE}.
 #' @param previous_pred prediction vector for training. Boosted training given predictions from another model.
 #'
@@ -67,7 +67,7 @@
 #' @export
 gbt.train <- function(y, x, learning_rate = 0.01,
                       loss_function = "mse", nrounds = 50000,
-                      verbose=FALSE, greedy_complexities=TRUE, 
+                      verbose=0, greedy_complexities=TRUE, 
                       previous_pred=NULL){
     
     error_messages <- c()
@@ -79,7 +79,7 @@ gbt.train <- function(y, x, learning_rate = 0.01,
         "\n Error: learning_rate must be a number between 0 and 1 \n",
         "\n Error: loss_function must be a valid loss function. See documentation for valid parameters \n",
         "\n Error: nrounds must be an integer >= 1 \n",
-        "\n Error: verbose must be of type logical with length 1",
+        "\n Error: verbose must be of type numeric with length 1",
         "\n Error: greedy_complexities must be of type logical with length 1",
         "\n Error: previous_pred must be a vector of type numeric",
         "\n Error: previous_pred must correspond to length of y"
@@ -132,13 +132,12 @@ gbt.train <- function(y, x, learning_rate = 0.01,
     
     
     # verbose
-    if(is.logical(verbose) && length(verbose)==1){
-        # ok
+    if(is.numeric(verbose) && length(verbose)==1){
+        #ok
     }else{
-        # error
         error_messages <- c(error_messages, error_messages_type[7])
     }
-    
+
     # greedy_complexities
     if(is.logical(greedy_complexities) && length(greedy_complexities)==1){
         #ok

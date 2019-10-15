@@ -5,7 +5,7 @@
 \title{GBTorch Training.}
 \usage{
 gbt.train(y, x, learning_rate = 0.01, loss_function = "mse",
-  nrounds = 50000, verbose = FALSE, greedy_complexities = TRUE,
+  nrounds = 50000, verbose = 0, greedy_complexities = TRUE,
   previous_pred = NULL)
 }
 \arguments{
@@ -23,7 +23,7 @@ gbt.train(y, x, learning_rate = 0.01, loss_function = "mse",
 
 \item{nrounds}{a just-in-case max number of boosting iterations. Default: 50000}
 
-\item{verbose}{Boolean: Enable boosting tracing information? Default: \code{FALSE}.}
+\item{verbose}{Enable boosting tracing information at i-th iteration? Default: \code{0}.}
 
 \item{greedy_complexities}{Boolean: \code{FALSE} means standard GTB, \code{TRUE} means greedy complexity tree-building. Default: \code{TRUE}.}
 
