@@ -6,5 +6,11 @@
 ## enable compilation with C++11 (or even C++14) where available
 #CXX_STD = CXX11
 
-PKG_CPPFLAGS = -I../inst/include
+# old, works locally
+PKG_CPPFLAGS = -I../inst/include -I../include
+
+#PKGROOT=../../
+
+#PKG_CPPFLAGS=  -I$(PKGROOT)/inst/include## -I../../inst/include
+
 PKG_CXXFLAGS = -std=c++11
