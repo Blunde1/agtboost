@@ -42,7 +42,7 @@ prob <- 1/(1+exp(-pred)) # Probabilities
 
 Furthermore, a GBTorch model is (see example code)
 
-- highly robust to dimensions: [Comparisons to a linear regression in high dimensions](R-package/demo/gbt_high_dimt.R)
+- highly robust to dimensions: [Comparisons to a linear regression in high dimensions](R-package/demo/gbt_high_dim.R)
 - has minimal worries of overfitting: [Stock market classificatin](R-package/demo/stock_market_classification.R)
 - and can train further given previous models: [Boosting from a regularized linear model](R-package/demo/boost_from_predictions.R)
 
