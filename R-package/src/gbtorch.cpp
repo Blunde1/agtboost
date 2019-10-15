@@ -120,6 +120,10 @@ void ENSEMBLE::train(Tvec<double> &y, Tmat<double> &X, int verbose, bool greedy_
     
     for(int i=2; i<(MAXITER+1); i++){
         
+        // check for interrupt every iterations
+        if (i % 1 == 0)
+            Rcpp::checkUserInterrupt();
+        
         // TRAINING
         GBTREE* new_tree = new GBTREE();
         g = dloss(y, pred, param["loss_function"]);
@@ -200,6 +204,10 @@ void ENSEMBLE::train_from_preds(Tvec<double> &pred, Tvec<double> &y, Tmat<double
     
     
     for(int i=2; i<(MAXITER+1); i++){
+        
+        // check for interrupt every iterations
+        if (i % 1 == 0)
+            Rcpp::checkUserInterrupt();
         
         // TRAINING
         GBTREE* new_tree = new GBTREE();
