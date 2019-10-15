@@ -17,7 +17,7 @@ x.test <- runif(500, 0, 4)
 y.test <- rnorm(500, x.test, 1)
 
 # First do standard boosting
-mod <- gbt.train(y, as.matrix(x), verbose=F)
+mod <- gbt.train(y, as.matrix(x), verbose=0)
 mod$get_num_trees()
 y.pred <- predict( mod, as.matrix( x.test ) )
 
@@ -36,7 +36,7 @@ preds.test <- predict(lm.mod, newdata=data.frame(x=x.test))
 points(x.test, preds.test, col=3)
 
 # Train from regularized linear model
-mod2 <- gbt.train(y, as.matrix(x), verbose=F, previous_pred = preds)
+mod2 <- gbt.train(y, as.matrix(x), verbose=0, previous_pred = preds)
 mod2$get_num_trees() # Smaller than boosting iterations for mod -- less added complexity needed
 
 y.pred2 <- predict( mod2, as.matrix(x.test))
