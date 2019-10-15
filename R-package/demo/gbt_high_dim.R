@@ -90,8 +90,8 @@ plot1 <- preds %>%
     geom_point(aes(predictive_feature, test_obs, colour="Observations"), size=1 ) + 
     geom_point(aes(predictive_feature, pred.lm, colour="lm-1d predictions"), size=2) +  
     geom_point(aes(predictive_feature, pred.ridge, colour="ridge-p>>n predictions"), size=2) + 
-    xlab("Day") +
-    ylab("Count of surfs per day") +
+    xlab("x") +
+    ylab("y") +
     scale_color_manual(name=NULL, values=cols) + 
     theme(legend.position=c(.25, .8),legend.background=element_rect(colour='black'))
 
@@ -100,8 +100,8 @@ plot2 <- preds %>%
     geom_point(aes(predictive_feature, test_obs, colour="Observations"), size=1 ) + 
     geom_point(aes(predictive_feature, pred.gbt.1d, colour="gbt-1d predictions"), size=2) +  
     geom_point(aes(predictive_feature, pred.gbt.md, colour="gbt-p>>n predictions"), size=2) + 
-    xlab("Day") +
-    ylab("Count of surfs per day") +
+    xlab("x") +
+    ylab("y") +
     scale_color_manual(name=NULL, values=cols) + 
     theme(legend.position=c(.25, .8),legend.background=element_rect(colour='black'))
 
@@ -132,7 +132,7 @@ pred.test3 <- predict( mod3, x.test3 )
 
 # Training a GLMNET Lasso
 cat("Training a third (penalized) linear regression: Ridge with glmnet")
-mod.lasso <- cv.glmnet(y=y.train, x=x.train3, alpha=1, nfolds=5, lambda=exp(seq(-3,3,length.out=100)))
+mod.lasso <- cv.glmnet(y=y.train, x=x.train3, alpha=1, nfolds=5, lambda=exp(seq(-5,3,length.out=100)))
 plot(mod.lasso)
 pred.lasso <- predict(mod.lasso, x.test3, s=mod.lasso$lambda.min)
 
@@ -152,8 +152,8 @@ plot3 <- preds %>%
     geom_point(aes(predictive_feature, test_obs, colour="Observations"), size=1 ) + 
     geom_point(aes(predictive_feature, pred.lm, colour="lm-1d predictions"), size=2) +  
     geom_point(aes(predictive_feature, pred.ridge, colour="lasso-p>>n predictions"), size=2) + 
-    xlab("Day") +
-    ylab("Count of surfs per day") +
+    xlab("x") +
+    ylab("y") +
     scale_color_manual(name=NULL, values=cols) + 
     theme(legend.position=c(.25, .8),legend.background=element_rect(colour='black'))
 
@@ -162,8 +162,8 @@ plot4 <- preds %>%
     geom_point(aes(predictive_feature, test_obs, colour="Observations"), size=1 ) + 
     geom_point(aes(predictive_feature, pred.gbt.1d, colour="gbt-1d predictions"), size=2) +  
     geom_point(aes(predictive_feature, pred.gbt.md, colour="gbt-p>>n predictions"), size=2) + 
-    xlab("Day") +
-    ylab("Count of surfs per day") +
+    xlab("x") +
+    ylab("y") +
     scale_color_manual(name=NULL, values=cols) + 
     theme(legend.position=c(.25, .8),legend.background=element_rect(colour='black'))
 
