@@ -22,8 +22,8 @@ y.test <- rnorm(500, 5* x.test, 1)
 
 
 # -- Train models --
-greedy_tree_mod <- gbt.train(y, x, verbose=T, greedy_complexities=F)
-greedy_complexities_mod <- gbt.train(y, x, verbose=T, greedy_complexities=T)
+greedy_tree_mod <- gbt.train(y, x, verbose=1, greedy_complexities=F)
+greedy_complexities_mod <- gbt.train(y, x, verbose=1, greedy_complexities=T)
 
 
 # -- Predict on test --
