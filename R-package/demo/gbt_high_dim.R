@@ -151,7 +151,7 @@ plot3 <- preds %>%
     ggplot() +
     geom_point(aes(predictive_feature, test_obs, colour="Observations"), size=1 ) + 
     geom_point(aes(predictive_feature, pred.lm, colour="lm-1d predictions"), size=2) +  
-    geom_point(aes(predictive_feature, pred.ridge, colour="lasso-p>>n predictions"), size=2) + 
+    geom_point(aes(predictive_feature, pred.lasso, colour="lasso-p>>n predictions"), size=2) + 
     xlab("x") +
     ylab("y") +
     scale_color_manual(name=NULL, values=cols) + 
@@ -169,7 +169,7 @@ plot4 <- preds %>%
 
 grid.arrange(plot3, plot4, ncol=2, 
              top="Test data and predictions, vs. the predictive feature: 
-             Lasso seem to adapt more to noise than GBTorch")
+             Lasso seem to adapt similarly to noise in comparison to GBTorch")
 
 cat("The information theoretic approach behind GBTorch is developed under independence assumptions")
 cat("But luckily also works under dependence. :) ")
