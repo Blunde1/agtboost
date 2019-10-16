@@ -18,6 +18,11 @@ Consequently, the speed-ups relative to state-of-the-art implementations are in 
 ```r
 devtools::install_github("Blunde1/gbtorch/R-package")
 ```
+Users experiencing errors after warnings during installlation, may be helped by the following command prior to installation:
+
+```r
+Sys.setenv(R_REMOTES_NO_ERRORS_FROM_WARNINGS="true")
+```
 
 ## Example code and documentation
 
@@ -33,7 +38,7 @@ train <- caravan.train
 test <- caravan.test
 
 # -- Model building --
-mod <- gbt.train(train$y, train$x, loss_function = "logloss", verbose=T)
+mod <- gbt.train(train$y, train$x, loss_function = "logloss", verbose=10)
 
 # -- Predictions --
 pred <- predict(mod, test$x) # Score before logistic transformation
@@ -42,7 +47,7 @@ prob <- 1/(1+exp(-pred)) # Probabilities
 
 Furthermore, a GBTorch model is (see example code)
 
-- highly robust to dimensions: [Comparisons to a linear regression in high dimensions](R-package/demo/gbt_high_dim.R)
+- highly robust to dimensions: [Comparisons to (penalized) linear regression in (very) high dimensions](R-package/demo/gbt_high_dim.R)
 - has minimal worries of overfitting: [Stock market classificatin](R-package/demo/stock_market_classification.R)
 - and can train further given previous models: [Boosting from a regularized linear model](R-package/demo/boost_from_predictions.R)
 
