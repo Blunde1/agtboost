@@ -29,6 +29,7 @@ Rcpp::List unbiased_splitting(Tvec<double> &g, Tvec<double> &h, Tmat<double> &X,
         w_l=0, w_r=0, bias_left=0, bias_right=0,
         score_left=0, score_right=0;
     double G=0, H=0, G2=0, H2=0, gxh=0;
+    bool any_split = false;
     int m=0, i=0;
     
     double score = 0;
@@ -74,6 +75,7 @@ Rcpp::List unbiased_splitting(Tvec<double> &g, Tvec<double> &h, Tmat<double> &X,
             // score
             // Make sure all values equal to x_i,j has been counted before checking score
             if( score < split_score && vm[idx[i+1]] > vm[idx[i]] ){
+                any_split = true;
                 score = split_score; //(Gl*Gl/Hl + Gr*Gr/Hr - G*G/H)/(2.0*n) + (C-Cl-Cr);
                 expected_reduction = (Gl*Gl/Hl + Gr*Gr/Hr - G*G/H)/(2.0*n) + (C-Cl-Cr);
                 observed_reduction = (Gl*Gl/Hl + Gr*Gr/Hr - G*G/H)/(2*n);
@@ -103,7 +105,8 @@ Rcpp::List unbiased_splitting(Tvec<double> &g, Tvec<double> &h, Tmat<double> &X,
         Named("score_left") = score_left, // change
         Named("score_right") = score_right, // change
         Named("n_left") = n_left,
-        Named("n_right") = n_right
+        Named("n_right") = n_right,
+        Named("any_split") = any_split
     );
     
 }

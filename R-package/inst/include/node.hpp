@@ -99,6 +99,12 @@ void node::split_node(Tvec<double> &g, Tvec<double> &h, Tmat<double> &X, node* n
         double score_right = split_information["score_right"];
         int n_left = split_information["n_left"];
         int n_right = split_information["n_right"];
+        bool any_split = split_information["any_split"];
+        
+        // Check if a split happened
+        if(!any_split){
+            return;
+        }
         
         // Calculate probs
         int n_parent = n_left + n_right;
