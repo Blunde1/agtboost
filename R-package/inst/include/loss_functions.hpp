@@ -6,19 +6,19 @@
 #include "external_rcpp.hpp"
 
 // ----------- LOSS --------------
-double loss(Tvec<double> &y, Tvec<double> &pred, std::string loss_type){
+double loss(Tvec<double> &y, Tvec<double> &pred, std::string loss_type, Tvec<double> &w){
     int n = y.size();
     double res = 0;
     
     if(loss_type=="mse"){
         // MSE
         for(int i=0; i<n; i++){
-            res += pow(y[i]-pred[i],2);
+            res += pow(y[i]*w[i]-pred[i],2);
         }
         
     }else if(loss_type=="logloss"){
         for(int i=0; i<n; i++){
-            res += y[i]*log(1.0+exp(-pred[i])) + (1.0-y[i])*log(1.0 + exp(pred[i]));
+            res += y[i]*w[i]*log(1.0+exp(-pred[i])) + (1.0-y[i]*w[i])*log(1.0 + exp(pred[i]));
         }
     }
     
