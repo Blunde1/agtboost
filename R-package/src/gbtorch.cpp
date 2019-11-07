@@ -26,9 +26,9 @@ public:
     // Functions
     void set_param(Rcpp::List par_list);
     Rcpp::List get_param();
-    double initial_prediction(Tvec<double> &y, std::string loss_function);
-    void train(Tvec<double> &y, Tmat<double> &X, int verbose, bool greedy_complexities);
-    void train_from_preds(Tvec<double> &pred, Tvec<double> &y, Tmat<double> &X, int verbose, bool greedy_complexities);
+    double initial_prediction(Tvec<double> &y, std::string loss_function, Tvec<double> &w);
+    void train(Tvec<double> &y, Tmat<double> &X, int verbose, bool greedy_complexities, Tvec<double> &w);
+    void train_from_preds(Tvec<double> &pred, Tvec<double> &y, Tmat<double> &X, int verbose, bool greedy_complexities, Tvec<double> &w);
     Tvec<double> predict(Tmat<double> &X);
     Tvec<double> predict2(Tmat<double> &X, int num_trees);
     double get_ensemble_bias(int num_trees);
@@ -64,15 +64,15 @@ Rcpp::List ENSEMBLE::get_param(){
     return this->param;
 }
 
-double ENSEMBLE::initial_prediction(Tvec<double> &y, std::string loss_function){
+double ENSEMBLE::initial_prediction(Tvec<double> &y, std::string loss_function, Tvec<double> &w){
     
     double pred=0;
     int n = y.size();
     
     if(loss_function=="mse"){
-        pred = y.sum() / n;
+        pred = (y*w).sum() / n;
     }else if(loss_function=="logloss"){
-        double pred_g_transform = y.sum()/n; // naive probability
+        double pred_g_transform = (y*w).sum()/n; // naive probability
         pred = log(pred_g_transform) - log(1 - pred_g_transform);
     }
     
@@ -80,7 +80,7 @@ double ENSEMBLE::initial_prediction(Tvec<double> &y, std::string loss_function){
 }
 
 
-void ENSEMBLE::train(Tvec<double> &y, Tmat<double> &X, int verbose, bool greedy_complexities){
+void ENSEMBLE::train(Tvec<double> &y, Tmat<double> &X, int verbose, bool greedy_complexities, Tvec<double> &w){
     // Set init -- mean
     int MAXITER = param["nrounds"];
     int n = y.size(); 
@@ -91,13 +91,13 @@ void ENSEMBLE::train(Tvec<double> &y, Tmat<double> &X, int verbose, bool greedy_
     Tvec<double> pred(n), g(n), h(n);
     
     // MSE -- FIX FOR OTHER LOSS FUNCTIONS
-    this->initialPred = this->initial_prediction(y, param["loss_function"]); //y.sum()/n;
+    this->initialPred = this->initial_prediction(y, param["loss_function"], w); //y.sum()/n;
     pred.setConstant(this->initialPred);
-    this->initial_score = loss(y, pred, param["loss_function"]); //(y - pred).squaredNorm() / n;
+    this->initial_score = loss(y, pred, param["loss_function"], w); //(y - pred).squaredNorm() / n;
     
     // First tree
-    g = dloss(y, pred, param["loss_function"]);
-    h = ddloss(y, pred, param["loss_function"]);
+    g = dloss(y, pred, param["loss_function"]) * w;
+    h = ddloss(y, pred, param["loss_function"]) * w;
     this->first_tree = new GBTREE;
     this->first_tree->train(g, h, X, greedy_complexities, learning_rate_set);
     GBTREE* current_tree = this->first_tree;
@@ -111,7 +111,7 @@ void ENSEMBLE::train(Tvec<double> &y, Tmat<double> &X, int verbose, bool greedy_
             "iter: " << 1 << 
             "  |  reduction tr: " << (current_tree->getTreeScore()) * (-2)*learning_rate_set*(learning_rate_set/2 - 1) <<
             "  |  reduction gen: " << expected_loss <<
-            "  |  tr loss: " << loss(y, pred, param["loss_function"]) <<
+            "  |  tr loss: " << loss(y, pred, param["loss_function"], w) <<
             "  |  gen loss: " << this->get_ensemble_bias(1) << 
              std::endl;
     }
@@ -126,8 +126,8 @@ void ENSEMBLE::train(Tvec<double> &y, Tmat<double> &X, int verbose, bool greedy_
         
         // TRAINING
         GBTREE* new_tree = new GBTREE();
-        g = dloss(y, pred, param["loss_function"]);
-        h = ddloss(y, pred, param["loss_function"]);
+        g = dloss(y, pred, param["loss_function"]) * w;
+        h = ddloss(y, pred, param["loss_function"]) * w;
         new_tree->train(g, h, X, greedy_complexities, learning_rate_set);
         
         // EXPECTED LOSS
@@ -146,7 +146,7 @@ void ENSEMBLE::train(Tvec<double> &y, Tmat<double> &X, int verbose, bool greedy_
                         "  |  n-leaves: " << current_tree->getNumLeaves() << 
                        // "  |  reduct tr: " << (current_tree->getTreeScore()) * (-2)*learning_rate_set*(learning_rate_set/2 - 1) <<
                         //"  |  reduct gen: " << expected_loss <<
-                        "  |  tr loss: " << loss(y, pred, param["loss_function"]) <<
+                        "  |  tr loss: " << loss(y, pred, param["loss_function"], w) <<
                         "  |  gen loss: " << this->get_ensemble_bias(i-1) + expected_loss << 
                         std::endl;
                 
@@ -163,7 +163,7 @@ void ENSEMBLE::train(Tvec<double> &y, Tmat<double> &X, int verbose, bool greedy_
     }
 }
 
-void ENSEMBLE::train_from_preds(Tvec<double> &pred, Tvec<double> &y, Tmat<double> &X, int verbose, bool greedy_complexities){
+void ENSEMBLE::train_from_preds(Tvec<double> &pred, Tvec<double> &y, Tmat<double> &X, int verbose, bool greedy_complexities, Tvec<double> &w){
     // Set init -- mean
     int MAXITER = param["nrounds"];
     int n = y.size(); 
@@ -174,15 +174,15 @@ void ENSEMBLE::train_from_preds(Tvec<double> &pred, Tvec<double> &y, Tmat<double
     Tvec<double> g(n), h(n);
     
     // Initial prediction
-    g = dloss(y, pred, param["loss_function"]);
-    h = ddloss(y, pred, param["loss_function"]);
+    g = dloss(y, pred, param["loss_function"])*w;
+    h = ddloss(y, pred, param["loss_function"])*w;
     this->initialPred = - g.sum() / h.sum();
     pred = pred.array() + this->initialPred;
-    this->initial_score = loss(y, pred, param["loss_function"]); //(y - pred).squaredNorm() / n;
+    this->initial_score = loss(y, pred, param["loss_function"], w); //(y - pred).squaredNorm() / n;
     
     // First tree
-    g = dloss(y, pred, param["loss_function"]);
-    h = ddloss(y, pred, param["loss_function"]);
+    g = dloss(y, pred, param["loss_function"])*w;
+    h = ddloss(y, pred, param["loss_function"])*w;
     this->first_tree = new GBTREE;
     this->first_tree->train(g, h, X, greedy_complexities, learning_rate_set);
     GBTREE* current_tree = this->first_tree;
@@ -196,7 +196,7 @@ void ENSEMBLE::train_from_preds(Tvec<double> &pred, Tvec<double> &y, Tmat<double
                 "iter: " << 1 << 
                     "  |  reduction tr: " << (current_tree->getTreeScore()) * (-2)*learning_rate_set*(learning_rate_set/2 - 1) <<
                         "  |  reduction gen: " << expected_loss <<
-                            "  |  tr loss: " << loss(y, pred, param["loss_function"]) <<
+                            "  |  tr loss: " << loss(y, pred, param["loss_function"], w) <<
                                 "  |  gen loss: " << this->get_ensemble_bias(1) << 
                                     std::endl;
     }
@@ -211,8 +211,8 @@ void ENSEMBLE::train_from_preds(Tvec<double> &pred, Tvec<double> &y, Tmat<double
         
         // TRAINING
         GBTREE* new_tree = new GBTREE();
-        g = dloss(y, pred, param["loss_function"]);
-        h = ddloss(y, pred, param["loss_function"]);
+        g = dloss(y, pred, param["loss_function"])*w;
+        h = ddloss(y, pred, param["loss_function"])*w;
         new_tree->train(g, h, X, greedy_complexities, learning_rate_set);
         
         // EXPECTED LOSS
@@ -231,7 +231,7 @@ void ENSEMBLE::train_from_preds(Tvec<double> &pred, Tvec<double> &y, Tmat<double
                         "  |  n-leaves: " << current_tree->getNumLeaves() << 
                             "  |  reduct tr: " << (current_tree->getTreeScore()) * (-2)*learning_rate_set*(learning_rate_set/2 - 1) <<
                                 "  |  reduct gen: " << expected_loss <<
-                                    "  |  tr loss: " << loss(y, pred, param["loss_function"]) <<
+                                    "  |  tr loss: " << loss(y, pred, param["loss_function"], w) <<
                                         "  |  gen loss: " << this->get_ensemble_bias(i-1) + expected_loss << 
                                             std::endl;
             }

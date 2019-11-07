@@ -6,7 +6,7 @@
 \usage{
 gbt.train(y, x, learning_rate = 0.01, loss_function = "mse",
   nrounds = 50000, verbose = 0, greedy_complexities = TRUE,
-  previous_pred = NULL)
+  previous_pred = NULL, weights = NULL)
 }
 \arguments{
 \item{y}{response vector for training. Must correspond to the design matrix \code{x}.}
@@ -28,6 +28,8 @@ gbt.train(y, x, learning_rate = 0.01, loss_function = "mse",
 \item{greedy_complexities}{Boolean: \code{FALSE} means standard GTB, \code{TRUE} means greedy complexity tree-building. Default: \code{TRUE}.}
 
 \item{previous_pred}{prediction vector for training. Boosted training given predictions from another model.}
+
+\item{weights}{weights vector for scaling contributions of individual observations. Default \code{NULL} (the unit vector).}
 }
 \value{
 An object of class \code{ENSEMBLE} with the following elements:

@@ -14,6 +14,7 @@
 #' @param verbose Enable boosting tracing information at i-th iteration? Default: \code{0}.
 #' @param greedy_complexities Boolean: \code{FALSE} means standard GTB, \code{TRUE} means greedy complexity tree-building. Default: \code{TRUE}.
 #' @param previous_pred prediction vector for training. Boosted training given predictions from another model.
+#' @param weights weights vector for scaling contributions of individual observations. Default \code{NULL} (the unit vector).
 #'
 #' @details
 #' These are the training functions for \code{gbtorch}.
@@ -68,7 +69,8 @@
 gbt.train <- function(y, x, learning_rate = 0.01,
                       loss_function = "mse", nrounds = 50000,
                       verbose=0, greedy_complexities=TRUE, 
-                      previous_pred=NULL){
+                      previous_pred=NULL,
+                      weights = NULL){
     
     error_messages <- c()
     error_messages_type <- c(
@@ -161,6 +163,10 @@ gbt.train <- function(y, x, learning_rate = 0.01,
     if(length(error_messages)>0)
         stop(error_messages)
     
+    # Weights vector?
+    if(is.null(weights))
+        weights = rep(1,nrow(x))
+    
     # create gbtorch ensemble object
     mod <- new(ENSEMBLE)
     param <- list("learning_rate" = learning_rate, 
@@ -172,11 +178,11 @@ gbt.train <- function(y, x, learning_rate = 0.01,
     if(is.null(previous_pred)){
         
         # train from scratch
-        mod$train(y,x, verbose, greedy_complexities)   
+        mod$train(y,x, verbose, greedy_complexities, weights)   
     }else{
         
         # train from previous predictions
-        mod$train_from_preds(previous_pred,y,x, verbose, greedy_complexities)
+        mod$train_from_preds(previous_pred,y,x, verbose, greedy_complexities, weights)
     }
     
     # return trained gbtorch ensemble
