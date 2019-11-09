@@ -9,6 +9,7 @@
 #'   \itemize{
 #'   \item \code{mse} regression with squared error loss (Default).
 #'   \item \code{logloss} logistic regression for binary classification, output score before logistic transformation.
+#'   \item \code{poisson} Poisson regression for count data using a log-link, output score before natural transformation. 
 #'   }
 #' @param nrounds a just-in-case max number of boosting iterations. Default: 50000
 #' @param verbose Enable boosting tracing information at i-th iteration? Default: \code{0}.
@@ -115,7 +116,7 @@ gbt.train <- function(y, x, learning_rate = 0.01,
     # loss function
     if(is.character(loss_function) && length(loss_function) == 1){
         if(
-            loss_function %in% c("mse", "logloss")
+            loss_function %in% c("mse", "logloss", "poisson")
         ){}else{
             error_messages <- c(error_messages, error_messages_type[5])
         }   
