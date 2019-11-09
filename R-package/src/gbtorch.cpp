@@ -74,6 +74,9 @@ double ENSEMBLE::initial_prediction(Tvec<double> &y, std::string loss_function, 
     }else if(loss_function=="logloss"){
         double pred_g_transform = (y*w).sum()/n; // naive probability
         pred = log(pred_g_transform) - log(1 - pred_g_transform);
+    }else if(loss_function=="poisson"){
+        double pred_g_transform = (y*w).sum()/n; // naive intensity
+        pred = log(pred_g_transform);
     }
     
     return pred;
