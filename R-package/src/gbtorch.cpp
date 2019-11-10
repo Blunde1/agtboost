@@ -68,15 +68,19 @@ double ENSEMBLE::initial_prediction(Tvec<double> &y, std::string loss_function, 
     
     double pred=0;
     int n = y.size();
+    double pred_g_transform = (y*w).sum()/n; // Only initialize once, transform given link
     
     if(loss_function=="mse"){
-        pred = (y*w).sum() / n;
+        pred = pred_g_transform;
     }else if(loss_function=="logloss"){
-        double pred_g_transform = (y*w).sum()/n; // naive probability
+        //double pred_g_transform = (y*w).sum()/n; // naive probability
         pred = log(pred_g_transform) - log(1 - pred_g_transform);
     }else if(loss_function=="poisson"){
-        double pred_g_transform = (y*w).sum()/n; // naive intensity
+        //double pred_g_transform = (y*w).sum()/n; // naive intensity
         pred = log(pred_g_transform);
+    }else if(loss_function=="gamma::neginv"){
+        //double pred_g_transform = (y*w).sum()/n;
+        pred = - 1.0 / pred_g_transform;
     }
     
     return pred;

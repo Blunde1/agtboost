@@ -26,6 +26,12 @@ double loss(Tvec<double> &y, Tvec<double> &pred, std::string loss_type, Tvec<dou
         for(int i=0; i<n; i++){
             res += exp(pred[i]) - y[i]*w[i]*pred[i]; // skip normalizing factor log(y!)
         }
+    }else if(loss_type=="gamma::neginv"){
+        // GAMMA::NEGINV
+        // shape=1, only relevant part of negative log-likelihood
+        for(int i=0; i<n; i++){
+            res += -y[i]*w[i]*pred[i] - log(-pred[i]);
+        }
     }
     
     return res/n;
@@ -51,6 +57,11 @@ Tvec<double> dloss(Tvec<double> &y, Tvec<double> &pred, std::string loss_type){
         for(int i=0; i<n; i++){
             g[i] = exp(pred[i]) - y[i];
         }
+    }else if(loss_type == "gamma::neginv"){
+        // GAMMA::NEGINV
+        for(int i=0; i<n; i++){
+            g[i] = -(y[i]+1.0/pred[i]);
+        }
     }
     
     return g;
@@ -73,6 +84,11 @@ Tvec<double> ddloss(Tvec<double> &y, Tvec<double> &pred, std::string loss_type="
         // POISSON REG
         for(int i=0; i<n; i++){
             h[i] = exp(pred[i]);
+        }
+    }else if(loss_type == "gamma::neginv"){
+        // GAMMA::NEGINV
+        for(int i=0; i<n; i++){
+            h[i] = 1.0/(pred[i]*pred[i]);
         }
     }
     
