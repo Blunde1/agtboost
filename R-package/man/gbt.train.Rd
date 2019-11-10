@@ -35,7 +35,7 @@ gbt.train(y, x, learning_rate = 0.01, loss_function = "mse",
 \value{
 An object of class \code{ENSEMBLE} with the following elements:
 \itemize{
-  \item \code{handle} a handle (pointer) to the xgboost model in memory.
+  \item \code{handle} a handle (pointer) to the gbtorch model in memory.
   \item \code{initialPred} a field containing the initial prediction of the ensemble.
   \item \code{set_param} function for changing the parameters of the ensemble.
   \item \code{get_param} function for looking up the parameters of the ensemble.
