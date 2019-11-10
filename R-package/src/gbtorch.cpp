@@ -81,6 +81,8 @@ double ENSEMBLE::initial_prediction(Tvec<double> &y, std::string loss_function, 
     }else if(loss_function=="gamma::neginv"){
         //double pred_g_transform = (y*w).sum()/n;
         pred = - 1.0 / pred_g_transform;
+    }else if(loss_function=="gamma::log"){
+        pred = log(pred_g_transform);
     }
     
     return pred;

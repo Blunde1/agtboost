@@ -32,6 +32,11 @@ double loss(Tvec<double> &y, Tvec<double> &pred, std::string loss_type, Tvec<dou
         for(int i=0; i<n; i++){
             res += -y[i]*w[i]*pred[i] - log(-pred[i]);
         }
+    }else if(loss_type=="gamma::log"){
+        // GAMMA::LOG
+        for(int i=0; i<n; i++){
+            res += y[i]*w[i]*exp(-pred[i]) + pred[i];
+        }
     }
     
     return res/n;
@@ -62,6 +67,11 @@ Tvec<double> dloss(Tvec<double> &y, Tvec<double> &pred, std::string loss_type){
         for(int i=0; i<n; i++){
             g[i] = -(y[i]+1.0/pred[i]);
         }
+    }else if(loss_type == "gamma::log"){
+        // GAMMA::LOG
+        for(int i=0; i<n; i++){
+            g[i] = -y[i]*exp(-pred[i]) + 1.0;
+        }
     }
     
     return g;
@@ -89,6 +99,11 @@ Tvec<double> ddloss(Tvec<double> &y, Tvec<double> &pred, std::string loss_type="
         // GAMMA::NEGINV
         for(int i=0; i<n; i++){
             h[i] = 1.0/(pred[i]*pred[i]);
+        }
+    }else if(loss_type == "gamma::log"){
+        // GAMMA::LOG
+        for(int i=0; i<n; i++){
+            h[i] = y[i] * exp(-pred[i]);
         }
     }
     
