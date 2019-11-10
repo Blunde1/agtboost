@@ -19,7 +19,9 @@ gbt.train(y, x, learning_rate = 0.01, loss_function = "mse",
 \itemize{
 \item \code{mse} regression with squared error loss (Default).
 \item \code{logloss} logistic regression for binary classification, output score before logistic transformation.
-\item \code{poisson} Poisson regression for count data using a log-link, output score before natural transformation. 
+\item \code{poisson} Poisson regression for count data using a log-link, output score before natural transformation.
+\item \code{gamma::neginv} gamma regression using the canonical negative inverse link. Scaling independent of y.
+\item \code{gamma::log} gamma regression using the log-link. Constant information parametrisation. 
 }}
 
 \item{nrounds}{a just-in-case max number of boosting iterations. Default: 50000}
