@@ -286,14 +286,16 @@ void node::split_node(Tvec<double> &g, Tvec<double> &h, Tmat<double> &X, Tmat<do
 {
     
     // if flags stop
-    if(g.size()<10){
+    if(g.size()<2){
         return;
     }
     
+    /*
     // Check depth
     if(depth>=maxDepth){
         return;
     }
+    */
     
     //else check split
     // Calculate split information
