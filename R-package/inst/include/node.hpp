@@ -310,7 +310,7 @@ void node::split_node(Tvec<double> &g, Tvec<double> &h, Tmat<double> &X, Tmat<do
     double expected_reduction = nptr->expected_reduction();
     
     // Considering additive effects vs interaction effects trade-off?
-    if(!greey_complexities){
+    if(!greedy_complexities){
         
         // Don't consider trade-off
         // if expected_reduction < 0 then reset node

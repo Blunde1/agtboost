@@ -245,8 +245,8 @@ double GBTREE::getFeatureMapOptimism(){
 
 double GBTREE::getTreeOptimism(){
     
-    double conditional_leaf_optimism = this->getConditionalOptimism()
-    double feature_map_optimism = this->getFeatureMapOptimism()
+    double conditional_leaf_optimism = this->getConditionalOptimism();
+    double feature_map_optimism = this->getFeatureMapOptimism();
     return conditional_leaf_optimism + feature_map_optimism;
     
 }

@@ -31,7 +31,7 @@ public:
     void train_from_preds(Tvec<double> &pred, Tvec<double> &y, Tmat<double> &X, int verbose, bool greedy_complexities, Tvec<double> &w);
     Tvec<double> predict(Tmat<double> &X);
     Tvec<double> predict2(Tmat<double> &X, int num_trees);
-    double get_ensemble_bias(int num_trees);
+    double estimate_generalization_loss(int num_trees);
     int get_num_trees();
 };
 
@@ -123,7 +123,7 @@ void ENSEMBLE::train(Tvec<double> &y, Tmat<double> &X, int verbose, bool greedy_
             "it: " << 1 << 
             "  |  n-leaves: " << current_tree->getNumLeaves() <<
             "  |  tr loss: " << loss(y, pred, param["loss_function"], w) <<
-            "  |  gen loss: " << this->get_ensemble_bias(1) << 
+            "  |  gen loss: " << this->estimate_generalization_loss(1) << 
              std::endl;
     }
     
@@ -156,7 +156,7 @@ void ENSEMBLE::train(Tvec<double> &y, Tmat<double> &X, int verbose, bool greedy_
                         "it: " << i << 
                         "  |  n-leaves: " << current_tree->getNumLeaves() << 
                         "  |  tr loss: " << loss(y, pred, param["loss_function"], w) <<
-                        "  |  gen loss: " << this->get_ensemble_bias(i-1) + expected_loss << 
+                        "  |  gen loss: " << this->estimate_generalization_loss(i-1) + expected_loss << 
                         std::endl;
                 
             }
@@ -208,7 +208,7 @@ void ENSEMBLE::train_from_preds(Tvec<double> &pred, Tvec<double> &y, Tmat<double
                 "it: " << 1 << 
                     "  |  n-leaves: " << current_tree->getNumLeaves() <<
                         "  |  tr loss: " << loss(y, pred, param["loss_function"], w) <<
-                            "  |  gen loss: " << this->get_ensemble_bias(1) << 
+                            "  |  gen loss: " << this->estimate_generalization_loss(1) << 
                                 std::endl;
     }
     
@@ -241,7 +241,7 @@ void ENSEMBLE::train_from_preds(Tvec<double> &pred, Tvec<double> &y, Tmat<double
                         "it: " << i << 
                             "  |  n-leaves: " << current_tree->getNumLeaves() << 
                                 "  |  tr loss: " << loss(y, pred, param["loss_function"], w) <<
-                                    "  |  gen loss: " << this->get_ensemble_bias(i-1) + expected_loss << 
+                                    "  |  gen loss: " << this->estimate_generalization_loss(i-1) + expected_loss << 
                                         std::endl;
                 
             }
@@ -295,7 +295,7 @@ Tvec<double> ENSEMBLE::predict2(Tmat<double> &X, int num_trees){
     return pred;
 }
 
-double ENSEMBLE::get_ensemble_bias(int num_trees){
+double ENSEMBLE::estimate_generalization_loss(int num_trees){
     
     int tree_num = 1;
     double total_observed_reduction = 0.0;
@@ -350,7 +350,7 @@ RCPP_MODULE(MyModule) {
         .method("train_from_preds", &ENSEMBLE::train_from_preds)
         .method("predict", &ENSEMBLE::predict)
         .method("predict2", &ENSEMBLE::predict2)
-        .method("get_ensemble_bias", &ENSEMBLE::get_ensemble_bias)
+        .method("estimate_generalization_loss", &ENSEMBLE::estimate_generalization_loss)
         .method("get_num_trees", &ENSEMBLE::get_num_trees)
     ;
 }
