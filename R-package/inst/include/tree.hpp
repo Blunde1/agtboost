@@ -27,7 +27,7 @@ public:
     double getTreeScore();
     double getConditionalOptimism();
     double getFeatureMapOptimism();
-    // double getTreeOptimism(); // sum of the conditional and feature map optimism
+    double getTreeOptimism(); // sum of the conditional and feature map optimism
     int getNumLeaves();
     void print_tree(int type);
     
@@ -241,6 +241,14 @@ double GBTREE::getFeatureMapOptimism(){
     } /* End of while */
             
             return feature_map_optimism;
+}
+
+double GBTREE::getTreeOptimism(){
+    
+    double conditional_leaf_optimism = this->getConditionalOptimism()
+    double feature_map_optimism = this->getFeatureMapOptimism()
+    return conditional_leaf_optimism + feature_map_optimism;
+    
 }
 
 int GBTREE::getNumLeaves(){

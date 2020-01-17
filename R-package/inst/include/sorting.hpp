@@ -19,7 +19,7 @@ Tvec<size_t> sort_indexes(const Tvec<T> &v) {
     return idx;
 }
 
-
+/*
 Rcpp::List unbiased_splitting(Tvec<double> &g, Tvec<double> &h, Tmat<double> &X, int n, int min_obs_in_node=2){
     
     //int n = g.size(), // should be n of full data
@@ -110,6 +110,6 @@ Rcpp::List unbiased_splitting(Tvec<double> &g, Tvec<double> &h, Tmat<double> &X,
     );
     
 }
-
+*/
 
 #endif
