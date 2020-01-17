@@ -4,6 +4,69 @@
 #define __CIR_HPP_INCLUDED__
 
 
+#include "external_rcpp.hpp"
+
+
+/*
+ * cir_sim_vec:
+ * Returns cir simulation on transformed equidistant grid tau = f(u)
+ */
+Tvec<double> cir_sim_vec(int m)
+{
+    double EPS = 1e-7;
+    
+    // Find original time of sim: assumption equidistant steps on u\in(0,1)
+    double delta_time = 1.0 / ( m+1.0 );
+    Tvec<double> u_cirsim = Tvec<double>::LinSpaced(m, delta_time, 1.0-delta_time);
+    
+    // Transform to CIR time
+    Tvec<double> tau = 0.5 * log( (u_cirsim.array()*(1-EPS))/(EPS*(1.0-u_cirsim.array())) );
+    
+    // Find cir delta
+    Tvec<double> tau_delta = tau.tail(m-1) - tau.head(m-1);
+    
+    // Simulate first observation
+    Tvec<double> res(m);
+    res[0] = R::rgamma( 1.0, 2.0 );
+    
+    // Simulate remaining observatins
+    
+    double kappa=2.0, sigma = 2.0*sqrt(2.0);
+    double a = kappa;
+    double b = 2.0 * sigma*sigma / (4.0 * kappa);
+    double c = 0;
+    double ncchisq;
+    
+    for(int i=1; i<m; i++){
+        
+        c = 2.0 * a / ( sigma*sigma * (1.0 - exp(-a*tau_delta[i-1])) );
+        ncchisq =  R::rnchisq( 4.0*a*b/(sigma*sigma), 2.0*c*res[i-1]*exp(-a*tau_delta[i-1]) );
+        res[i] = ncchisq/(2.0*c);
+        
+    }
+    
+    return res;
+    
+}
+
+/*
+ * cir_sim_mat:
+ * Returns 100 by 100 cir simulations
+ */
+Tmat<double> cir_sim_mat()
+{
+    int n=100, m=100;
+    Tmat<double> res(n, m);
+    
+    for(int i=0; i<n; i++){
+        res.row(i) = cir_sim_vec(m);
+    }
+    
+    return res;
+    
+}
+
+
 /*
  * interpolate_cir:
  * Returns interpolated observations between an observation vector, u, 
