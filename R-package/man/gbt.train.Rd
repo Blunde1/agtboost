@@ -44,7 +44,7 @@ An object of class \code{ENSEMBLE} with the following elements:
   \item \code{train} function for re-training (or from scratch) the ensemble directly on vector \code{y} and design matrix \code{x}.
   \item \code{predict} function for predicting observations given a design matrix
   \item \code{predict2} function as above, but takes a parameter max number of boosting ensemble iterations.
-  \item \code{get_ensemble_bias} function for calculating the (approximate) optimism of the ensemble.
+  \item \code{estimate_generalization_loss} function for calculating the (approximate) optimism of the ensemble.
   \item \code{get_num_trees} function returning the number of trees in the ensemble.
 }
 }
