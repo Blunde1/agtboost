@@ -160,7 +160,7 @@ bool node::split_information(const Tvec<double> &g, const Tvec<double> &h, const
     
     // Prepare for CIR
     Tvec<double> u_store(n_indices);
-    double prob_delta = 1.0/n_indices;
+    double prob_delta = 1.0/n; //1.0/n_indices;
     int feature_counter=0, num_splits;
     Tvec<double> max_cir(n_sim);
     Tmat<double> gamma_param(n_features, 2); // Store estimated shape-scale parameters
