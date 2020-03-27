@@ -18,6 +18,7 @@
 #' @param greedy_complexities Boolean: \code{FALSE} means standard GTB, \code{TRUE} means greedy complexity tree-building. Default: \code{TRUE}.
 #' @param previous_pred prediction vector for training. Boosted training given predictions from another model.
 #' @param weights weights vector for scaling contributions of individual observations. Default \code{NULL} (the unit vector).
+#' @param force_continued_learning Boolean: \code{FALSE} (default) stops at information stopping criterion, \code{TRUE} stops at \code{nround} iterations.
 #'
 #' @details
 #' These are the training functions for \code{gbtorch}.
@@ -73,7 +74,8 @@ gbt.train <- function(y, x, learning_rate = 0.01,
                       loss_function = "mse", nrounds = 50000,
                       verbose=0, greedy_complexities=TRUE, 
                       previous_pred=NULL,
-                      weights = NULL){
+                      weights = NULL,
+                      force_continued_learning=FALSE){
     
     error_messages <- c()
     error_messages_type <- c(
@@ -87,7 +89,8 @@ gbt.train <- function(y, x, learning_rate = 0.01,
         "\n Error: verbose must be of type numeric with length 1",
         "\n Error: greedy_complexities must be of type logical with length 1",
         "\n Error: previous_pred must be a vector of type numeric",
-        "\n Error: previous_pred must correspond to length of y"
+        "\n Error: previous_pred must correspond to length of y",
+        "\n Error: force_continued_learning must be of type logical with length 1"
     )
     # Check y, x
     if(!is.vector(y, mode="numeric")){
@@ -162,6 +165,14 @@ gbt.train <- function(y, x, learning_rate = 0.01,
             error_messages <- c(error_messages, error_messages_type[10])
     }
     
+    # force_continued_learning
+    if(is.logical(force_continued_learning) && length(force_continued_learning)==1){
+        #ok
+    }else{
+        # error
+        error_messages <- c(error_messages, error_messages_type[11])
+    }
+    
     # Any error messages?
     if(length(error_messages)>0)
         stop(error_messages)
@@ -181,7 +192,7 @@ gbt.train <- function(y, x, learning_rate = 0.01,
     if(is.null(previous_pred)){
         
         # train from scratch
-        mod$train(y,x, verbose, greedy_complexities, weights)   
+        mod$train(y,x, verbose, greedy_complexities, force_continued_learning, weights)   
     }else{
         
         # train from previous predictions
