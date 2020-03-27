@@ -13,7 +13,7 @@
  */
 Tvec<double> cir_sim_vec(int m)
 {
-    double EPS = 1e-7;
+    double EPS = 1e-15;
     
     // Find original time of sim: assumption equidistant steps on u\in(0,1)
     double delta_time = 1.0 / ( m+1.0 );
@@ -55,7 +55,7 @@ Tvec<double> cir_sim_vec(int m)
  */
 Tmat<double> cir_sim_mat()
 {
-    int n=100, m=100;
+    int n=1000, m=1000;
     Tmat<double> res(n, m);
     
     for(int i=0; i<n; i++){
@@ -207,77 +207,38 @@ Tvec<double> estimate_shape_scale(const Tvec<double> &max_cir)
     
 }
 
-/*
- * pmax_cir:
- * \prod_j p( max_cir_j < s)
- */
-double pmax_cir(double s, const Tmat<double> &gamma_param)
-{
+// Empirical cdf p_n(X\leq x)
+double pmax_cir(double x, Tvec<double>& obs){
     
-    int m = gamma_param.rows();
-    double log_res = 0;
-    for(int i=0; i<m; i++){
-        log_res += R::pgamma( s, gamma_param(i,0), gamma_param(i, 1), 1, 1 );
+    // Returns proportion of values in obs less or equal to x
+    int n = obs.size();
+    int sum = 0;
+    for(int i=0; i<n; i++){
+        if( obs[i] <= x ){
+            sum++;
+        }
     }
+    return (double)sum/n;
+}
+
+// Composite simpson's rule -- requires n even (grid.size() odd)
+double simpson(Tvec<double>& fval, Tvec<double>& grid){
     
-    if(std::isnan(exp(log_res))){
-        return 0.0;
+    // fval is f(x) on evenly spaced grid
+    
+    int n = grid.size() - 1;
+    double h = (grid[n] - grid[0]) / n;
+    double s = 0;
+    
+    if(n==2){
+        s = fval[0] + 4.0*fval[1] + fval[2];
     }else{
-        exp(log_res);   
+        s = fval[0] + fval[n];
+        for(int i=1; i<=(n/2); i++) { s += 4.0*fval[2*i-1]; }
+        for(int i=1; i<=((n/2)-1); i++) { s += 2.0*fval[2*i]; }
     }
-    
-}
-
-/*
- * expected_max_cir:
- * E[S] = \int_0^\infty (1 - pmax_cir(s)) ds
- */
-double expected_max_cir(const Tmat<double> &gamma_param)
-{
-    // Calculate E[S] = \int 1-\prod p(s;\theta_i) ds
-    
-    // Smart choice of a and b
-    int m = gamma_param.rows();
-    double avg_shape = gamma_param.col(0).sum() / m;
-    double avg_scale = gamma_param.col(1).sum() / m;
-    double a = R::qgamma( 0.001, avg_shape, avg_scale, 1, 0);
-    double b = R::qgamma( 0.999, avg_shape, avg_scale, 1, 0);
-    
-    double val = 0.0; //, a=0.0, b=10;
-    int n=100;
-    double h = (b-a)/n;
-    
-    // f(a)
-    val = 1.0;
-    
-    // f(b)
-    val += 1.0 - pmax_cir(b, gamma_param);
-    
-    // mid
-    for(int j=1; j<=(n/2); j++){
-        val += 4.0 * ( 1.0 - pmax_cir( h*(2*j-1), gamma_param ) );
-    }
-    for(int j=1; j<=(n/2-1); j++){
-        val += 2.0 * ( 1.0 - pmax_cir( h*(2*j), gamma_param ) );
-    }
-    
-    // Scale
-    val = val * h/3;
-    
-    return val;
-}
-
-/*
- * expected_max_cir_approx:
- * E[S] \sim Q(m/(m+1), avg_shape, avg_scale)
- */
-double expected_max_cir_approx(const Tmat<double> &gamma_param)
-{
-    int m = gamma_param.rows();
-    double avg_shape = gamma_param.col(0).sum() / m;
-    double avg_scale = gamma_param.col(1).sum() / m;
-    
-    return R::qgamma( (double)m/(m+1), avg_shape, avg_scale, 1, 0);
+    s = s*h/3.0;
+    return s;
     
 }
 
