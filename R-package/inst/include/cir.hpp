@@ -75,7 +75,7 @@ Tmat<double> cir_sim_mat()
 Tmat<double> interpolate_cir(const Tvec<double>&u, const Tmat<double>& cir_sim)
 {
     // cir long-term mean is 2.0 -- but do not use this! 
-    double EPS = 1e-7;
+    double EPS = 1e-12;
     int cir_obs = cir_sim.cols();
     int n_timesteps = u.size();
     int n_sim = cir_sim.rows();
