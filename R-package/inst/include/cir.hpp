@@ -13,7 +13,7 @@
  */
 Tvec<double> cir_sim_vec(int m)
 {
-    double EPS = 1e-15;
+    double EPS = 1e-12;
     
     // Find original time of sim: assumption equidistant steps on u\in(0,1)
     double delta_time = 1.0 / ( m+1.0 );
@@ -51,11 +51,11 @@ Tvec<double> cir_sim_vec(int m)
 
 /*
  * cir_sim_mat:
- * Returns 100 by 100 cir simulations
+ * Returns 1000 by 1000 cir simulations
  */
 Tmat<double> cir_sim_mat()
 {
-    int n=1000, m=1000;
+    int n=100, m=200;
     Tmat<double> res(n, m);
     
     for(int i=0; i<n; i++){
@@ -164,7 +164,7 @@ Tvec<double> rmax_cir(const Tvec<double>& u, const Tmat<double>& cir_sim)
     Tvec<double> max_cir_obs(nsims);
     
     if(nsplits < simsplits){
-        double EPS = 1e-7;
+        double EPS = 1e-12;
         //int nsplits = u.size();
         
         // Transform interval: 0.5*log( (b*(1-a)) / (a*(1-b)) )
