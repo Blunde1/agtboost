@@ -95,7 +95,7 @@ void ENSEMBLE::train(Tvec<double> &y, Tmat<double> &X, int verbose, bool greedy_
     // Set init -- mean
     int MAXITER = param["nrounds"];
     int n = y.size(); 
-    //int m = X.size();
+    int m = X.cols();
     double EPS = 1E-12;
     double expected_loss;
     double learning_rate_set = this->learning_rate;
@@ -107,7 +107,9 @@ void ENSEMBLE::train(Tvec<double> &y, Tmat<double> &X, int verbose, bool greedy_
     this->initial_score = loss(y, pred, param["loss_function"], w); //(y - pred).squaredNorm() / n;
     
     // Prepare cir matrix
-    Tmat<double> cir_sim = cir_sim_mat();
+    // PARAMETERS FOR CIR CONTROL: Choose nsim and nobs by user
+    // Default to nsim=100 nobs=100
+    Tmat<double> cir_sim = cir_sim_mat(100, 100);
     
     // First tree
     g = dloss(y, pred, param["loss_function"]) * w;
@@ -195,7 +197,7 @@ void ENSEMBLE::train_from_preds(Tvec<double> &pred, Tvec<double> &y, Tmat<double
     // Set init -- mean
     int MAXITER = param["nrounds"];
     int n = y.size(); 
-    //int m = X.size();
+    int m = X.cols();
     double EPS = -1E-12;
     double expected_loss;
     double learning_rate_set = this->learning_rate;
@@ -209,7 +211,7 @@ void ENSEMBLE::train_from_preds(Tvec<double> &pred, Tvec<double> &y, Tmat<double
     this->initial_score = loss(y, pred, param["loss_function"], w); //(y - pred).squaredNorm() / n;
     
     // Prepare cir matrix
-    Tmat<double> cir_sim = cir_sim_mat();
+    Tmat<double> cir_sim = cir_sim_mat(std::max(2*m, 100), 100);
     
     // First tree
     g = dloss(y, pred, param["loss_function"])*w;

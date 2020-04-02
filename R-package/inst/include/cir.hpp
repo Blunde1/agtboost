@@ -53,13 +53,13 @@ Tvec<double> cir_sim_vec(int m)
  * cir_sim_mat:
  * Returns 1000 by 1000 cir simulations
  */
-Tmat<double> cir_sim_mat()
+Tmat<double> cir_sim_mat(int nsim, int nobs)
 {
-    int n=100, m=200;
-    Tmat<double> res(n, m);
+    //int n=100, m=200;
+    Tmat<double> res(nsim, nobs);
     
-    for(int i=0; i<n; i++){
-        res.row(i) = cir_sim_vec(m);
+    for(int i=0; i<nsim; i++){
+        res.row(i) = cir_sim_vec(nobs);
     }
     
     return res;
