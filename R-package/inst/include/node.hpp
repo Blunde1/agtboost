@@ -161,9 +161,15 @@ bool node::split_information(const Tvec<double> &g, const Tvec<double> &h, const
     // Prepare for CIR
     Tvec<double> u_store(n_indices);
     double prob_delta = 1.0/n; //1.0/n_indices;
-    int feature_counter=0, num_splits;
+    int num_splits;
     Tvec<double> max_cir(n_sim);
-    Tmat<double> gamma_param(n_features, 2); // Store estimated shape-scale parameters
+    int grid_size = 101; // should be odd
+    double grid_end = cir_sim.maxCoeff();
+    Tvec<double> grid = Tvec<double>::LinSpaced( grid_size, 0.0, grid_end );
+    Tvec<double> emp_cdf_grid(grid_size);
+    Tvec<double> emp_cdf_mmcir_grid = Tvec<double>::Ones(grid_size);
+    Tvec<double> emp_cdf_mmcir_complement(grid_size);
+    
     
     // 1. Create child nodes
     node* left = new node;
@@ -233,21 +239,25 @@ bool node::split_information(const Tvec<double> &g, const Tvec<double> &h, const
             
         }
         
-        // 3.3 Store gamma param estimates    
+        // 3.3 Estimate empirical cdf for feature j
         if(num_splits > 0){
             // At least one split-point
             
-            if(num_splits == 1){
-                // one-hot encoding
-                gamma_param.row(feature_counter) << 1.0, 2.0; // Asymptotic cir
-            }else{
-                // More than one split
-                Tvec<double> u = u_store.head(num_splits);
-                max_cir = rmax_cir(u, cir_sim); // Input cir_sim!
-                gamma_param.row(feature_counter) = estimate_shape_scale(max_cir);
-            }
+            // Get probabilities
+            Tvec<double> u = u_store.head(num_splits);
+            //Rcpp::Rcout << "u: \n" <<  u << std::endl; // COMMENT REMOVE
             
-            feature_counter++;
+            // Get observations of max cir on probability observations
+            max_cir = rmax_cir(u, cir_sim); // Input cir_sim!
+            
+            // Estimate cdf of max cir for feature j
+            for(int k=0; k<grid_size; k++){ 
+                emp_cdf_grid[k] = pmax_cir(grid[k], max_cir);
+            }
+            //Rcpp::Rcout << "emp_cdf_grid: \n" <<  emp_cdf_grid << std::endl; // COMMENT REMOVE
+            
+            // Update empirical cdf for max max cir
+            emp_cdf_mmcir_grid.array() *= emp_cdf_grid.array();
             
         }
         
@@ -256,8 +266,8 @@ bool node::split_information(const Tvec<double> &g, const Tvec<double> &h, const
     if(any_split){
         
         // 4. Estimate E[S]
-        //this->expected_max_S = std::max(2.0, expected_max_cir(gamma_param.block(0,0,feature_counter, 2)));
-        this->expected_max_S = std::max(2.0, expected_max_cir_approx(gamma_param.block(0,0,feature_counter, 2)));
+        emp_cdf_mmcir_complement = Tvec<double>::Ones(grid_size) - emp_cdf_mmcir_grid.matrix();
+        this->expected_max_S = simpson( emp_cdf_mmcir_complement, grid );
         
         // 5. Update information in parent node -- reset later if no-split
         this->split_feature = split_feature;

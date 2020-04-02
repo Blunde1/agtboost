@@ -27,7 +27,8 @@ public:
     void set_param(Rcpp::List par_list);
     Rcpp::List get_param();
     double initial_prediction(Tvec<double> &y, std::string loss_function, Tvec<double> &w);
-    void train(Tvec<double> &y, Tmat<double> &X, int verbose, bool greedy_complexities, Tvec<double> &w);
+    void train(Tvec<double> &y, Tmat<double> &X, int verbose, bool greedy_complexities,
+               bool force_continued_learning, Tvec<double> &w);
     void train_from_preds(Tvec<double> &pred, Tvec<double> &y, Tmat<double> &X, int verbose, bool greedy_complexities, Tvec<double> &w);
     Tvec<double> predict(Tmat<double> &X);
     Tvec<double> predict2(Tmat<double> &X, int num_trees);
@@ -89,12 +90,13 @@ double ENSEMBLE::initial_prediction(Tvec<double> &y, std::string loss_function, 
 }
 
 
-void ENSEMBLE::train(Tvec<double> &y, Tmat<double> &X, int verbose, bool greedy_complexities, Tvec<double> &w){
+void ENSEMBLE::train(Tvec<double> &y, Tmat<double> &X, int verbose, bool greedy_complexities, 
+                     bool force_continued_learning, Tvec<double> &w){
     // Set init -- mean
     int MAXITER = param["nrounds"];
     int n = y.size(); 
-    //int m = X.size();
-    double EPS = -1E-12;
+    int m = X.cols();
+    double EPS = 1E-12;
     double expected_loss;
     double learning_rate_set = this->learning_rate;
     Tvec<double> pred(n), g(n), h(n);
@@ -105,7 +107,9 @@ void ENSEMBLE::train(Tvec<double> &y, Tmat<double> &X, int verbose, bool greedy_
     this->initial_score = loss(y, pred, param["loss_function"], w); //(y - pred).squaredNorm() / n;
     
     // Prepare cir matrix
-    Tmat<double> cir_sim = cir_sim_mat();
+    // PARAMETERS FOR CIR CONTROL: Choose nsim and nobs by user
+    // Default to nsim=100 nobs=100
+    Tmat<double> cir_sim = cir_sim_mat(100, 100);
     
     // First tree
     g = dloss(y, pred, param["loss_function"]) * w;
@@ -162,13 +166,30 @@ void ENSEMBLE::train(Tvec<double> &y, Tmat<double> &X, int verbose, bool greedy_
             }
         }
         
+        // Stopping criteria 
+        // Check for continued learning
+        if(!force_continued_learning){
+            
+            // No forced learning
+            // Check criterion
+            if(expected_loss > EPS){
+                break;
+            }
+            
+        }
         
+        // Passed criterion or force passed: Update ensemble
+        current_tree->next_tree = new_tree;
+        current_tree = new_tree;
+        
+        /*
         if(expected_loss < EPS){ // && NUM_BINTREE_CONSECUTIVE < MAX_NUM_BINTREE_CONSECUTIVE){
             current_tree->next_tree = new_tree;
             current_tree = new_tree;
         }else{
             break;
         }
+         */
     }
 }
 
@@ -176,7 +197,7 @@ void ENSEMBLE::train_from_preds(Tvec<double> &pred, Tvec<double> &y, Tmat<double
     // Set init -- mean
     int MAXITER = param["nrounds"];
     int n = y.size(); 
-    //int m = X.size();
+    int m = X.cols();
     double EPS = -1E-12;
     double expected_loss;
     double learning_rate_set = this->learning_rate;
@@ -190,7 +211,7 @@ void ENSEMBLE::train_from_preds(Tvec<double> &pred, Tvec<double> &y, Tmat<double
     this->initial_score = loss(y, pred, param["loss_function"], w); //(y - pred).squaredNorm() / n;
     
     // Prepare cir matrix
-    Tmat<double> cir_sim = cir_sim_mat();
+    Tmat<double> cir_sim = cir_sim_mat(std::max(2*m, 100), 100);
     
     // First tree
     g = dloss(y, pred, param["loss_function"])*w;
