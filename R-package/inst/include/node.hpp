@@ -8,6 +8,7 @@
 #include "external_rcpp.hpp"
 #include "sorting.hpp"
 #include "gtbic.hpp"
+#include "gumbel.hpp"
 
 
 // CLASS
@@ -134,7 +135,8 @@ bool node::split_information(const Tvec<double> &g, const Tvec<double> &h, const
     // 3. Loop over features
     // 3.1 Profiles over all possible splits
     // 3.2 Simultaniously builds observations vectors
-    // 3.3 Store gamma param estimates
+    // 3.3.1 Build gumbel (or gamma-one-hot) cdf of max cir for feature j
+    // 3.3.2 Update joint cdf of max max cir over all features
     // 4. Estimate E[S]
     // 5. Estimate local optimism and probabilities
     // 6. Update split information in child nodes
@@ -162,13 +164,13 @@ bool node::split_information(const Tvec<double> &g, const Tvec<double> &h, const
     Tvec<double> u_store(n_indices);
     double prob_delta = 1.0/n; //1.0/n_indices;
     int num_splits;
-    Tvec<double> max_cir(n_sim);
+    Tavec<double> max_cir(n_sim);
     int grid_size = 101; // should be odd
-    double grid_end = cir_sim.maxCoeff();
+    double grid_end = 1.5*cir_sim.maxCoeff();
     Tvec<double> grid = Tvec<double>::LinSpaced( grid_size, 0.0, grid_end );
-    Tvec<double> emp_cdf_grid(grid_size);
-    Tvec<double> emp_cdf_mmcir_grid = Tvec<double>::Ones(grid_size);
-    Tvec<double> emp_cdf_mmcir_complement(grid_size);
+    Tavec<double> gum_cdf_grid(grid_size);
+    Tavec<double> gum_cdf_mmcir_grid = Tvec<double>::Ones(grid_size);
+    Tvec<double> gum_cdf_mmcir_complement(grid_size);
     
     
     // 1. Create child nodes
@@ -250,14 +252,30 @@ bool node::split_information(const Tvec<double> &g, const Tvec<double> &h, const
             // Get observations of max cir on probability observations
             max_cir = rmax_cir(u, cir_sim); // Input cir_sim!
             
-            // Estimate cdf of max cir for feature j
-            for(int k=0; k<grid_size; k++){ 
-                emp_cdf_grid[k] = pmax_cir(grid[k], max_cir);
+            if(num_splits==1){
+                
+                // Exactly gamma distrbuted: shape 1, scale 2
+                
+                // Estimate cdf of max cir for feature j
+                for(int k=0; k<grid_size; k++){ 
+                    gum_cdf_grid[k] = R::pgamma(grid[k], 1.0, 2.0, 1, 0); // lower tail, not log
+                }
+                
+            }else{
+                
+                // Asymptotically Gumbel
+                
+                // Estimate Gumbel parameters
+                Tvec<double> par_gumbel = par_gumbel_estimates(max_cir);
+                
+                // Estimate cdf of max cir for feature j
+                for(int k=0; k<grid_size; k++){ 
+                    gum_cdf_grid[k] = pgumbel<double>(grid[k], par_gumbel[0], par_gumbel[1], true, false);
+                }
             }
-            //Rcpp::Rcout << "emp_cdf_grid: \n" <<  emp_cdf_grid << std::endl; // COMMENT REMOVE
             
             // Update empirical cdf for max max cir
-            emp_cdf_mmcir_grid.array() *= emp_cdf_grid.array();
+            gum_cdf_mmcir_grid *= gum_cdf_grid;
             
         }
         
@@ -266,8 +284,8 @@ bool node::split_information(const Tvec<double> &g, const Tvec<double> &h, const
     if(any_split){
         
         // 4. Estimate E[S]
-        emp_cdf_mmcir_complement = Tvec<double>::Ones(grid_size) - emp_cdf_mmcir_grid.matrix();
-        this->expected_max_S = simpson( emp_cdf_mmcir_complement, grid );
+        gum_cdf_mmcir_complement = Tvec<double>::Ones(grid_size) - gum_cdf_mmcir_grid.matrix();
+        this->expected_max_S = simpson( gum_cdf_mmcir_complement, grid );
         
         // 5. Update information in parent node -- reset later if no-split
         this->split_feature = split_feature;
