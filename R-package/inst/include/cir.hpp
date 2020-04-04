@@ -152,7 +152,7 @@ Tmat<double> interpolate_cir(const Tvec<double>&u, const Tmat<double>& cir_sim)
  * rmax_cir:
  * Simulates maximum of cir observations on an observation vector u
  */
-Tvec<double> rmax_cir(const Tvec<double>& u, const Tmat<double>& cir_sim)
+Tavec<double> rmax_cir(const Tvec<double>& u, const Tmat<double>& cir_sim)
 {
     // Simulate maximum of observations on a cir process
     // u: split-points on 0-1
@@ -179,7 +179,7 @@ Tvec<double> rmax_cir(const Tvec<double>& u, const Tmat<double>& cir_sim)
         max_cir_obs = cir_sim.rowwise().maxCoeff();
     }
     
-    return max_cir_obs;
+    return max_cir_obs.array();
 }
 
 /*

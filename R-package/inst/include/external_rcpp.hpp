@@ -20,5 +20,8 @@ using Tvec = Eigen::Matrix<T,Dynamic,1>;
 template <class T>
 using Tmat = Eigen::Matrix<T,Dynamic,Dynamic>;
 
+template<class T>
+using Tavec = Eigen::Array<T,Eigen::Dynamic,1>; 
+
 
 #endif // __EXTERNALRCPP_HPP_INCLUDED__
