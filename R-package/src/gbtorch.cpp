@@ -95,8 +95,8 @@ void ENSEMBLE::train(Tvec<double> &y, Tmat<double> &X, int verbose, bool greedy_
     // Set init -- mean
     int MAXITER = param["nrounds"];
     int n = y.size(); 
-    int m = X.cols();
-    double EPS = 1E-12;
+    //int m = X.cols();
+    double EPS = 1E-9;
     double expected_loss;
     double learning_rate_set = this->learning_rate;
     Tvec<double> pred(n), g(n), h(n);
@@ -119,8 +119,8 @@ void ENSEMBLE::train(Tvec<double> &y, Tmat<double> &X, int verbose, bool greedy_
     GBTREE* current_tree = this->first_tree;
     pred = pred + learning_rate * (current_tree->predict_data(X)); // POSSIBLY SCALED
     expected_loss = (current_tree->getTreeScore()) * (-2)*learning_rate_set*(learning_rate_set/2 - 1) + 
-        learning_rate_set * current_tree->getTreeOptimism();
-
+        //1.0*learning_rate_set * current_tree->getTreeOptimism();
+        learning_rate_set * current_tree->getFeatureMapOptimism();
     if(verbose>0){
         Rcpp::Rcout  <<
             std::setprecision(4) <<
@@ -147,8 +147,9 @@ void ENSEMBLE::train(Tvec<double> &y, Tmat<double> &X, int verbose, bool greedy_
         
         // EXPECTED LOSS
         expected_loss = (new_tree->getTreeScore()) * (-2)*learning_rate_set*(learning_rate_set/2 - 1) + 
-            learning_rate_set * new_tree->getTreeOptimism();
-        
+            //1.0*learning_rate_set * new_tree->getTreeOptimism();
+            1.0*learning_rate_set * new_tree->getFeatureMapOptimism();
+
         // Update preds -- if should not be updated for last iter, it does not matter much computationally
         pred = pred + learning_rate * (current_tree->predict_data(X));
             
@@ -197,8 +198,8 @@ void ENSEMBLE::train_from_preds(Tvec<double> &pred, Tvec<double> &y, Tmat<double
     // Set init -- mean
     int MAXITER = param["nrounds"];
     int n = y.size(); 
-    int m = X.cols();
-    double EPS = -1E-12;
+    //int m = X.cols();
+    double EPS = 1E-9;
     double expected_loss;
     double learning_rate_set = this->learning_rate;
     Tvec<double> g(n), h(n);
@@ -211,7 +212,7 @@ void ENSEMBLE::train_from_preds(Tvec<double> &pred, Tvec<double> &y, Tmat<double
     this->initial_score = loss(y, pred, param["loss_function"], w); //(y - pred).squaredNorm() / n;
     
     // Prepare cir matrix
-    Tmat<double> cir_sim = cir_sim_mat(std::max(2*m, 100), 100);
+    Tmat<double> cir_sim = cir_sim_mat(100, 100);
     
     // First tree
     g = dloss(y, pred, param["loss_function"])*w;

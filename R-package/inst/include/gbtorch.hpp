@@ -14,6 +14,7 @@
 //#include "parameters.hpp"
 #include "cir.hpp"
 #include "sorting.hpp"
+#include "gumbel.hpp"
 #include "node.hpp"
 #include "tree.hpp"
 //#include "order_gamma.hpp"
