@@ -5,7 +5,7 @@
 \title{GBTorch Training.}
 \usage{
 gbt.train(y, x, learning_rate = 0.01, loss_function = "mse",
-  nrounds = 50000, verbose = 0, greedy_complexities = TRUE,
+  nrounds = 50000, verbose = 0, greedy_complexities = FALSE,
   previous_pred = NULL, weights = NULL,
   force_continued_learning = FALSE)
 }
@@ -29,7 +29,7 @@ gbt.train(y, x, learning_rate = 0.01, loss_function = "mse",
 
 \item{verbose}{Enable boosting tracing information at i-th iteration? Default: \code{0}.}
 
-\item{greedy_complexities}{Boolean: \code{FALSE} means standard GTB, \code{TRUE} means greedy complexity tree-building. Default: \code{TRUE}.}
+\item{greedy_complexities}{Boolean: \code{FALSE} means standard GTB, \code{TRUE} means greedy complexity tree-building. Default: \code{FALSE} (temporary).}
 
 \item{previous_pred}{prediction vector for training. Boosted training given predictions from another model.}
 
