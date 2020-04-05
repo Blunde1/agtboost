@@ -15,7 +15,7 @@
 #'   }
 #' @param nrounds a just-in-case max number of boosting iterations. Default: 50000
 #' @param verbose Enable boosting tracing information at i-th iteration? Default: \code{0}.
-#' @param greedy_complexities Boolean: \code{FALSE} means standard GTB, \code{TRUE} means greedy complexity tree-building. Default: \code{TRUE}.
+#' @param greedy_complexities Boolean: \code{FALSE} means standard GTB, \code{TRUE} means greedy complexity tree-building. Default: \code{FALSE} (temporary).
 #' @param previous_pred prediction vector for training. Boosted training given predictions from another model.
 #' @param weights weights vector for scaling contributions of individual observations. Default \code{NULL} (the unit vector).
 #' @param force_continued_learning Boolean: \code{FALSE} (default) stops at information stopping criterion, \code{TRUE} stops at \code{nround} iterations.
@@ -72,7 +72,7 @@
 #' @export
 gbt.train <- function(y, x, learning_rate = 0.01,
                       loss_function = "mse", nrounds = 50000,
-                      verbose=0, greedy_complexities=TRUE, 
+                      verbose=0, greedy_complexities=FALSE, 
                       previous_pred=NULL,
                       weights = NULL,
                       force_continued_learning=FALSE){
