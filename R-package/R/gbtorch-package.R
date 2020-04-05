@@ -1,3 +1,5 @@
+#' Adaptive and Automatic Gradient Boosting Computations
+#' 
 #' \code{gbtorch} is a lightning fast gradient boosting library designed to avoid 
 #' manual tuning and cross-validation by utilizing an information theoretic 
 #' approach. This makes the algorithm adaptive to the dataset at hand; it is 
@@ -10,7 +12,7 @@
 #' 
 #' \itemize{
 #' \item \code{\link{gbt.train}}: function for training a \code{gbtorch} ensemble
-#' \item \code{\link{gbt.pred}}: function for predicting from a \code{gbtorch} ensemble
+#' \item \code{\link{predict.Rcpp_ENSEMBLE}}: function for predicting from a \code{gbtorch} ensemble
 #' }
 #' 
 #' See individual function documentation for usage.

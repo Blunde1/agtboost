@@ -1,6 +1,6 @@
 #' GBTorch Prediction
 #'
-#' \code{gbt.pred} is an interface for predicting from a \code{gbtorch} model.
+#' \code{predict} is an interface for predicting from a \code{gbtorch} model.
 #'
 #' @param object Object or pointer to object of class \code{ENSEMBLE}
 #' @param newdata Design matrix of data to be predicted. Type \code{matrix}
@@ -40,44 +40,11 @@
 #' points(x.test, y.pred.2, col="blue")
 #'
 #'
-#' @rdname gbt.pred
+#' @rdname predict.Rcpp_ENSEMBLE
 #' @export
-gbt.pred <- function(object, newdata){
-    # object - pointer to class ENSEMBLE
-    # newdata - design matrix of type matrix
-    
-    # checks on newdata and e.ptr
-    error_messages <- c()
-    error_messages_type <- c(
-        "Error: object must be a GBTorch ensemble \n",
-        "Error: GBTorch ensemble must be trained, see function documentation gbt.train \n",
-        "Error: newdata must be a matrix \n"
-    )
-    # check object
-    if(class(object)!="Rcpp_ENSEMBLE"){
-        error_messages <- c(error_messages, error_messages_type[1])
-    }else{
-        # test if trained
-        if(object$get_num_trees()==0)
-            error_messages <- c(error_messages, error_messages_type[2])
-    }
-    
-    # check x
-    if(!is.matrix(newdata))
-        error_messages <- c(error_messages, error_messages_type[3])
-
-    # Any error messages?
-    if(length(error_messages)>0)
-        stop(error_messages)
-    
-    # predict
-    res <- object$predict(newdata)
-    
-    return(res)
-}
 
 #' @export
-predict.Rcpp_ENSEMBLE <- function(object, newdata){
+predict.Rcpp_ENSEMBLE <- function(object, newdata, ...){
     # object - pointer to class ENSEMBLE
     # newdata - design matrix of type matrix
     
@@ -110,4 +77,41 @@ predict.Rcpp_ENSEMBLE <- function(object, newdata){
     
     return(res)
 } 
+
+
+
+# gbt.pred <- function(object, newdata){
+#     # object - pointer to class ENSEMBLE
+#     # newdata - design matrix of type matrix
+#     
+#     # checks on newdata and e.ptr
+#     error_messages <- c()
+#     error_messages_type <- c(
+#         "Error: object must be a GBTorch ensemble \n",
+#         "Error: GBTorch ensemble must be trained, see function documentation gbt.train \n",
+#         "Error: newdata must be a matrix \n"
+#     )
+#     # check object
+#     if(class(object)!="Rcpp_ENSEMBLE"){
+#         error_messages <- c(error_messages, error_messages_type[1])
+#     }else{
+#         # test if trained
+#         if(object$get_num_trees()==0)
+#             error_messages <- c(error_messages, error_messages_type[2])
+#     }
+#     
+#     # check x
+#     if(!is.matrix(newdata))
+#         error_messages <- c(error_messages, error_messages_type[3])
+#     
+#     # Any error messages?
+#     if(length(error_messages)>0)
+#         stop(error_messages)
+#     
+#     # predict
+#     res <- object$predict(newdata)
+#     
+#     return(res)
+# }
+
     

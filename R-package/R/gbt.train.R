@@ -47,7 +47,7 @@
 #' }
 #'
 #' @seealso
-#' \code{\link{gbt.pred}}
+#' \code{\link{predict.Rcpp_ENSEMBLE}}
 #'
 #' @references
 #'
@@ -70,6 +70,7 @@
 #'
 #' @rdname gbt.train
 #' @export
+#' @importFrom methods new
 gbt.train <- function(y, x, learning_rate = 0.01,
                       loss_function = "mse", nrounds = 50000,
                       verbose=0, greedy_complexities=FALSE, 

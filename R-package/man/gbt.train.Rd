@@ -86,5 +86,5 @@ B. Å. S. Lunde, T. S. Kleppe and H. J. Skaug, "An information criterion for gra
 publishing details, \url{}
 }
 \seealso{
-\code{\link{gbt.pred}}
+\code{\link{predict.Rcpp_ENSEMBLE}}
 }
