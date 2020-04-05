@@ -10,6 +10,8 @@
 \item{object}{Object or pointer to object of class \code{ENSEMBLE}}
 
 \item{newdata}{Design matrix of data to be predicted. Type \code{matrix}}
+
+\item{...}{additional parameters passed. Currently not in use.}
 }
 \value{
 For regression or binary classification, it returns a vector of length \code{nrows(newdata)}.

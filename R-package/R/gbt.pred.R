@@ -4,6 +4,7 @@
 #'
 #' @param object Object or pointer to object of class \code{ENSEMBLE}
 #' @param newdata Design matrix of data to be predicted. Type \code{matrix}
+#' @param ... additional parameters passed. Currently not in use.
 #'
 #' @details
 #' 
@@ -42,7 +43,7 @@
 #' @export
 
 #' @export
-predict.Rcpp_ENSEMBLE <- function(object, newdata){
+predict.Rcpp_ENSEMBLE <- function(object, newdata, ...){
     # object - pointer to class ENSEMBLE
     # newdata - design matrix of type matrix
     
