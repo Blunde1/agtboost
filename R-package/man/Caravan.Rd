@@ -1,7 +1,7 @@
 \name{Caravan}
 \alias{Caravan}
-\alias{Caravan.train}
-\alias{Caravan.test}
+\alias{caravan.train}
+\alias{caravan.test}
 \docType{data}
 \title{The Insurance Company (TIC) Benchmark
 %%   ~~ data name/kind ... ~~

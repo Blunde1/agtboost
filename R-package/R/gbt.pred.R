@@ -30,9 +30,8 @@
 #' y.test <- rnorm(500, x.test, 1)
 #' 
 #' mod <- gbt.train(y, as.matrix(x))
-#' y.pred.1 <- gbt.pred( mod, as.matrix( x.test ) )
 #' 
-#' ## predict i overloaded
+#' ## predict is overloaded
 #' y.pred.2 <- predict( mod, as.matrix( x.test ) )
 #' 
 #' plot(x.test, y.test)
