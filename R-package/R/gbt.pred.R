@@ -42,7 +42,7 @@
 #' @export
 
 #' @export
-predict.Rcpp_ENSEMBLE <- function(object, newdata, ...){
+predict.Rcpp_ENSEMBLE <- function(object, newdata){
     # object - pointer to class ENSEMBLE
     # newdata - design matrix of type matrix
     
