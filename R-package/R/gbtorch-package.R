@@ -20,5 +20,5 @@
 #' @title Adaptive and automatic gradient boosting computations.
 #'
 #' @author Berent Ånund Strømnes Lunde
-#' @useDynLib gbtorch
+#' @useDynLib gbtorch, .registration = TRUE
 NULL

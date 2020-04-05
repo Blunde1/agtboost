@@ -9,7 +9,7 @@
 
 
 
-//' @export ENSEMBLE
+// -- TRY WITHOUT EXPORT //' @export ENSEMBLE
 class ENSEMBLE
 {
 public:

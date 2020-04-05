@@ -15,7 +15,8 @@ Description: GBTorch is a lightning fast gradient boosting library designed
 License: MIT + file LICENSE
 Encoding: UTF-8
 LazyData: true
-Depends: Rcpp (>= 1.0.1)
+Depends: R (>= 3.6.0)
+Imports: methods, Rcpp (>= 1.0.1)
 LinkingTo: Rcpp, RcppEigen
 RcppModules: MyModule
 RoxygenNote: 6.1.1
