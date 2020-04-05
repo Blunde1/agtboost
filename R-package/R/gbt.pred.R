@@ -32,11 +32,10 @@
 #' mod <- gbt.train(y, as.matrix(x))
 #' 
 #' ## predict is overloaded
-#' y.pred.2 <- predict( mod, as.matrix( x.test ) )
+#' y.pred <- predict( mod, as.matrix( x.test ) )
 #' 
 #' plot(x.test, y.test)
-#' points(x.test, y.pred.1, col="red")
-#' points(x.test, y.pred.2, col="blue")
+#' points(x.test, y.pred, col="red")
 #'
 #'
 #' @rdname predict.Rcpp_ENSEMBLE
