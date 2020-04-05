@@ -52,7 +52,7 @@
 #' @references
 #'
 #' B. Å. S. Lunde, T. S. Kleppe and H. J. Skaug, "An information criterion for gradient boosted trees"
-#' publishing details, \url{}
+#' publishing details, 
 #'
 #' @examples
 #' ## A simple gtb.train example with linear regression:

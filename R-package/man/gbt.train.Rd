@@ -83,7 +83,7 @@ points(x.test, y.pred, col="red")
 }
 \references{
 B. Å. S. Lunde, T. S. Kleppe and H. J. Skaug, "An information criterion for gradient boosted trees"
-publishing details, \url{}
+publishing details,
 }
 \seealso{
 \code{\link{predict.Rcpp_ENSEMBLE}}
