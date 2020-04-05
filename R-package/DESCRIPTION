@@ -1,6 +1,6 @@
 Package: gbtorch
 Type: Package
-Title: Adaptive and Automatic Gradient Boosting Computations.
+Title: Adaptive and Automatic Gradient Boosting Computations
 Version: 1.0
 Date: 2019-09-07
 Author: Berent Ånund Strømnes Lunde
@@ -16,7 +16,6 @@ License: MIT + file LICENSE
 Encoding: UTF-8
 LazyData: true
 Depends: Rcpp (>= 1.0.1)
-Imports: Rcpp (>= 1.0.1)
 LinkingTo: Rcpp, RcppEigen
 RcppModules: MyModule
 RoxygenNote: 6.1.1
