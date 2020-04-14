@@ -34,6 +34,7 @@ public:
     Tvec<double> predict2(Tmat<double> &X, int num_trees);
     double estimate_generalization_loss(int num_trees);
     int get_num_trees();
+    Tvec<double> get_num_leaves();
 };
 
 
@@ -119,8 +120,8 @@ void ENSEMBLE::train(Tvec<double> &y, Tmat<double> &X, int verbose, bool greedy_
     GBTREE* current_tree = this->first_tree;
     pred = pred + learning_rate * (current_tree->predict_data(X)); // POSSIBLY SCALED
     expected_loss = (current_tree->getTreeScore()) * (-2)*learning_rate_set*(learning_rate_set/2 - 1) + 
-        //1.0*learning_rate_set * current_tree->getTreeOptimism();
-        learning_rate_set * current_tree->getFeatureMapOptimism();
+        learning_rate_set * current_tree->getTreeOptimism();
+        //learning_rate_set * current_tree->getFeatureMapOptimism();
     if(verbose>0){
         Rcpp::Rcout  <<
             std::setprecision(4) <<
@@ -147,11 +148,11 @@ void ENSEMBLE::train(Tvec<double> &y, Tmat<double> &X, int verbose, bool greedy_
         
         // EXPECTED LOSS
         expected_loss = (new_tree->getTreeScore()) * (-2)*learning_rate_set*(learning_rate_set/2 - 1) + 
-            //1.0*learning_rate_set * new_tree->getTreeOptimism();
-            1.0*learning_rate_set * new_tree->getFeatureMapOptimism();
+            learning_rate_set * new_tree->getTreeOptimism();
+            //1.0*learning_rate_set * new_tree->getFeatureMapOptimism();
 
         // Update preds -- if should not be updated for last iter, it does not matter much computationally
-        pred = pred + learning_rate * (current_tree->predict_data(X));
+        pred = pred + learning_rate * (new_tree->predict_data(X));
             
         // iter: i | num leaves: T | iter train loss: itl | iter generalization loss: igl | mod train loss: mtl | mod gen loss: mgl "\n"
         if(verbose>0){
@@ -159,7 +160,7 @@ void ENSEMBLE::train(Tvec<double> &y, Tmat<double> &X, int verbose, bool greedy_
                 Rcpp::Rcout  <<
                     std::setprecision(4) <<
                         "it: " << i << 
-                        "  |  n-leaves: " << current_tree->getNumLeaves() << 
+                        "  |  n-leaves: " << new_tree->getNumLeaves() << 
                         "  |  tr loss: " << loss(y, pred, param["loss_function"], w) <<
                         "  |  gen loss: " << this->estimate_generalization_loss(i-1) + expected_loss << 
                         std::endl;
@@ -358,6 +359,17 @@ int ENSEMBLE::get_num_trees(){
     return num_trees;
 }
 
+Tvec<double> ENSEMBLE::get_num_leaves(){
+    int num_trees = this->get_num_trees();
+    Tvec<double> num_leaves(num_trees);
+    GBTREE* current = this->first_tree;
+    for(int i=0; i<num_trees; i++){
+        num_leaves[i] = current->getNumLeaves();
+        current = current->next_tree;
+    }
+    return num_leaves;
+}
+
 // Expose the classes
 RCPP_MODULE(MyModule) {
     using namespace Rcpp;
@@ -374,5 +386,6 @@ RCPP_MODULE(MyModule) {
         .method("predict2", &ENSEMBLE::predict2)
         .method("estimate_generalization_loss", &ENSEMBLE::estimate_generalization_loss)
         .method("get_num_trees", &ENSEMBLE::get_num_trees)
+        .method("get_num_leaves", &ENSEMBLE::get_num_leaves)
     ;
 }
