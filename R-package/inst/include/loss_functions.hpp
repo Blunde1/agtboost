@@ -142,5 +142,21 @@ Tvec<double> ddloss(Tvec<double> &y, Tvec<double> &pred, std::string loss_type="
     return h;    
 }
 
+Tvec<double> ddloss(Tvec<double> &y, Tvec<double> &pred, std::string loss_type, double extra_param){
+    int n = y.size();
+    Tvec<double> h(n);
+    
+    if( loss_type == "negbinom" ){
+        // NEGATIVE BINOMIAL, LOG LINK
+        double dispersion = extra_param;
+        for(int i=0; i<n; i++){
+            h[i] = (y[i]+dispersion)*dispersion*exp(pred[i]) / 
+                ( (dispersion + exp(pred[i]))*(dispersion + exp(pred[i])) );
+        }
+    }
+    
+    return h;    
+}
+
 
 #endif
