@@ -17,10 +17,10 @@
 #include "gumbel.hpp"
 #include "node.hpp"
 #include "tree.hpp"
+#include "ensemble.hpp"
 //#include "order_gamma.hpp"
 //#include "gtbic.hpp"
 #include "loss_functions.hpp"
-//#include "ensemble.hpp"
 
 
 #endif // __GMGTB_HPP_INCLUDED__

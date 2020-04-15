@@ -7,7 +7,7 @@
 gbt.train(y, x, learning_rate = 0.01, loss_function = "mse",
   nrounds = 50000, verbose = 0, greedy_complexities = FALSE,
   previous_pred = NULL, weights = NULL,
-  force_continued_learning = FALSE)
+  force_continued_learning = FALSE, ...)
 }
 \arguments{
 \item{y}{response vector for training. Must correspond to the design matrix \code{x}.}
