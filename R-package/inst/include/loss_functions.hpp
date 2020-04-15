@@ -56,7 +56,6 @@ double loss(Tvec<double> &y, Tvec<double> &pred, std::string loss_type, Tvec<dou
 }
 
 
-
 Tvec<double> dloss(Tvec<double> &y, Tvec<double> &pred, std::string loss_type){
     
     int n = y.size();
@@ -91,6 +90,24 @@ Tvec<double> dloss(Tvec<double> &y, Tvec<double> &pred, std::string loss_type){
     
     return g;
 }
+
+Tvec<double> dloss(Tvec<double> &y, Tvec<double> &pred, std::string loss_type, double extra_param){
+    
+    int n = y.size();
+    Tvec<double> g(n);
+    
+    if(loss_type == "negbinom"){
+        // NEGATIVE BINOMIAL, LOG LINK
+        double dispersion = extra_param;
+        for(int i=0; i<n; i++){
+            g[i] = -y[i] + (y[i]+dispersion)*exp(pred[i]) / (dispersion + exp(pred[i]));
+        }
+    }
+    
+    return g;
+}
+
+
 Tvec<double> ddloss(Tvec<double> &y, Tvec<double> &pred, std::string loss_type="mse"){
     int n = y.size();
     Tvec<double> h(n);
