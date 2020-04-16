@@ -6,7 +6,7 @@
 #include "external_rcpp.hpp"
 
 // ----------- LOSS --------------
-double loss(Tvec<double> &y, Tvec<double> &pred, std::string loss_type, Tvec<double> &w){
+double loss(Tvec<double> &y, Tvec<double> &pred, std::string loss_type, Tvec<double> &w, ENSEMBLE* ens_ptr){
     int n = y.size();
     double res = 0;
     
@@ -37,12 +37,20 @@ double loss(Tvec<double> &y, Tvec<double> &pred, std::string loss_type, Tvec<dou
         for(int i=0; i<n; i++){
             res += y[i]*w[i]*exp(-pred[i]) + pred[i];
         }
+    }else if(loss_type=="negbinom"){
+        double dispersion = ens_ptr -> extra_param;
+        for(int i=0; i<n; i++){
+            // log-link, mu=exp(pred[i])
+            res += -y[i]*pred[i] + (y[i]*dispersion)*log(1.0+exp(pred[i])/dispersion); // Keep only relevant part
+        }
     }
     
     return res/n;
     
 }
-Tvec<double> dloss(Tvec<double> &y, Tvec<double> &pred, std::string loss_type){
+
+
+Tvec<double> dloss(Tvec<double> &y, Tvec<double> &pred, std::string loss_type, ENSEMBLE* ens_ptr){
     
     int n = y.size();
     Tvec<double> g(n);
@@ -72,11 +80,19 @@ Tvec<double> dloss(Tvec<double> &y, Tvec<double> &pred, std::string loss_type){
         for(int i=0; i<n; i++){
             g[i] = -y[i]*exp(-pred[i]) + 1.0;
         }
+    }else if(loss_type == "negbinom"){
+        // NEGATIVE BINOMIAL, LOG LINK
+        double dispersion = ens_ptr->extra_param;
+        for(int i=0; i<n; i++){
+            g[i] = -y[i] + (y[i]+dispersion)*exp(pred[i]) / (dispersion + exp(pred[i]));
+        }
     }
     
     return g;
 }
-Tvec<double> ddloss(Tvec<double> &y, Tvec<double> &pred, std::string loss_type="mse"){
+
+
+Tvec<double> ddloss(Tvec<double> &y, Tvec<double> &pred, std::string loss_type, ENSEMBLE* ens_ptr){
     int n = y.size();
     Tvec<double> h(n);
     
@@ -105,10 +121,16 @@ Tvec<double> ddloss(Tvec<double> &y, Tvec<double> &pred, std::string loss_type="
         for(int i=0; i<n; i++){
             h[i] = y[i] * exp(-pred[i]);
         }
+    }else if( loss_type == "negbinom" ){
+        // NEGATIVE BINOMIAL, LOG LINK
+        double dispersion = ens_ptr->extra_param;
+        for(int i=0; i<n; i++){
+            h[i] = (y[i]+dispersion)*dispersion*exp(pred[i]) / 
+                ( (dispersion + exp(pred[i]))*(dispersion + exp(pred[i])) );
+        }
     }
     
     return h;    
 }
-
 
 #endif

@@ -76,7 +76,8 @@ gbt.train <- function(y, x, learning_rate = 0.01,
                       verbose=0, greedy_complexities=FALSE, 
                       previous_pred=NULL,
                       weights = NULL,
-                      force_continued_learning=FALSE){
+                      force_continued_learning=FALSE,
+                      ...){
     
     error_messages <- c()
     error_messages_type <- c(
@@ -91,7 +92,8 @@ gbt.train <- function(y, x, learning_rate = 0.01,
         "\n Error: greedy_complexities must be of type logical with length 1",
         "\n Error: previous_pred must be a vector of type numeric",
         "\n Error: previous_pred must correspond to length of y",
-        "\n Error: force_continued_learning must be of type logical with length 1"
+        "\n Error: force_continued_learning must be of type logical with length 1",
+        "negbinom"= "\n Error: if loss_function is 'negbinom', dispersion must be provided in ..."
     )
     # Check y, x
     if(!is.vector(y, mode="numeric")){
@@ -122,7 +124,7 @@ gbt.train <- function(y, x, learning_rate = 0.01,
     # loss function
     if(is.character(loss_function) && length(loss_function) == 1){
         if(
-            loss_function %in% c("mse", "logloss", "poisson", "gamma::neginv", "gamma::log")
+            loss_function %in% c("mse", "logloss", "poisson", "gamma::neginv", "gamma::log", "negbinom")
         ){}else{
             error_messages <- c(error_messages, error_messages_type[5])
         }   
@@ -174,6 +176,18 @@ gbt.train <- function(y, x, learning_rate = 0.01,
         error_messages <- c(error_messages, error_messages_type[11])
     }
     
+    # Check for dispersion if negbinom
+    if(loss_function=="negbinom"){
+        input_list <- list(...)
+        dispersion <- input_list$dispersion
+        if(is.null(dispersion) || !is.numeric(dispersion) || length(dispersion)>1){
+            error_messages <- c(error_messages, error_messages["negbinom"])
+        }
+        extra_param <- dispersion
+    }else{
+        extra_param <- 0 # default without meaning
+    }
+    
     # Any error messages?
     if(length(error_messages)>0)
         stop(error_messages)
@@ -186,7 +200,8 @@ gbt.train <- function(y, x, learning_rate = 0.01,
     mod <- new(ENSEMBLE)
     param <- list("learning_rate" = learning_rate, 
                   "loss_function" = loss_function, 
-                  "nrounds"=nrounds)
+                  "nrounds"=nrounds,
+                  "extra_param" = extra_param)
     mod$set_param(param)
     
     # train ensemble
