@@ -48,6 +48,17 @@ double loss(Tvec<double> &y, Tvec<double> &pred, std::string loss_type, Tvec<dou
         for(int i=0; i<n; i++){
             res += exp(pred[i]) - y[i]*pred[i] + log(1.0-exp(-exp(pred[i]))); // Last is conditional p(y>0)
         }
+    }else if(loss_type=="zero_inflation"){
+        // ZERO-INFLATION PROBABILITY MIX
+        for(int i=0; i<n; i++){
+            if(y[i] > 0){
+                // avoid comparing equality to zero...
+                res += pred[i] + log(1.0+exp(-pred[i])) - w[i]; // Weight is log probability weight!!
+            }else{
+                // get y[i] == 0
+                res += -log(1.0/(1.0+exp(-pred[i])) + (1.0 - 1.0/(1.0+exp(-pred[i])))*exp(w[i]) );
+            }
+        }
     }
     
     return res/n;
@@ -96,6 +107,17 @@ Tvec<double> dloss(Tvec<double> &y, Tvec<double> &pred, std::string loss_type, E
         for(int i=0; i<n; i++){
             //double log_conditional = pred[i] - log(exp(exp(pred[i]))-1.0);
             g[i] = exp(pred[i]) - y[i] + exp(pred[i])/(exp(exp(pred[i]))-1.0);
+        }
+    }else if(loss_type=="zero_inflation"){
+        // ZERO-INFLATION PROBABILITY MIX
+        for(int i=0; i<n; i++){
+            if(y[i] > 0){
+                // avoid comparing equality to zero...
+                g[i] = exp(pred[i]) / (exp(pred[i]) + 1.0);
+            }else{
+                // get y[i] == 0
+                g[i] = (exp(w[i])-1.0)*exp(pred[i]) / ( (exp(pred[i])+1.0)*(exp(w[i])+exp(pred[i])) );
+            }
         }
     }
     
@@ -146,6 +168,18 @@ Tvec<double> ddloss(Tvec<double> &y, Tvec<double> &pred, std::string loss_type, 
             h[i] = exp(pred[i]) + 
                 exp(pred[i])*(exp(exp(pred[i]))-exp(pred[i]+exp(pred[i]))-1.0) / 
                 ( (exp(exp(pred[i]))-1.0)*(exp(exp(pred[i]))-1.0) );
+        }
+    }else if(loss_type=="zero_inflation"){
+        // ZERO-INFLATION PROBABILITY MIX
+        for(int i=0; i<n; i++){
+            if(y[i] > 0){
+                // avoid comparing equality to zero...
+                h[i] = exp(pred[i]) / ((exp(pred[i]) + 1.0)*(exp(pred[i]) + 1.0));
+            }else{
+                // get y[i] == 0
+                h[i] = -(exp(w[i])-1.0)*exp(pred[i])*(exp(2.0*pred[i])-exp(w[i])) / 
+                    ( (exp(pred[i])+1.0)*(exp(pred[i])+1.0)*(exp(w[i])+exp(pred[i]))*(exp(w[i])+exp(pred[i])) );
+            }
         }
     }
     
