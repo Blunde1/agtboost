@@ -43,6 +43,11 @@ double loss(Tvec<double> &y, Tvec<double> &pred, std::string loss_type, Tvec<dou
             // log-link, mu=exp(pred[i])
             res += -y[i]*pred[i] + (y[i]*dispersion)*log(1.0+exp(pred[i])/dispersion); // Keep only relevant part
         }
+    }else if(loss_type=="poisson::zip"){
+        // POISSON COND Y>0, LOG LINK
+        for(int i=0; i<n; i++){
+            res += exp(pred[i]) - y[i]*pred[i] + log(1.0-exp(-exp(pred[i]))); // Last is conditional p(y>0)
+        }
     }
     
     return res/n;
@@ -86,6 +91,12 @@ Tvec<double> dloss(Tvec<double> &y, Tvec<double> &pred, std::string loss_type, E
         for(int i=0; i<n; i++){
             g[i] = -y[i] + (y[i]+dispersion)*exp(pred[i]) / (dispersion + exp(pred[i]));
         }
+    }else if(loss_type == "poisson::zip"){
+        // POISSON COND Y>0, LOG LINK
+        for(int i=0; i<n; i++){
+            //double log_conditional = pred[i] - log(exp(exp(pred[i]))-1.0);
+            g[i] = exp(pred[i]) - y[i] + exp(pred[i])/(exp(exp(pred[i]))-1.0);
+        }
     }
     
     return g;
@@ -127,6 +138,14 @@ Tvec<double> ddloss(Tvec<double> &y, Tvec<double> &pred, std::string loss_type, 
         for(int i=0; i<n; i++){
             h[i] = (y[i]+dispersion)*dispersion*exp(pred[i]) / 
                 ( (dispersion + exp(pred[i]))*(dispersion + exp(pred[i])) );
+        }
+    }else if(loss_type == "poisson::zip"){
+        // POISSON COND Y>0, LOG LINK
+        for(int i=0; i<n; i++){
+            //double log_conditional = pred[i] - 2.0*log(exp(exp(pred[i]))-1.0) + log(exp(exp(pred[i]))-exp(pred[i]+exp(pred[i]))-1.0);
+            h[i] = exp(pred[i]) + 
+                exp(pred[i])*(exp(exp(pred[i]))-exp(pred[i]+exp(pred[i]))-1.0) / 
+                ( (exp(exp(pred[i]))-1.0)*(exp(exp(pred[i]))-1.0) );
         }
     }
     

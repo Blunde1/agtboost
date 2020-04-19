@@ -1,0 +1,182 @@
+---
+title: "Zero-Inflated Boosting"
+author: "Berent Lunde"
+date: "18 4 2020"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, fig.width = 4, fig.height = 3, fig.align = 'center')
+```
+
+## Zero-Inflation
+
+Zero-inflation allows additional flexibility on the distribution to model the exact zeroes of the data by themselves. This has several real-world applications, for example in Insurance. 
+
+For illustrative purposes, consider the Poisson distribution with probability mass function
+$$p_Y(y;\lambda) = \frac{\lambda^y e^{-\lambda}}{!y}$$
+where we typically would be concerned with modelling $\lambda = f(x)$, where $x$ is the feature vector. The exact zeroes has mass $e^{\lambda}$ in this model.
+Zero-inflation of the Poisson model allows additional flexibility in modelling the zeroes. Formally, it is a mixture model, which mixes two zero-generating process. The first process generates exact zeroes and occurs with probability $\pi$, the second process is the ordinary count-process that occurs with probability $1-\pi$, which in our illustrative case is the Poisson distribution that also allows for zeroes. The probability mass function is
+$$
+\begin{align}
+p_Y(0;\lambda,\pi) &= \pi + (1-\pi)e^{-\lambda}\\
+p_Y(y;\lambda,\pi) &= (1-\pi)\frac{\lambda^y e^{-\lambda}}{!y},~y>0.
+\end{align}
+$$
+
+This mixture obviously allows additional flexibility in accounting for zeroes that does not seem to follow a Poisson distribution fitted to the non-zero counts. Typically, $\pi$ will be fitted as a constant. 
+
+
+## Fitting procedure
+
+Here, we seek to model the mixing probability as a function of the feature vector $\pi=g(x)$, and to use our powerful boosting framework to learn the functions $f$ and $g$. To do this, we propose a two-stage approach:
+
+1. Fit a Poisson distribution only to the non-zero counts. This implies a modified negative log likelihood (the natural loss function) that conditiones on positive counts: 
+$$p_Y(y|y>0;\lambda) = \frac{p_Y(y;\lambda)}{p_Y(y>0)} = \frac{p_Y(y;\lambda)}{1-e^{-\lambda}}.$$
+Taking negative logs we obtain our loss function.
+
+2. Fit a probability $\pi$ to the likelihood 
+$$p_Y(y;\lambda,\pi) = 1_{[y=0]}\left(\pi + (1-\pi)e^{-\lambda}\right) + 1_{[y>0]}(1-\pi)\frac{\lambda^y e^{-\lambda}}{!y}.$$
+Where estimated $\lambda$'s would be provided pre-training by step 1. Taking relevant negative logs, we obtain the loss function
+$$l(y,x;\pi) = -\log p = -1_{[y=0]}\log\left(\pi + (1-\pi)e^{-\lambda}\right) - 
+1_{[y>0]}\left(\log (1-\pi) + y\log \lambda - \lambda -\sum_{i=1}^y \log(i) \right).$$
+In standard Poisson regression, we would drop the normalizing factor. However, in this case it is important to get the weights properly. 
+
+The procedure above could be made even more efficient, by pre-calculating weights 
+$$w_i=y_i\log \lambda - \lambda -\sum_{j=1}^{y_i} \log(j),$$ and for all counts $i=1:n$, and then optimize the loss
+$$l(y,x) =  -1_{[y=0]}\log\left(\pi + (1-\pi)e^{w_i}\right) - 
+1_{[y>0]}\left(\log (1-\pi) + w_i \right).$$
+
+
+## Simple Example
+
+We first test the procedure where $\lambda$ and $\pi$ are constants over the observations. First we create the function for the data generating process.
+```{r random-generation, tidy=TRUE}
+rzip <- function(n, lambda, prob){
+    bin <- rbinom(n, 1, prob)
+    y <- numeric(n)
+    #y <- ifelse(bin==1, 0, rpois(1, lambda))
+    for(i in 1:n){
+        y[i] <- ifelse(bin[i]==1, 0, rpois(1, lambda))
+    }
+    return(y)
+}
+```
+
+Secondly, create the likelihood functions, we also create the Poisson nll, as we want to compare to the ordinary Poisson fit.
+```{r loss-functions, tidy=TRUE}
+# Negative log-likelihood of Poisson observations
+nll_pois <- function(response, prediction){
+    -sum(dpois(response, prediction, log=TRUE)) / length(response)
+}
+
+# conditional nll
+nll_pois_cond <- function(y, lambda){
+    # conditioned all y > 0
+    n <- length(y)
+    ordinary <- -sum(dpois(y, lambda, log=TRUE))
+    conditional <- ordinary + n*log(1-exp(-lambda))
+    return(conditional)
+}
+
+# mixture probability
+nll_mixture_prob <- function(y, prob, w){
+    ind_zero <- y==0
+    ind_non_zero <- y>0
+    nll <- -sum( log( prob + (1-prob)*exp(w[ind_zero]) ) ) - 
+        sum( log(1-prob) + w[ind_non_zero] )
+                     
+    return(nll)
+}
+```
+
+We also create some functions that transforms the count variables to continuous $U(0,1)$ random variables (if the model is correctly specified). We can then check the Kolmogorov-Smirnov test on the transformed variables as a measure of goodness of fit, and also visually inspect the histogram that should look like a standard uniform.
+```{r density-utrans-fun, tidy=TRUE}
+# p.m.f
+dzip <- function(y, lambda, prob){
+    ifelse(y==0, prob + (1-prob)*exp(-lambda), (1-prob)*dpois(y,lambda))
+}
+
+# distribution
+pzip <- function(y, lambda, prob){
+    if(y<0) return(0)
+    sum(dzip(0:y, lambda, prob))
+}
+
+# uniform transform zip
+uzip <- function(y, lambda, prob){
+    n <- length(y)
+    U <- rep(0, n)
+    
+    v <- runif(n)
+    for(i in 1:n){
+        U[i] <- pzip(y[i]-1, lambda, prob) + v[i]*dzip(y[i], lambda, prob)
+    }
+    
+    return(U)
+    
+}
+
+# uniform transform Poisson
+upois <- function(X, lambda){
+    
+    n <- length(X)
+    U <- rep(0, n)
+    
+    v <- runif(n)
+    U <- ppois(X-1, lambda) + v*dpois(X, lambda)
+    
+    # avoid exact zeroes and unity
+    ind0 <- U==0
+    U[ind0] <- U[ind0] + 1e-9*runif(1)
+    ind1 <- U==1
+    U[ind1] <- U[ind1] - 1e-9*runif(1) # U to avoid ties
+    return(U)
+}
+```
+
+Now we are ready to create our little experiment: Generate `n=1000` observations from the zip model 
+```{r simple-experiment, tidy=TRUE}
+n <- 1000
+p <- 0.4 # probability mixture
+lambda <- 3 # Poisson intensity
+y <- rzip(n, lambda, p) # generate data
+hist(y, freq=F) # Inspect data
+```
+
+and 
+
+1. Fit a Poisson, Uniform transform and check goodness of fit.
+2. Fit the zip model with our procedure, Uniform transform and chceck goodness of fit.
+
+First the Poisson model.
+```{r poisson-model, tidy=TRUE}
+# poisson model
+lambda_est <- nlminb(c(1), nll_pois, response=y)$par
+u_pois <- upois(y, lambda_est)
+hist(u_pois, freq = F)
+```
+The Histogram does not look like the standard uniform at all. A formal Kolmogorov-Smirnov test gives us a p-value of `r ks.test(u_pois, "punif")$p.value`. In addition, due to the zero-inflation, the estimated Poisson intensity is drawn towards zero, estimated to `r lambda_est`, and is not a good estimate of the true intensity.
+
+We now proceed with our two-step zip modelling.
+```{r zip-model, tidy=TRUE}
+# step 1: conditional poisson
+ynz <- y[y>0] # non-zero y's
+lambda_cond_est <- nlminb(c(1), nll_pois_cond, y=ynz)$par
+
+# step 2: mixture probability
+weights <- ppois(y, lambda_cond_est, log=T)
+p_est <- nlminb(0.5, nll_mixture_prob, y=y, w=weights, lower=c(0), upper=c(1))$par
+
+u_zip <- uzip(y, lambda_cond_est, p_est)
+hist(u_zip, freq=F)
+```
+The estimated values of probability is `r p_est` and the estimated Poisson intensity (from the zip model) is `r lambda_cond_est`, which are both very good! The histogram looks very much like the standard uniform (indicating that we have specified the correct model), and a formal Kolmogorov-Smirnov test gives us the p-value `r ks.test(u_zip, "punif")$p.value`.
+
+
+## Implementation
+
+The implementation in GBTorch is done by specifying the new loss-functions (conditional Poisson and mixture probability) and their derivatives, while introducing a new class, passed back to R, which binds them together. Note that the mixture probability takes in weights $w_i$, and can therefore be used in a general procedure with *any* count process, not just the Poisson. *Note: It is meaningful to also implement the conditional negative binomial at a later stage.*
+
+The conditional Poisson is implemented with link function $\log\lambda=f(x)$ and the probabilities with the logit $\log(\pi)-\log(1-\pi) = g(x)$. The estimates would be $\lambda=\exp f(x)$ and $\pi=\frac{1}{1+e^{-g(x)}}$.
+

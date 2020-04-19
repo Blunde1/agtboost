@@ -12,6 +12,8 @@
 #'   \item \code{poisson} Poisson regression for count data using a log-link, output score before natural transformation.
 #'   \item \code{gamma::neginv} gamma regression using the canonical negative inverse link. Scaling independent of y.
 #'   \item \code{gamma::log} gamma regression using the log-link. Constant information parametrisation. 
+#'   \item \code{negbinom} Negative binomial regression for count data with overdispersion. Log-link.
+#'   \item \code{poisson::zip} Conditional Zero-Inflated Poisson (ZIP) regression, for modelling the Poisson intensity in a ZIP regression model. Log-link.
 #'   }
 #' @param nrounds a just-in-case max number of boosting iterations. Default: 50000
 #' @param verbose Enable boosting tracing information at i-th iteration? Default: \code{0}.
@@ -124,7 +126,7 @@ gbt.train <- function(y, x, learning_rate = 0.01,
     # loss function
     if(is.character(loss_function) && length(loss_function) == 1){
         if(
-            loss_function %in% c("mse", "logloss", "poisson", "gamma::neginv", "gamma::log", "negbinom")
+            loss_function %in% c("mse", "logloss", "poisson", "gamma::neginv", "gamma::log", "negbinom", "poisson::zip")
         ){}else{
             error_messages <- c(error_messages, error_messages_type[5])
         }   

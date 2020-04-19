@@ -59,6 +59,8 @@ double ENSEMBLE::initial_prediction(Tvec<double> &y, std::string loss_function, 
         pred = log(pred_g_transform);
     }else if(loss_function=="negbinom"){
         pred = log(pred_g_transform);
+    }else if(loss_function=="poisson::zip"){
+        pred = poisson_zip_start(pred_g_transform);
     }
     
     return pred;
@@ -89,6 +91,8 @@ void ENSEMBLE::train(Tvec<double> &y, Tmat<double> &X, int verbose, bool greedy_
     // First tree
     g = dloss(y, pred, param["loss_function"], this) * w;
     h = ddloss(y, pred, param["loss_function"], this) * w;
+    //Rcpp::Rcout << g.array()/h.array() << std::endl;
+    
 
     this->first_tree = new GBTREE;
     this->first_tree->train(g, h, X, cir_sim, greedy_complexities, learning_rate_set);

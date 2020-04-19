@@ -20,6 +20,7 @@
 #include "ensemble.hpp"
 //#include "order_gamma.hpp"
 //#include "gtbic.hpp"
+#include "optimization.hpp"
 #include "loss_functions.hpp"
 
 
