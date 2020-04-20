@@ -50,13 +50,14 @@ double loss(Tvec<double> &y, Tvec<double> &pred, std::string loss_type, Tvec<dou
         }
     }else if(loss_type=="zero_inflation"){
         // ZERO-INFLATION PROBABILITY MIX
+        Tvec<double> lprob_weights = ens_ptr->param["log_prob_weights"];
         for(int i=0; i<n; i++){
             if(y[i] > 0){
                 // avoid comparing equality to zero...
-                res += pred[i] + log(1.0+exp(-pred[i])) - w[i]; // Weight is log probability weight!!
+                res += pred[i] + log(1.0+exp(-pred[i])) - lprob_weights[i]; // Weight is log probability weight!!
             }else{
                 // get y[i] == 0
-                res += -log(1.0/(1.0+exp(-pred[i])) + (1.0 - 1.0/(1.0+exp(-pred[i])))*exp(w[i]) );
+                res += -log(1.0/(1.0+exp(-pred[i])) + (1.0 - 1.0/(1.0+exp(-pred[i])))*exp(lprob_weights[i]) );
             }
         }
     }
@@ -105,18 +106,18 @@ Tvec<double> dloss(Tvec<double> &y, Tvec<double> &pred, std::string loss_type, E
     }else if(loss_type == "poisson::zip"){
         // POISSON COND Y>0, LOG LINK
         for(int i=0; i<n; i++){
-            //double log_conditional = pred[i] - log(exp(exp(pred[i]))-1.0);
             g[i] = exp(pred[i]) - y[i] + exp(pred[i])/(exp(exp(pred[i]))-1.0);
         }
     }else if(loss_type=="zero_inflation"){
         // ZERO-INFLATION PROBABILITY MIX
+        Tvec<double> lprob_weights = ens_ptr->param["log_prob_weights"];
         for(int i=0; i<n; i++){
             if(y[i] > 0){
                 // avoid comparing equality to zero...
                 g[i] = exp(pred[i]) / (exp(pred[i]) + 1.0);
             }else{
                 // get y[i] == 0
-                g[i] = (exp(w[i])-1.0)*exp(pred[i]) / ( (exp(pred[i])+1.0)*(exp(w[i])+exp(pred[i])) );
+                g[i] = (exp(lprob_weights[i])-1.0)*exp(pred[i]) / ( (exp(pred[i])+1.0)*(exp(lprob_weights[i])+exp(pred[i])) );
             }
         }
     }
@@ -164,21 +165,21 @@ Tvec<double> ddloss(Tvec<double> &y, Tvec<double> &pred, std::string loss_type, 
     }else if(loss_type == "poisson::zip"){
         // POISSON COND Y>0, LOG LINK
         for(int i=0; i<n; i++){
-            //double log_conditional = pred[i] - 2.0*log(exp(exp(pred[i]))-1.0) + log(exp(exp(pred[i]))-exp(pred[i]+exp(pred[i]))-1.0);
             h[i] = exp(pred[i]) + 
                 exp(pred[i])*(exp(exp(pred[i]))-exp(pred[i]+exp(pred[i]))-1.0) / 
                 ( (exp(exp(pred[i]))-1.0)*(exp(exp(pred[i]))-1.0) );
         }
     }else if(loss_type=="zero_inflation"){
         // ZERO-INFLATION PROBABILITY MIX
+        Tvec<double> lprob_weights = ens_ptr->param["log_prob_weights"];
         for(int i=0; i<n; i++){
             if(y[i] > 0){
                 // avoid comparing equality to zero...
                 h[i] = exp(pred[i]) / ((exp(pred[i]) + 1.0)*(exp(pred[i]) + 1.0));
             }else{
                 // get y[i] == 0
-                h[i] = -(exp(w[i])-1.0)*exp(pred[i])*(exp(2.0*pred[i])-exp(w[i])) / 
-                    ( (exp(pred[i])+1.0)*(exp(pred[i])+1.0)*(exp(w[i])+exp(pred[i]))*(exp(w[i])+exp(pred[i])) );
+                h[i] = -(exp(lprob_weights[i])-1.0)*exp(pred[i])*(exp(2.0*pred[i])-exp(lprob_weights[i])) / 
+                    ( (exp(pred[i])+1.0)*(exp(pred[i])+1.0)*(exp(lprob_weights[i])+exp(pred[i]))*(exp(lprob_weights[i])+exp(pred[i])) );
             }
         }
     }

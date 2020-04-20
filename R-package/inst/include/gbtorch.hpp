@@ -22,6 +22,7 @@
 //#include "gtbic.hpp"
 #include "optimization.hpp"
 #include "loss_functions.hpp"
+#include "gbt_zi_mix.hpp"
 
 
 #endif // __GMGTB_HPP_INCLUDED__
