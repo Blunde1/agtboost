@@ -25,19 +25,27 @@ Using the generic \code{predict} function in R is also possible, using the same 
 }
 \examples{
 ## A simple gtb.train example with linear regression:
-x <- runif(500, 0, 4)
-y <- rnorm(500, x, 1)
-x.test <- runif(500, 0, 4)
-y.test <- rnorm(500, x.test, 1)
+## Random generation of zero-inflated poisson
+rzip <- function(n, lambda, prob){
+bin <- rbinom(n, 1, prob)
+y <- numeric(n)
+for(i in 1:n){
+    y[i] <- ifelse(bin[i]==1, 0, rpois(1, lambda))
+}
+return(y)
+}
 
-mod <- gbt.train(y, as.matrix(x))
+prob <- 0.4
+lambda <- 3
+y <- rzip(1000, lambda, prob)
+x <- as.matrix(runif(1000, 1,5))
 
-## predict is overloaded
-y.pred <- predict( mod, as.matrix( x.test ) )
+mod <- gbt.train(y, x, loss_function = "zero_inflation::poisson", verbose=1)
+pred <- predict(mod, x)
+range(pred) # mean predictions
+(1-prob)*lambda # true mean
 
-plot(x.test, y.test)
-points(x.test, y.pred, col="red")
-
+plot(y, pred, ylim=c(0,max(y)))
 
 }
 \references{

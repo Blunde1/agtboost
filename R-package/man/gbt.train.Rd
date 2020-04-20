@@ -41,7 +41,7 @@ gbt.train(y, x, learning_rate = 0.01, loss_function = "mse",
 \item{force_continued_learning}{Boolean: \code{FALSE} (default) stops at information stopping criterion, \code{TRUE} stops at \code{nround} iterations.}
 }
 \value{
-An object of class \code{ENSEMBLE} with the following elements:
+An object of class \code{ENSEMBLE} or \code{GBT_ZI_MIX} with some or all of the following elements:
 \itemize{
   \item \code{handle} a handle (pointer) to the gbtorch model in memory.
   \item \code{initialPred} a field containing the initial prediction of the ensemble.

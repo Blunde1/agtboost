@@ -104,19 +104,27 @@ predict.Rcpp_ENSEMBLE <- function(object, newdata, ...){
 #'
 #' @examples
 #' ## A simple gtb.train example with linear regression:
-#' x <- runif(500, 0, 4)
-#' y <- rnorm(500, x, 1)
-#' x.test <- runif(500, 0, 4)
-#' y.test <- rnorm(500, x.test, 1)
+#' ## Random generation of zero-inflated poisson
+#' rzip <- function(n, lambda, prob){
+#' bin <- rbinom(n, 1, prob)
+#' y <- numeric(n)
+#' for(i in 1:n){
+#'     y[i] <- ifelse(bin[i]==1, 0, rpois(1, lambda))
+#' }
+#' return(y)
+#' }
 #' 
-#' mod <- gbt.train(y, as.matrix(x))
+#' prob <- 0.4
+#' lambda <- 3
+#' y <- rzip(1000, lambda, prob)
+#' x <- as.matrix(runif(1000, 1,5))
 #' 
-#' ## predict is overloaded
-#' y.pred <- predict( mod, as.matrix( x.test ) )
+#' mod <- gbt.train(y, x, loss_function = "zero_inflation::poisson", verbose=1)
+#' pred <- predict(mod, x)
+#' range(pred) # mean predictions
+#' (1-prob)*lambda # true mean
 #' 
-#' plot(x.test, y.test)
-#' points(x.test, y.pred, col="red")
-#'
+#' plot(y, pred, ylim=c(0,max(y)))
 #'
 #' @rdname predict.Rcpp_GBT_ZI_MIX
 #' @export
@@ -137,9 +145,9 @@ predict.Rcpp_GBT_ZI_MIX <- function(object, newdata, ...){
     if(class(object)!="Rcpp_GBT_ZI_MIX"){
         error_messages <- c(error_messages, error_messages_type[1])
     }#else{
-     #   # test if trained
-     #   if(object$get_num_trees()==0)
-     #       error_messages <- c(error_messages, error_messages_type[2])
+    #   # test if trained
+    #   if(object$get_num_trees()==0)
+    #       error_messages <- c(error_messages, error_messages_type[2])
     #}
     
     # check x
@@ -155,41 +163,3 @@ predict.Rcpp_GBT_ZI_MIX <- function(object, newdata, ...){
     
     return(res)
 } 
-
-
-
-# gbt.pred <- function(object, newdata){
-#     # object - pointer to class ENSEMBLE
-#     # newdata - design matrix of type matrix
-#     
-#     # checks on newdata and e.ptr
-#     error_messages <- c()
-#     error_messages_type <- c(
-#         "Error: object must be a GBTorch ensemble \n",
-#         "Error: GBTorch ensemble must be trained, see function documentation gbt.train \n",
-#         "Error: newdata must be a matrix \n"
-#     )
-#     # check object
-#     if(class(object)!="Rcpp_ENSEMBLE"){
-#         error_messages <- c(error_messages, error_messages_type[1])
-#     }else{
-#         # test if trained
-#         if(object$get_num_trees()==0)
-#             error_messages <- c(error_messages, error_messages_type[2])
-#     }
-#     
-#     # check x
-#     if(!is.matrix(newdata))
-#         error_messages <- c(error_messages, error_messages_type[3])
-#     
-#     # Any error messages?
-#     if(length(error_messages)>0)
-#         stop(error_messages)
-#     
-#     # predict
-#     res <- object$predict(newdata)
-#     
-#     return(res)
-# }
-
-    

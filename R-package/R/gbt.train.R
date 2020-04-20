@@ -36,7 +36,7 @@
 #' Formally, ....
 #'
 #' @return
-#' An object of class \code{ENSEMBLE} with the following elements:
+#' An object of class \code{ENSEMBLE} or \code{GBT_ZI_MIX} with some or all of the following elements:
 #' \itemize{
 #'   \item \code{handle} a handle (pointer) to the gbtorch model in memory.
 #'   \item \code{initialPred} a field containing the initial prediction of the ensemble.
