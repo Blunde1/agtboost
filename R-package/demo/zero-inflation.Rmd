@@ -187,7 +187,7 @@ p_est2
 ## Implementation
 
 The implementation in GBTorch is done by specifying the new loss-functions (conditional Poisson and mixture probability) and their derivatives, while introducing a new class, passed back to R, which binds them together. Specifically, it is implemented via the `loss_function` field in `gbt.train`, as `"poisson::zip"` for the conditional (on $y>0$) Poisson, `"zero_inflation"` (note: needs work with input parameters to ENSEMBLE from R, unsure if this should be seen by the user) for step 2, and `"zero_inflation::poisson"` which binds them together and does all the work under the hood. This introduces a new class called `GBT_ZI_MIX`, which may be sent to the `predict` function as normal. 
-Note that the mixture probability takes in weights $w_i$, and can therefore be used in a general procedure with *any* count process, not just the Poisson. *Note: It is meaningful to also implement the conditional negative binomial at a later stage.*
+Note that the mixture probability takes in weights $w_i$, and can therefore be used in a general procedure with *any* count process, not just the Poisson.
 
 The conditional Poisson is implemented with link function $\log\lambda=f(x)$ and the probabilities with the logit $\log(\pi)-\log(1-\pi) = g(x)$. The estimates would be $\lambda=\exp f(x)$ and $\pi=\frac{1}{1+e^{-g(x)}}$.
 The return predictions are scaled back to mean predictions, however: $(1-\pi)\lambda$
@@ -207,4 +207,38 @@ range(pred)
 (1-p)*lambda
 ```
 
+Furthermore, the zero-inflated negative binomial distribution is implemented via `"zero_inflation::negbinom"`, and automatic selection between the two, using `"zero_inflation::auto"`.
+```{r zi-auto}
+rzip <- function(n, lambda, prob){
+    bin <- rbinom(n, 1, prob)
+    y <- numeric(n)
+    for(i in 1:n){
+        y[i] <- ifelse(bin[i]==1, 0, rpois(1, lambda))
+    }
+    return(y)
+}
+
+prob <- 0.4
+lambda <- 3
+y <- rzip(1000, lambda, prob)
+x <- as.matrix(runif(1000, 1,5))
+
+mod <- gbt.train(y, x, loss_function = "zero_inflation::poisson", verbose=20)
+pred <- predict(mod, x)
+range(pred) # mean predictions
+(1-prob)*lambda # true mean
+plot(y, pred, ylim=c(0,max(y)))
+
+mod2 <- gbt.train(y, x, loss_function = "zero_inflation::negbinom", verbose=20)
+pred2 <- predict(mod2, x)
+range(pred2) # mean predictions
+(1-prob)*lambda # true mean
+plot(y, pred2, ylim=c(0,max(y)))
+
+mod3 <- gbt.train(y, x, loss_function = "zero_inflation::auto", verbose=20)
+pred3 <- predict(mod3, x)
+range(pred3) # mean predictions
+(1-prob)*lambda # true mean
+plot(y, pred3, ylim=c(0,max(y)))
+```
 

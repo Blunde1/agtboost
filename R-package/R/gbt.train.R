@@ -14,7 +14,9 @@
 #'   \item \code{gamma::log} gamma regression using the log-link. Constant information parametrisation. 
 #'   \item \code{negbinom} Negative binomial regression for count data with overdispersion. Log-link.
 #'   \item \code{poisson::zip} Conditional Zero-Inflated Poisson (ZIP) regression, for modelling the Poisson intensity in a ZIP regression model. Log-link.
-#'   \item \code{zero_inflation::poisson} Zero-inflated Poisson
+#'   \item \code{zero_inflation::poisson} Zero-inflated Poisson. Mean predictions.
+#'   \item \code{zero_inflation::negbinom} Zero-inflated negative binomial (Poisson-gamma mixture). Mean predictions.
+#'   \tem \code{zero_inflation::auto} Zero inflation that automatically chooses between the ordinary Poisson and a mixture as the conditional count process. Mean predictions.
 #'   }
 #' @param nrounds a just-in-case max number of boosting iterations. Default: 50000
 #' @param verbose Enable boosting tracing information at i-th iteration? Default: \code{0}.
