@@ -51,6 +51,9 @@ double zero_inflation_start(Tvec<double>& y, ENSEMBLE* ens_ptr)
     }
     //Rcpp::Rcout <<"lambda_sum" << lambda_sum << " - y_sum: " << y_sum << std::endl;
     double prob = (lambda_sum - y_sum)/lambda_sum;
+    if(prob <= 0){ // needs to be between 0 and 1, likely due to no zero-inflation
+        throw std::range_error("Predicted Poisson intensity smaller than observations: Try ordinary Poisson regression");
+    }
     Rcpp::Rcout << "Initial probability: " << prob << std::endl;
     return log(prob) - log(1.0-prob); // logit transform
 }
