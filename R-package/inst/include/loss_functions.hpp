@@ -60,6 +60,13 @@ double loss(Tvec<double> &y, Tvec<double> &pred, std::string loss_type, Tvec<dou
                 res += -log(1.0/(1.0+exp(-pred[i])) + (1.0 - 1.0/(1.0+exp(-pred[i])))*exp(lprob_weights[i]) );
             }
         }
+    }else if(loss_type=="negbinom::zinb"){
+        // NEGBINOM COND Y>0, LOG LINK
+        double dispersion = ens_ptr -> extra_param;
+        for(int i=0; i<n; i++){
+            res += -y[i]*pred[i] + (y[i]*dispersion)*log(1.0+exp(pred[i])/dispersion) + 
+                log(1.0-(exp(-dispersion*log(1.0+exp(pred[i])/dispersion)))); // Last is conditional p(y>0)
+        }
     }
     
     return res/n;
@@ -119,6 +126,14 @@ Tvec<double> dloss(Tvec<double> &y, Tvec<double> &pred, std::string loss_type, E
                 // get y[i] == 0
                 g[i] = (exp(lprob_weights[i])-1.0)*exp(pred[i]) / ( (exp(pred[i])+1.0)*(exp(lprob_weights[i])+exp(pred[i])) );
             }
+        }
+    }else if(loss_type=="negbinom::zinb"){
+        // NEGBINOM COND Y>0, LOG LINK
+        double dispersion = ens_ptr -> extra_param;
+        for(int i=0; i<n; i++){
+            g[i] = -y[i] + (y[i]+dispersion)*exp(pred[i]) / (dispersion + exp(pred[i])) + 
+                dispersion*exp(pred[i]) / 
+                ( (dispersion+exp(pred[i]))*( exp(dispersion*(log(dispersion+exp(pred[i]))-log(dispersion))) -1.0 ));
         }
     }
     
@@ -181,6 +196,18 @@ Tvec<double> ddloss(Tvec<double> &y, Tvec<double> &pred, std::string loss_type, 
                 h[i] = -(exp(lprob_weights[i])-1.0)*exp(pred[i])*(exp(2.0*pred[i])-exp(lprob_weights[i])) / 
                     ( (exp(pred[i])+1.0)*(exp(pred[i])+1.0)*(exp(lprob_weights[i])+exp(pred[i]))*(exp(lprob_weights[i])+exp(pred[i])) );
             }
+        }
+    }else if(loss_type=="negbinom::zinb"){
+        // NEGBINOM COND Y>0, LOG LINK
+        double dispersion = ens_ptr -> extra_param;
+        for(int i=0; i<n; i++){
+            h[i] = (y[i]+dispersion)*dispersion*exp(pred[i]) / 
+                ( (dispersion + exp(pred[i]))*(dispersion + exp(pred[i])) ) - 
+                // d^2/dx^2 log(p(y>0))
+                -dispersion*dispersion*exp(pred[i])*
+                ((exp(pred[i])-1.0)*exp(dispersion*(log(dispersion+exp(pred[i]))-log(dispersion))) +1.0 ) / 
+                (exp(2.0*log(dispersion+exp(pred[i]))) * 
+                 pow(exp(dispersion*(log(dispersion+exp(pred[i]))-log(dispersion))) - 1.0, 2.0 )  );
         }
     }
     

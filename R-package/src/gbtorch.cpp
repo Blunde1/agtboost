@@ -64,6 +64,9 @@ double ENSEMBLE::initial_prediction(Tvec<double> &y, std::string loss_function, 
     }else if(loss_function=="zero_inflation"){
         // (mean(pois_pred)-mean(y))/mean(pois_pred)
         pred = zero_inflation_start(y, this);
+    }else if(loss_function=="negbinom::zinb"){
+        double dispersion = this->get_extra_param();
+        pred = negbinom_zinb_start(pred_g_transform, dispersion); // extra param is dispersion
     }
     
     return pred;
@@ -360,6 +363,14 @@ double ENSEMBLE::get_extra_param(){
 // ------ GBT_ZI_MIX ------------
 
 void GBT_ZI_MIX::set_param(Rcpp::List par_list){
+    
+    /*
+     * loss_function could be
+     * 1. poisson
+     * 2. negbinom
+     * 3. auto
+     */ 
+    
     this->param = par_list;
     this->learning_rate = par_list["learning_rate"];
     this->extra_param = par_list["extra_param"];
@@ -387,7 +398,180 @@ double GBT_ZI_MIX::get_overdispersion(){
 
 void GBT_ZI_MIX::train(Tvec<double> &y, Tmat<double> &X, int verbose, bool greedy_complexities)
 {
+    
+    /*
+     * 1. Train zero-inflated poisson
+     * 1.2 if negbinom or auto: learn dispersion, train negbinom
+     * 1.3 if auto, compare likelihoods with AIC and choose model
+     * 
+     * 2. Learn log-probability weights
+     * 
+     * 3. Train zero-inflation probability
+     */
+    
+    // Variables
+    double log_factorial;
+    
+    
+    
     // 1.0 train zero-inflated count-model
+    
+    // Prepare data
+    // Build new design matrix and vector: Needs to be done until Eigen 3.4 is in RcppEigen...
+    // which are non-zero?
+    int n = y.size();
+    Tavec<int> ind_nz_tmp(n);
+    int counter = 0;
+    for(int i=0; i<n; i++){
+        if(y[i] > 0){
+            ind_nz_tmp[counter] = i;
+            counter++;
+        }
+    }
+    Tavec<int> ind_nz = ind_nz_tmp.head(counter);
+    
+    // Before Eigen 3.4 solution...
+    Tmat<double> Xnz(ind_nz.size(), X.cols());
+    Tvec<double> ynz(ind_nz.size());
+    for(int i=0; i<counter; i++){
+        ynz[i] = y[ind_nz[i]];
+        Xnz.row(i) = X.row(ind_nz[i]);
+    }
+    
+    
+    // First Poisson
+    ENSEMBLE* mod_pois = new ENSEMBLE;
+    mod_pois->set_param(
+            Rcpp::List::create(
+                Named("learning_rate") = param["learning_rate"],
+                                              Named("loss_function") = "poisson::zip",
+                                              Named("nrounds") = param["nrounds"],
+                                                                      Named("extra_param") = param["extra_param"]
+            )
+    );
+    
+    // Training
+    Tvec<double> weights = Tvec<double>::Ones(counter); // This is unnecessary -- CLEANUP! --> fix ENSEMBLE->train()
+    mod_pois->train(ynz, Xnz, verbose, greedy_complexities, false, weights);
+    //this->count_conditional->train(y(ind_nz), X(ind_nz,Eigen::all), verbose, greedy_complexities, false, weights);
+    
+    std::string lossfun_tot = this->get_param()["loss_function"];
+    // Check if negbinom or auto
+    if(lossfun_tot == "zero_inflation::negbinom" || 
+       lossfun_tot == "zero_inflation::auto"){
+        
+        // Predictions on ynz
+        Tvec<double> pred_pois_ynz = mod_pois->predict(Xnz); // log intensity
+        
+        // Learn dispersion
+        double dispersion = learn_dispersion(ynz, pred_pois_ynz);
+        
+        // Train negbinom
+        ENSEMBLE* mod_nbinom = new ENSEMBLE;
+        mod_nbinom->set_param(
+                Rcpp::List::create(
+                    Named("learning_rate") = param["learning_rate"],
+                    Named("loss_function") = "negbinom::zinb",
+                    Named("nrounds") = param["nrounds"],
+                    Named("extra_param") = dispersion
+                )
+        );
+        mod_nbinom->train(ynz, Xnz, verbose, greedy_complexities, false, weights);
+            
+        // If auto: Compare models with aic
+        if( lossfun_tot == "zero_inflation::auto" ){
+            
+            // log-predictions from nbinom zip
+            Tvec<double> pred_nbinom_ynz = mod_nbinom->predict(Xnz); // log intensity
+            
+            // Needs to compare on full likelihood!
+            double nll_pois_zip=0.0, nll_nbinom_zinb=0.0;
+            for(int i=0; i<ynz.size(); i++)
+            {
+                // poisson
+                log_factorial = 0;
+                for(int j=0; j<ynz[i]; j++){ // also works when y=0-->log_factorial=0, R would have failed...
+                    log_factorial += log(j+1.0);
+                }
+                nll_pois_zip -= ynz[i]*pred_pois_ynz[i] - exp(pred_pois_ynz[i]) - log_factorial;
+                
+                // negative binomial
+                nll_nbinom_zinb += ynz[i]*log(dispersion) - ynz[i]*pred_nbinom_ynz[i] + 
+                    (ynz[i]+dispersion)*log(1.0+exp(pred_nbinom_ynz[i])/dispersion) - 
+                    R::lgammafn(ynz[i]+dispersion) + R::lgammafn(ynz[i]+1.0) + R::lgammafn(dispersion);
+            }
+            
+            double poisson_aic = nll_pois_zip / ynz.size();
+            double nbinom_aic = (nll_nbinom_zinb + 1.0) / ynz.size();
+            
+            Rcpp::Rcout << "Relative AIC Poisson::zip: " << poisson_aic << "\n" << 
+                "Relative AIC nbinom::zinb: " << nbinom_aic << std::endl;
+            if(poisson_aic <= nbinom_aic){
+                Rcpp::Rcout << "Choosing Poisson model " << std::endl;
+                this->count_conditional = mod_pois;
+            }else{
+                Rcpp::Rcout << "Choosing nbinom model " << std::endl;
+                this->count_conditional = mod_nbinom;
+            }
+            
+        }else{
+            // Choosing nbinom due to loss_function
+            this->count_conditional = mod_nbinom;
+        }
+            
+    }else{
+        // Choosing poisson due to loss_function
+        this->count_conditional = mod_pois;
+        
+    }
+
+    
+    // 2.0 Calculate training weights
+    Tvec<double> lprob_weights(n);
+    Tvec<double> pred_conditional = this->count_conditional->predict(X);
+    std::string lossfun_count = this->count_conditional->get_param()["loss_function"];
+    //Rcpp::Rcout << "count loss function: " << lossfun_count << std::endl;
+    
+    if( lossfun_count == "poisson::zip"){
+        // Poisson weights
+        //Rcpp::Rcout << "Poisson weights" << std::endl;
+        for(int i=0; i<n; i++)
+        {
+            log_factorial = 0;
+            for(int j=0; j<y[i]; j++){ // also works when y=0-->log_factorial=0, R would have failed...
+                log_factorial += log(j+1.0);
+            }
+            lprob_weights[i] = y[i]*pred_conditional[i] - exp(pred_conditional[i]) - log_factorial;
+        }
+    }else{
+        // Negbinom weights
+        //Rcpp::Rcout << "negbinom weights" << std::endl;
+        double dispersion = this->count_conditional->get_extra_param();
+        for(int i=0; i<n; i++)
+        {
+            lprob_weights[i] = -y[i]*log(dispersion) + y[i]*pred_conditional[i] - 
+                (y[i]+dispersion)*log(1.0+exp(pred_conditional[i])/dispersion) + 
+                R::lgammafn(y[i]+dispersion) - R::lgammafn(y[i]+1.0) - R::lgammafn(dispersion);
+        }
+    }
+    
+    // 3.0 train mixture probability
+    this->zero_inflation = new ENSEMBLE;
+    this->zero_inflation->set_param(
+            Rcpp::List::create(
+                Named("learning_rate") = param["learning_rate"],
+                                              Named("loss_function") = "zero_inflation",
+                                              Named("nrounds") = param["nrounds"],
+                                                                      Named("extra_param") = param["extra_param"],
+                                                                                                  Named("preds_cond_count") = exp(pred_conditional.array()),
+                                                                                                  Named("log_prob_weights") = lprob_weights
+            )
+    );
+    this->zero_inflation->train(y, X, verbose, greedy_complexities, false, weights);
+
+    
+    /*
+    
     
     this->count_conditional = new ENSEMBLE;
     this->count_conditional->set_param(
@@ -450,7 +634,7 @@ void GBT_ZI_MIX::train(Tvec<double> &y, Tmat<double> &X, int verbose, bool greed
             )
     );
     this->zero_inflation->train(y, X, verbose, greedy_complexities, false, weights);
-    
+    */
 }
 
 Tvec<double> GBT_ZI_MIX::predict(Tmat<double> &X)

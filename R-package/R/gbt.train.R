@@ -129,7 +129,8 @@ gbt.train <- function(y, x, learning_rate = 0.01,
         if(
             loss_function %in% c("mse", "logloss", "poisson", "gamma::neginv", 
                                  "gamma::log", "negbinom", 
-                                 "poisson::zip", "zero_inflation", "zero_inflation::poisson")
+                                 "poisson::zip", "zero_inflation", "zero_inflation::poisson",
+                                 "zero_inflation::negbinom", "zero_inflation::auto")
         ){}else{
             error_messages <- c(error_messages, error_messages_type[5])
         }   
@@ -206,7 +207,7 @@ gbt.train <- function(y, x, learning_rate = 0.01,
                   "nrounds"=nrounds,
                   "extra_param" = extra_param)
     
-    if(loss_function == "zero_inflation::poisson"){
+    if(loss_function %in% c("zero_inflation::poisson", "zero_inflation::negbinom", "zero_inflation::auto")){
         
         mod <- new(GBT_ZI_MIX)
         mod$set_param(param)
