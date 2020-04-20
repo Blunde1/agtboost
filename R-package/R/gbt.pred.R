@@ -77,6 +77,85 @@ predict.Rcpp_ENSEMBLE <- function(object, newdata, ...){
     return(res)
 } 
 
+#' GBTorch Zero-Inflated Mixture Prediction
+#'
+#' \code{predict} is an interface for predicting from a \code{gbtorch} model.
+#'
+#' @param object Object or pointer to object of class \code{GBT_ZI_MIX}
+#' @param newdata Design matrix of data to be predicted. Type \code{matrix}
+#' @param ... additional parameters passed. Currently not in use.
+#'
+#' @details
+#' 
+#' The prediction function for \code{gbtorch}.
+#' Using the generic \code{predict} function in R is also possible, using the same arguments.
+#' 
+#'
+#' @return
+#' For regression or binary classification, it returns a vector of length \code{nrows(newdata)}.
+#'
+#' @seealso
+#' \code{\link{gbt.train}}
+#'
+#' @references
+#'
+#' B. Å. S. Lunde, T. S. Kleppe and H. J. Skaug, "An information criterion for gradient boosted trees"
+#' publishing details,
+#'
+#' @examples
+#' ## A simple gtb.train example with linear regression:
+#' x <- runif(500, 0, 4)
+#' y <- rnorm(500, x, 1)
+#' x.test <- runif(500, 0, 4)
+#' y.test <- rnorm(500, x.test, 1)
+#' 
+#' mod <- gbt.train(y, as.matrix(x))
+#' 
+#' ## predict is overloaded
+#' y.pred <- predict( mod, as.matrix( x.test ) )
+#' 
+#' plot(x.test, y.test)
+#' points(x.test, y.pred, col="red")
+#'
+#'
+#' @rdname predict.Rcpp_GBT_ZI_MIX
+#' @export
+
+#' @export
+predict.Rcpp_GBT_ZI_MIX <- function(object, newdata, ...){
+    # object - pointer to class ENSEMBLE
+    # newdata - design matrix of type matrix
+    
+    # checks on newdata and e.ptr
+    error_messages <- c()
+    error_messages_type <- c(
+        "Error: object must be a GBTorch GBT_ZI_MIX \n",
+        "Error: GBTorch model must be trained, see function documentation gbt.train \n",
+        "Error: newdata must be a matrix \n"
+    )
+    # check object
+    if(class(object)!="Rcpp_GBT_ZI_MIX"){
+        error_messages <- c(error_messages, error_messages_type[1])
+    }#else{
+     #   # test if trained
+     #   if(object$get_num_trees()==0)
+     #       error_messages <- c(error_messages, error_messages_type[2])
+    #}
+    
+    # check x
+    if(!is.matrix(newdata))
+        error_messages <- c(error_messages, error_messages_type[3])
+    
+    # Any error messages?
+    if(length(error_messages)>0)
+        stop(error_messages)
+    
+    # predict
+    res <- object$predict(newdata)
+    
+    return(res)
+} 
+
 
 
 # gbt.pred <- function(object, newdata){

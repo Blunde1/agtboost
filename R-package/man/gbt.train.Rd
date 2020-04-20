@@ -25,6 +25,7 @@ gbt.train(y, x, learning_rate = 0.01, loss_function = "mse",
 \item \code{gamma::log} gamma regression using the log-link. Constant information parametrisation. 
 \item \code{negbinom} Negative binomial regression for count data with overdispersion. Log-link.
 \item \code{poisson::zip} Conditional Zero-Inflated Poisson (ZIP) regression, for modelling the Poisson intensity in a ZIP regression model. Log-link.
+\item \code{zero_inflation::poisson} Zero-inflated Poisson
 }}
 
 \item{nrounds}{a just-in-case max number of boosting iterations. Default: 50000}

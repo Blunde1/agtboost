@@ -173,10 +173,38 @@ hist(u_zip, freq=F)
 ```
 The estimated values of probability is `r p_est` and the estimated Poisson intensity (from the zip model) is `r lambda_cond_est`, which are both very good! The histogram looks very much like the standard uniform (indicating that we have specified the correct model), and a formal Kolmogorov-Smirnov test gives us the p-value `r ks.test(u_zip, "punif")$p.value`.
 
+**Comments** Note that $\lambda=W_k(-\bar{y}e^{-\bar{y}}) + \bar{y}$ where $W$ is the LambertW function.
+```{r lambertW}
+a <- mean(ynz)
+lamW::lambertW0(-a*exp(-a)) + a
+```
+Furthermore, that $\pi = \frac{\lambda - \bar{y}}{\lambda}$
+```{r prob}
+p_est2 <- (lambda_cond_est -  mean(y)) / lambda_cond_est
+p_est2
+```
 
 ## Implementation
 
-The implementation in GBTorch is done by specifying the new loss-functions (conditional Poisson and mixture probability) and their derivatives, while introducing a new class, passed back to R, which binds them together. Note that the mixture probability takes in weights $w_i$, and can therefore be used in a general procedure with *any* count process, not just the Poisson. *Note: It is meaningful to also implement the conditional negative binomial at a later stage.*
+The implementation in GBTorch is done by specifying the new loss-functions (conditional Poisson and mixture probability) and their derivatives, while introducing a new class, passed back to R, which binds them together. Specifically, it is implemented via the `loss_function` field in `gbt.train`, as `"poisson::zip"` for the conditional (on $y>0$) Poisson, `"zero_inflation"` (note: needs work with input parameters to ENSEMBLE from R, unsure if this should be seen by the user) for step 2, and `"zero_inflation::poisson"` which binds them together and does all the work under the hood. This introduces a new class called `GBT_ZI_MIX`, which may be sent to the `predict` function as normal. 
+Note that the mixture probability takes in weights $w_i$, and can therefore be used in a general procedure with *any* count process, not just the Poisson. *Note: It is meaningful to also implement the conditional negative binomial at a later stage.*
 
 The conditional Poisson is implemented with link function $\log\lambda=f(x)$ and the probabilities with the logit $\log(\pi)-\log(1-\pi) = g(x)$. The estimates would be $\lambda=\exp f(x)$ and $\pi=\frac{1}{1+e^{-g(x)}}$.
+The return predictions are scaled back to mean predictions, however: $(1-\pi)\lambda$
+
+```{r gbtorch-toy}
+library(gbtorch)
+x <- as.matrix(runif(length(y), 1, 5)) # toy design matrix
+xnz <- x[y>0,, drop=F] # non-zero design matrix
+mod1 <- gbt.train(ynz, xnz, loss_function = "poisson::zip")
+mod2 <- gbt.train(y, x, loss_function = "zero_inflation::poisson")
+mod1
+mod2
+predsjekk <- predict(mod1, x)
+range(exp(predsjekk))
+pred <- predict(mod2, x)
+range(pred)
+(1-p)*lambda
+```
+
 
