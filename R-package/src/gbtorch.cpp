@@ -61,6 +61,9 @@ double ENSEMBLE::initial_prediction(Tvec<double> &y, std::string loss_function, 
         pred = log(pred_g_transform);
     }else if(loss_function=="poisson::zip"){
         pred = poisson_zip_start(pred_g_transform);
+    }else if(loss_function=="zero_inflation"){
+        // (mean(pois_pred)-mean(y))/mean(pois_pred)
+        pred = zero_inflation_start(y, this);
     }
     
     return pred;
@@ -353,6 +356,117 @@ double ENSEMBLE::get_extra_param(){
     return this->extra_param;
 }
 
+
+// ------ GBT_ZI_MIX ------------
+
+void GBT_ZI_MIX::set_param(Rcpp::List par_list){
+    this->param = par_list;
+    this->learning_rate = par_list["learning_rate"];
+    this->extra_param = par_list["extra_param"];
+}
+Rcpp::List GBT_ZI_MIX::get_param(){
+    return this->param;
+}
+
+GBT_ZI_MIX::GBT_ZI_MIX(){
+    this->count_conditional = NULL;
+    this->zero_inflation = NULL;
+}
+
+ENSEMBLE* GBT_ZI_MIX::get_count_conditional(){
+    return this->count_conditional;
+}
+
+ENSEMBLE* GBT_ZI_MIX::get_zero_inflation(){
+    return this->zero_inflation;
+}
+
+double GBT_ZI_MIX::get_overdispersion(){
+    return this->extra_param;
+}
+
+void GBT_ZI_MIX::train(Tvec<double> &y, Tmat<double> &X, int verbose, bool greedy_complexities)
+{
+    // 1.0 train zero-inflated count-model
+    
+    this->count_conditional = new ENSEMBLE;
+    this->count_conditional->set_param(
+            Rcpp::List::create(
+                Named("learning_rate") = param["learning_rate"],
+                Named("loss_function") = "poisson::zip",
+                Named("nrounds") = param["nrounds"],
+                Named("extra_param") = param["extra_param"]
+                )
+            );
+    
+    // Build new design matrix and vector: Needs to be done until Eigen 3.4 is in RcppEigen...
+    // which are non-zero?
+    int n = y.size();
+    Tavec<int> ind_nz_tmp(n);
+    int counter = 0;
+    for(int i=0; i<n; i++){
+        if(y[i] > 0){
+            ind_nz_tmp[counter] = i;
+            counter++;
+        }
+    }
+    Tavec<int> ind_nz = ind_nz_tmp.head(counter);
+    
+    // Before Eigen 3.4 solution...
+    Tmat<double> Xnz(ind_nz.size(), X.cols());
+    Tvec<double> ynz(ind_nz.size());
+    for(int i=0; i<counter; i++){
+        ynz[i] = y[ind_nz[i]];
+        Xnz.row(i) = X.row(ind_nz[i]);
+    }
+    
+    Tvec<double> weights = Tvec<double>::Ones(counter); // This is unnecessary -- CLEANUP! --> fix ENSEMBLE->train()
+    this->count_conditional->train(ynz, Xnz, verbose, greedy_complexities, false, weights);
+    //this->count_conditional->train(y(ind_nz), X(ind_nz,Eigen::all), verbose, greedy_complexities, false, weights);
+    
+    // 2.0 Calculate training weights
+    Tvec<double> lprob_weights(n);
+    Tvec<double> pred_conditional = this->count_conditional->predict(X);
+    double log_factorial;
+    for(int i=0; i<n; i++)
+    {
+        log_factorial = 0;
+        for(int j=0; j<y[i]; j++){ // also works when y=0-->log_factorial=0, R would have failed...
+            log_factorial += log(j+1.0);
+        }
+        lprob_weights[i] = y[i]*pred_conditional[i] - exp(pred_conditional[i]) - log_factorial;
+    }
+    
+    // 3.0 train mixture probability
+    this->zero_inflation = new ENSEMBLE;
+    this->zero_inflation->set_param(
+            Rcpp::List::create(
+                Named("learning_rate") = param["learning_rate"],
+                Named("loss_function") = "zero_inflation",
+                Named("nrounds") = param["nrounds"],
+                Named("extra_param") = param["extra_param"],
+                Named("preds_cond_count") = exp(pred_conditional.array()),
+                Named("log_prob_weights") = lprob_weights
+            )
+    );
+    this->zero_inflation->train(y, X, verbose, greedy_complexities, false, weights);
+    
+}
+
+Tvec<double> GBT_ZI_MIX::predict(Tmat<double> &X)
+{
+    // Predict from conditional count and zero inflation
+    // Mean prediction is (1-pi)*Poisson_preds
+    Tvec<double> pred_l_lambda = this->count_conditional->predict(X);
+    Tvec<double> pred_logit_prob = this->zero_inflation->predict(X);
+    Tavec<double> n_prob = 1.0 - 1.0/(1.0+exp(-pred_logit_prob.array()));
+    Tavec<double> lambda = exp(pred_l_lambda.array());
+    return ( n_prob*lambda ).matrix();
+}
+
+
+
+
 // Expose the classes
 RCPP_MODULE(MyModule) {
     using namespace Rcpp;
@@ -371,5 +485,14 @@ RCPP_MODULE(MyModule) {
         .method("get_num_trees", &ENSEMBLE::get_num_trees)
         .method("get_num_leaves", &ENSEMBLE::get_num_leaves)
         .method("get_extra_param", &ENSEMBLE::get_extra_param)
+    ;
+    
+    class_<GBT_ZI_MIX>("GBT_ZI_MIX")
+        .default_constructor("Default constructor")
+        .method("set_param", &GBT_ZI_MIX::set_param)
+        .method("get_param", &GBT_ZI_MIX::get_param)
+        .method("train", &GBT_ZI_MIX::train)
+        .method("predict", &GBT_ZI_MIX::predict)
+        .method("get_overdispersion", &GBT_ZI_MIX::get_overdispersion)
     ;
 }
