@@ -648,6 +648,18 @@ Tvec<double> GBT_ZI_MIX::predict(Tmat<double> &X)
     return ( n_prob*lambda ).matrix();
 }
 
+Tmat<double> GBT_ZI_MIX::predict_separate(Tmat<double> &X)
+{
+    Tvec<double> pred_l_lambda = this->count_conditional->predict(X);
+    Tvec<double> pred_logit_prob = this->zero_inflation->predict(X);
+    Tavec<double> prob = 1.0/(1.0+exp(-pred_logit_prob.array()));
+    Tavec<double> lambda = exp(pred_l_lambda.array());
+    Tmat<double> res(lambda.size(), 2);
+    res.row(0) = prob;
+    res.row(1) = lambda;
+    return res;
+}
+
 
 
 
@@ -677,6 +689,7 @@ RCPP_MODULE(MyModule) {
         .method("get_param", &GBT_ZI_MIX::get_param)
         .method("train", &GBT_ZI_MIX::train)
         .method("predict", &GBT_ZI_MIX::predict)
+        .method("predict_separate", &GBT_ZI_MIX::predict_separate)
         .method("get_overdispersion", &GBT_ZI_MIX::get_overdispersion)
     ;
 }

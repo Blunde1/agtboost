@@ -158,8 +158,31 @@ predict.Rcpp_GBT_ZI_MIX <- function(object, newdata, ...){
     if(length(error_messages)>0)
         stop(error_messages)
     
-    # predict
-    res <- object$predict(newdata)
+    # Get input
+    input_list <- list(...)
+    type <- ""
+    if(length(input_list)>0){
+        if("type" %in% names(input_list)){
+            type <- input_list$type
+            if(!(type %in% c("response", "separate"))){
+                warning(paste0("Ignoring unknown input type: ", type))
+                type <- ""
+            }
+        }else{
+            warning(paste0("Ignoring unknown input: ", names(input_list)))
+        }
+    }
     
+    if(type %in% c("", "response")){
+        # predict mean
+        res <- object$predict(newdata)
+    }else if(type == "separate"){
+        # predict probability and non-zero mean separate
+        res <- object$predict_separate(newdata)
+        colnames(res) <- c("probability", "non_zero_mean")
+    }
+    
+    
+
     return(res)
 } 
