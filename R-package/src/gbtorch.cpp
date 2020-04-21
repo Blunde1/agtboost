@@ -393,7 +393,16 @@ ENSEMBLE* GBT_ZI_MIX::get_zero_inflation(){
 }
 
 double GBT_ZI_MIX::get_overdispersion(){
-    return this->extra_param;
+    return this->count_conditional->get_extra_param();
+}
+
+std::string GBT_ZI_MIX::get_model_name(){
+    std::string count_loss = this->count_conditional->get_param()["loss_function"];
+    if(count_loss == "poisson::zip"){
+        return "poisson";
+    }else if(count_loss == "negbinom::zinb"){
+        return "negbinom";
+    }
 }
 
 void GBT_ZI_MIX::train(Tvec<double> &y, Tmat<double> &X, int verbose, bool greedy_complexities)
@@ -691,5 +700,6 @@ RCPP_MODULE(MyModule) {
         .method("predict", &GBT_ZI_MIX::predict)
         .method("predict_separate", &GBT_ZI_MIX::predict_separate)
         .method("get_overdispersion", &GBT_ZI_MIX::get_overdispersion)
+        .method("get_model_name", &GBT_ZI_MIX::get_model_name)
     ;
 }

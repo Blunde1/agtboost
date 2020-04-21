@@ -25,6 +25,7 @@ public:
     // Functions
     void set_param(Rcpp::List par_list);
     Rcpp::List get_param();
+    std::string get_model_name();
     
     double get_overdispersion(); // Retrieve extra param (overdispersion)
     
