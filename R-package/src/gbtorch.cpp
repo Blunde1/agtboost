@@ -654,18 +654,25 @@ Tvec<double> GBT_ZI_MIX::predict(Tmat<double> &X)
     Tvec<double> pred_logit_prob = this->zero_inflation->predict(X);
     Tavec<double> n_prob = 1.0 - 1.0/(1.0+exp(-pred_logit_prob.array()));
     Tavec<double> lambda = exp(pred_l_lambda.array());
+    //Rcpp::Rcout << "n_prob\n" << n_prob << std::endl;
+    //Rcpp::Rcout << "lambda\n" << lambda << std::endl;
     return ( n_prob*lambda ).matrix();
 }
 
 Tmat<double> GBT_ZI_MIX::predict_separate(Tmat<double> &X)
 {
+    int n = X.rows();
     Tvec<double> pred_l_lambda = this->count_conditional->predict(X);
     Tvec<double> pred_logit_prob = this->zero_inflation->predict(X);
     Tavec<double> prob = 1.0/(1.0+exp(-pred_logit_prob.array()));
     Tavec<double> lambda = exp(pred_l_lambda.array());
-    Tmat<double> res(lambda.size(), 2);
-    res.row(0) = prob;
-    res.row(1) = lambda;
+    //Rcpp::Rcout << "prob\n" << prob << std::endl;
+    //Rcpp::Rcout << "lambda\n" << lambda << std::endl;
+    
+    Tmat<double> res(n, 2);
+    res.col(0) = prob.matrix();
+    res.col(1) = lambda.matrix();
+    //Rcpp::Rcout << "mat\n" << res << std::endl;
     return res;
 }
 
