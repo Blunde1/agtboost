@@ -80,3 +80,5 @@ rsconnect/
 *.bst
 
 *.Rproj
+
+*.html

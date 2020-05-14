@@ -23,6 +23,12 @@ gbt.train(y, x, learning_rate = 0.01, loss_function = "mse",
 \item \code{poisson} Poisson regression for count data using a log-link, output score before natural transformation.
 \item \code{gamma::neginv} gamma regression using the canonical negative inverse link. Scaling independent of y.
 \item \code{gamma::log} gamma regression using the log-link. Constant information parametrisation. 
+\item \code{negbinom} Negative binomial regression for count data with overdispersion. Log-link.
+\item \code{poisson::zip} Conditional Zero-Inflated Poisson (ZIP) regression, for modelling the Poisson intensity in a ZIP regression model. Log-link.
+\item \code{zero_inflation::poisson} Zero-inflated Poisson. Mean predictions.
+\item \code{zero_inflation::negbinom} Zero-inflated negative binomial (Poisson-gamma mixture). Mean predictions.
+\item \code{zero_inflation::auto} Zero inflation that automatically chooses between the ordinary Poisson and a mixture as the conditional count process. Mean predictions.
+\item \code{count::auto} Chooses automatically between Poisson or negative binomial regression.
 }}
 
 \item{nrounds}{a just-in-case max number of boosting iterations. Default: 50000}
@@ -38,7 +44,7 @@ gbt.train(y, x, learning_rate = 0.01, loss_function = "mse",
 \item{force_continued_learning}{Boolean: \code{FALSE} (default) stops at information stopping criterion, \code{TRUE} stops at \code{nround} iterations.}
 }
 \value{
-An object of class \code{ENSEMBLE} with the following elements:
+An object of class \code{ENSEMBLE} or \code{GBT_ZI_MIX} with some or all of the following elements:
 \itemize{
   \item \code{handle} a handle (pointer) to the gbtorch model in memory.
   \item \code{initialPred} a field containing the initial prediction of the ensemble.

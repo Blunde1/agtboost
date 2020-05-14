@@ -12,6 +12,12 @@
 #'   \item \code{poisson} Poisson regression for count data using a log-link, output score before natural transformation.
 #'   \item \code{gamma::neginv} gamma regression using the canonical negative inverse link. Scaling independent of y.
 #'   \item \code{gamma::log} gamma regression using the log-link. Constant information parametrisation. 
+#'   \item \code{negbinom} Negative binomial regression for count data with overdispersion. Log-link.
+#'   \item \code{poisson::zip} Conditional Zero-Inflated Poisson (ZIP) regression, for modelling the Poisson intensity in a ZIP regression model. Log-link.
+#'   \item \code{zero_inflation::poisson} Zero-inflated Poisson. Mean predictions.
+#'   \item \code{zero_inflation::negbinom} Zero-inflated negative binomial (Poisson-gamma mixture). Mean predictions.
+#'   \item \code{zero_inflation::auto} Zero inflation that automatically chooses between the ordinary Poisson and a mixture as the conditional count process. Mean predictions.
+#'   \item \code{count::auto} Chooses automatically between Poisson or negative binomial regression.
 #'   }
 #' @param nrounds a just-in-case max number of boosting iterations. Default: 50000
 #' @param verbose Enable boosting tracing information at i-th iteration? Default: \code{0}.
@@ -33,7 +39,7 @@
 #' Formally, ....
 #'
 #' @return
-#' An object of class \code{ENSEMBLE} with the following elements:
+#' An object of class \code{ENSEMBLE} or \code{GBT_ZI_MIX} with some or all of the following elements:
 #' \itemize{
 #'   \item \code{handle} a handle (pointer) to the gbtorch model in memory.
 #'   \item \code{initialPred} a field containing the initial prediction of the ensemble.
@@ -124,7 +130,11 @@ gbt.train <- function(y, x, learning_rate = 0.01,
     # loss function
     if(is.character(loss_function) && length(loss_function) == 1){
         if(
-            loss_function %in% c("mse", "logloss", "poisson", "gamma::neginv", "gamma::log", "negbinom")
+            loss_function %in% c("mse", "logloss", "poisson", "gamma::neginv", 
+                                 "gamma::log", "negbinom", 
+                                 "poisson::zip", "zero_inflation", "zero_inflation::poisson",
+                                 "zero_inflation::negbinom", "zero_inflation::auto",
+                                 "count::auto")
         ){}else{
             error_messages <- c(error_messages, error_messages_type[5])
         }   
@@ -196,24 +206,40 @@ gbt.train <- function(y, x, learning_rate = 0.01,
     if(is.null(weights))
         weights = rep(1,nrow(x))
     
-    # create gbtorch ensemble object
-    mod <- new(ENSEMBLE)
     param <- list("learning_rate" = learning_rate, 
                   "loss_function" = loss_function, 
                   "nrounds"=nrounds,
                   "extra_param" = extra_param)
-    mod$set_param(param)
     
-    # train ensemble
-    if(is.null(previous_pred)){
+    if(loss_function %in% c("zero_inflation::poisson", "zero_inflation::negbinom", "zero_inflation::auto")){
         
-        # train from scratch
-        mod$train(y,x, verbose, greedy_complexities, force_continued_learning, weights)   
+        mod <- new(GBT_ZI_MIX)
+        mod$set_param(param)
+        mod$train(y,x, verbose, greedy_complexities)   
+        
+    }else if(loss_function %in% c("count::auto")){
+        mod <- new(GBT_COUNT_AUTO)
+        mod$set_param(param)
+        mod$train(y,x, verbose, greedy_complexities)   
+        
     }else{
+        # create gbtorch ensemble object
+        mod <- new(ENSEMBLE)
+        mod$set_param(param)
         
-        # train from previous predictions
-        mod$train_from_preds(previous_pred,y,x, verbose, greedy_complexities, weights)
+        # train ensemble
+        if(is.null(previous_pred)){
+            
+            # train from scratch
+            mod$train(y,x, verbose, greedy_complexities, force_continued_learning, weights)   
+        }else{
+            
+            # train from previous predictions
+            mod$train_from_preds(previous_pred,y,x, verbose, greedy_complexities, weights)
+        }
+        
     }
+    
     
     # return trained gbtorch ensemble
     return(mod)

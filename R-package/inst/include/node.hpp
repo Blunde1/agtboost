@@ -162,7 +162,8 @@ bool node::split_information(const Tvec<double> &g, const Tvec<double> &h, const
     
     // Prepare for CIR
     Tvec<double> u_store(n_indices);
-    double prob_delta = 1.0/n; //1.0/n_indices;
+    //double prob_delta = 1.0/n;
+    double prob_delta = 1.0/n_indices;
     int num_splits;
     Tavec<double> max_cir(n_sim);
     int grid_size = 101; // should be odd
