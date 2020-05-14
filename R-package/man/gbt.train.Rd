@@ -28,6 +28,7 @@ gbt.train(y, x, learning_rate = 0.01, loss_function = "mse",
 \item \code{zero_inflation::poisson} Zero-inflated Poisson. Mean predictions.
 \item \code{zero_inflation::negbinom} Zero-inflated negative binomial (Poisson-gamma mixture). Mean predictions.
 \item \code{zero_inflation::auto} Zero inflation that automatically chooses between the ordinary Poisson and a mixture as the conditional count process. Mean predictions.
+\item \code{count::auto} Chooses automatically between Poisson or negative binomial regression.
 }}
 
 \item{nrounds}{a just-in-case max number of boosting iterations. Default: 50000}

@@ -129,6 +129,14 @@ void ENSEMBLE::train(Tvec<double> &y, Tmat<double> &X, int verbose, bool greedy_
         GBTREE* new_tree = new GBTREE();
         g = dloss(y, pred, param["loss_function"], this) * w;
         h = ddloss(y, pred, param["loss_function"], this) * w;
+        
+        // Check perfect fit
+        if(((g.array())/h.array()).matrix().maxCoeff() < 1e-12){
+            // Every perfect step is below tresh
+            break;
+        }
+        
+        
         new_tree->train(g, h, X, cir_sim, greedy_complexities, learning_rate_set);
         
         // EXPECTED LOSS
@@ -402,6 +410,8 @@ std::string GBT_ZI_MIX::get_model_name(){
         return "poisson";
     }else if(count_loss == "negbinom::zinb"){
         return "negbinom";
+    }else{
+        return "unknown";
     }
 }
 
@@ -473,7 +483,7 @@ void GBT_ZI_MIX::train(Tvec<double> &y, Tmat<double> &X, int verbose, bool greed
         Tvec<double> pred_pois_ynz = mod_pois->predict(Xnz); // log intensity
         
         // Learn dispersion
-        double dispersion = learn_dispersion(ynz, pred_pois_ynz);
+        double dispersion = learn_dispersion_zi(ynz, pred_pois_ynz);
         
         // Train negbinom
         ENSEMBLE* mod_nbinom = new ENSEMBLE;
@@ -578,72 +588,6 @@ void GBT_ZI_MIX::train(Tvec<double> &y, Tmat<double> &X, int verbose, bool greed
     );
     this->zero_inflation->train(y, X, verbose, greedy_complexities, false, weights);
 
-    
-    /*
-    
-    
-    this->count_conditional = new ENSEMBLE;
-    this->count_conditional->set_param(
-            Rcpp::List::create(
-                Named("learning_rate") = param["learning_rate"],
-                Named("loss_function") = "poisson::zip",
-                Named("nrounds") = param["nrounds"],
-                Named("extra_param") = param["extra_param"]
-                )
-            );
-    
-    // Build new design matrix and vector: Needs to be done until Eigen 3.4 is in RcppEigen...
-    // which are non-zero?
-    int n = y.size();
-    Tavec<int> ind_nz_tmp(n);
-    int counter = 0;
-    for(int i=0; i<n; i++){
-        if(y[i] > 0){
-            ind_nz_tmp[counter] = i;
-            counter++;
-        }
-    }
-    Tavec<int> ind_nz = ind_nz_tmp.head(counter);
-    
-    // Before Eigen 3.4 solution...
-    Tmat<double> Xnz(ind_nz.size(), X.cols());
-    Tvec<double> ynz(ind_nz.size());
-    for(int i=0; i<counter; i++){
-        ynz[i] = y[ind_nz[i]];
-        Xnz.row(i) = X.row(ind_nz[i]);
-    }
-    
-    Tvec<double> weights = Tvec<double>::Ones(counter); // This is unnecessary -- CLEANUP! --> fix ENSEMBLE->train()
-    this->count_conditional->train(ynz, Xnz, verbose, greedy_complexities, false, weights);
-    //this->count_conditional->train(y(ind_nz), X(ind_nz,Eigen::all), verbose, greedy_complexities, false, weights);
-    
-    // 2.0 Calculate training weights
-    Tvec<double> lprob_weights(n);
-    Tvec<double> pred_conditional = this->count_conditional->predict(X);
-    double log_factorial;
-    for(int i=0; i<n; i++)
-    {
-        log_factorial = 0;
-        for(int j=0; j<y[i]; j++){ // also works when y=0-->log_factorial=0, R would have failed...
-            log_factorial += log(j+1.0);
-        }
-        lprob_weights[i] = y[i]*pred_conditional[i] - exp(pred_conditional[i]) - log_factorial;
-    }
-    
-    // 3.0 train mixture probability
-    this->zero_inflation = new ENSEMBLE;
-    this->zero_inflation->set_param(
-            Rcpp::List::create(
-                Named("learning_rate") = param["learning_rate"],
-                Named("loss_function") = "zero_inflation",
-                Named("nrounds") = param["nrounds"],
-                Named("extra_param") = param["extra_param"],
-                Named("preds_cond_count") = exp(pred_conditional.array()),
-                Named("log_prob_weights") = lprob_weights
-            )
-    );
-    this->zero_inflation->train(y, X, verbose, greedy_complexities, false, weights);
-    */
 }
 
 Tvec<double> GBT_ZI_MIX::predict(Tmat<double> &X)
@@ -677,6 +621,138 @@ Tmat<double> GBT_ZI_MIX::predict_separate(Tmat<double> &X)
 }
 
 
+// --- GBT_COUNT_AUTO ----
+void GBT_COUNT_AUTO::set_param(Rcpp::List par_list){
+    this->param = par_list;
+    this->learning_rate = par_list["learning_rate"];
+    this->extra_param = par_list["extra_param"]; // Starting value
+}
+Rcpp::List GBT_COUNT_AUTO::get_param(){
+    return this->param;
+}
+GBT_COUNT_AUTO::GBT_COUNT_AUTO(){
+    this->count_mod = NULL;
+}
+ENSEMBLE* GBT_COUNT_AUTO::get_count_mod(){
+    return this->count_mod;
+}
+
+double GBT_COUNT_AUTO::get_overdispersion(){
+    return this->count_mod->get_extra_param();
+}
+
+std::string GBT_COUNT_AUTO::get_model_name(){
+    std::string count_loss = this->count_mod->get_param()["loss_function"];
+    if(count_loss == "poisson"){
+        return "poisson";
+    }else if(count_loss == "negbinom"){
+        return "negbinom";
+    }else{
+        return "unknown";
+    }
+}
+
+void GBT_COUNT_AUTO::train(Tvec<double> &y, Tmat<double> &X, int verbose, bool greedy_complexities)
+{
+    /*
+     * 1. Train Poisson model
+     * 2. Learn overdispersion
+     * 2.1 If overdispersion large, return Poisson model
+     * 3. Train negbinom model
+     * 4. Compare relative AIC of models
+     * 5. Return and set count model as model with best AIC
+     */
+    
+    
+    
+    
+    // Variables
+    double log_factorial;
+    double MAX_DISPERSION = 1e9;
+    int n =y.size();
+    
+    // --- 1.0 Poisson ---
+    ENSEMBLE* mod_pois = new ENSEMBLE;
+    mod_pois->set_param(
+            Rcpp::List::create(
+                Named("learning_rate") = param["learning_rate"],
+                                              Named("loss_function") = "poisson",
+                                              Named("nrounds") = param["nrounds"],
+                                                                      Named("extra_param") = param["extra_param"]
+            )
+    );
+    // Training
+    Tvec<double> weights = Tvec<double>::Ones(n); // This is unnecessary -- CLEANUP! --> fix ENSEMBLE->train()
+    mod_pois->train(y, X, verbose, greedy_complexities, false, weights);
+
+    // ---- 2.0 Learn overdispersion ----
+    // Predictions on ynz
+    Tvec<double> y_pred_pois = mod_pois->predict(X); // log intensity  
+    double dispersion = learn_dispersion(y, y_pred_pois);
+    
+    // ---- 2.1 Check dispersion -----
+    if(dispersion<MAX_DISPERSION)
+    {
+        // --- 3.1 Train negbinom ----
+        ENSEMBLE* mod_nbinom = new ENSEMBLE;
+        mod_nbinom->set_param(
+                Rcpp::List::create(
+                    Named("learning_rate") = param["learning_rate"],
+                                                  Named("loss_function") = "negbinom",
+                                                  Named("nrounds") = param["nrounds"],
+                                                                          Named("extra_param") = dispersion
+                )
+        );
+        mod_nbinom->train(y, X, verbose, greedy_complexities, false, weights);
+        
+        // ---- 4. Compare relative AIC of models ----
+        Tvec<double> y_pred_nbinom = mod_nbinom->predict(X); // log mean
+        dispersion = learn_dispersion(y, y_pred_nbinom, dispersion);
+        mod_nbinom->extra_param = dispersion;
+        
+        // Needs to compare on full likelihood!
+        double nll_pois=0.0, nll_nbinom=0.0;
+        for(int i=0; i<y.size(); i++)
+        {
+            // poisson
+            log_factorial = 0;
+            for(int j=0; j<y[i]; j++){ // also works when y=0-->log_factorial=0, R would have failed...
+                log_factorial += log(j+1.0);
+            }
+            nll_pois -= y[i]*y_pred_pois[i] - exp(y_pred_pois[i]) - log_factorial;
+            
+            // negative binomial
+            nll_nbinom += y[i]*log(dispersion) - y[i]*y_pred_nbinom[i] + 
+                (y[i]+dispersion)*log(1.0+exp(y_pred_nbinom[i])/dispersion) - 
+                R::lgammafn(y[i]+dispersion) + R::lgammafn(y[i]+1.0) + R::lgammafn(dispersion);
+        }
+        
+        double poisson_aic = nll_pois / y.size();
+        double nbinom_aic = (nll_nbinom + 1.0) / y.size();
+        
+        Rcpp::Rcout << "Relative AIC Poisson: " << poisson_aic << "\n" << 
+            "Relative AIC nbinom: " << nbinom_aic << std::endl;
+        if(poisson_aic <= nbinom_aic){
+            Rcpp::Rcout << "Choosing Poisson model " << std::endl;
+            this->count_mod = mod_pois;
+        }else{
+            Rcpp::Rcout << "Choosing nbinom model " << std::endl;
+            this->count_mod = mod_nbinom;
+        }
+        
+    }else{
+        // Return with Poisson
+        Rcpp::Rcout << "Dispersion too high: Choosing Poisson model " << std::endl;
+        this->count_mod = mod_pois;
+    }
+    
+}
+
+Tvec<double> GBT_COUNT_AUTO::predict(Tmat<double> &X)
+{
+    return this->count_mod->predict(X);
+}
+
 
 
 // Expose the classes
@@ -708,5 +784,15 @@ RCPP_MODULE(MyModule) {
         .method("predict_separate", &GBT_ZI_MIX::predict_separate)
         .method("get_overdispersion", &GBT_ZI_MIX::get_overdispersion)
         .method("get_model_name", &GBT_ZI_MIX::get_model_name)
+    ;
+    
+    class_<GBT_COUNT_AUTO>("GBT_COUNT_AUTO")
+        .default_constructor("Default constructor")
+        .method("set_param", &GBT_COUNT_AUTO::set_param)
+        .method("get_param", &GBT_COUNT_AUTO::get_param)
+        .method("train", &GBT_COUNT_AUTO::train)
+        .method("predict", &GBT_COUNT_AUTO::predict)
+        .method("get_overdispersion", &GBT_COUNT_AUTO::get_overdispersion)
+        .method("get_model_name", &GBT_COUNT_AUTO::get_model_name)
     ;
 }

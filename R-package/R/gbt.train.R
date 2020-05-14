@@ -17,6 +17,7 @@
 #'   \item \code{zero_inflation::poisson} Zero-inflated Poisson. Mean predictions.
 #'   \item \code{zero_inflation::negbinom} Zero-inflated negative binomial (Poisson-gamma mixture). Mean predictions.
 #'   \item \code{zero_inflation::auto} Zero inflation that automatically chooses between the ordinary Poisson and a mixture as the conditional count process. Mean predictions.
+#'   \item \code{count::auto} Chooses automatically between Poisson or negative binomial regression.
 #'   }
 #' @param nrounds a just-in-case max number of boosting iterations. Default: 50000
 #' @param verbose Enable boosting tracing information at i-th iteration? Default: \code{0}.
@@ -132,7 +133,8 @@ gbt.train <- function(y, x, learning_rate = 0.01,
             loss_function %in% c("mse", "logloss", "poisson", "gamma::neginv", 
                                  "gamma::log", "negbinom", 
                                  "poisson::zip", "zero_inflation", "zero_inflation::poisson",
-                                 "zero_inflation::negbinom", "zero_inflation::auto")
+                                 "zero_inflation::negbinom", "zero_inflation::auto",
+                                 "count::auto")
         ){}else{
             error_messages <- c(error_messages, error_messages_type[5])
         }   
@@ -212,6 +214,11 @@ gbt.train <- function(y, x, learning_rate = 0.01,
     if(loss_function %in% c("zero_inflation::poisson", "zero_inflation::negbinom", "zero_inflation::auto")){
         
         mod <- new(GBT_ZI_MIX)
+        mod$set_param(param)
+        mod$train(y,x, verbose, greedy_complexities)   
+        
+    }else if(loss_function %in% c("count::auto")){
+        mod <- new(GBT_COUNT_AUTO)
         mod$set_param(param)
         mod$train(y,x, verbose, greedy_complexities)   
         

@@ -186,3 +186,96 @@ predict.Rcpp_GBT_ZI_MIX <- function(object, newdata, ...){
 
     return(res)
 } 
+
+
+
+#' GBTorch Count-Regression Auto Prediction
+#'
+#' \code{predict} is an interface for predicting from a \code{gbtorch} model.
+#'
+#' @param object Object or pointer to object of class \code{GBT_ZI_MIX}
+#' @param newdata Design matrix of data to be predicted. Type \code{matrix}
+#' @param ... additional parameters passed. Currently not in use.
+#'
+#' @details
+#' 
+#' The prediction function for \code{gbtorch}.
+#' Using the generic \code{predict} function in R is also possible, using the same arguments.
+#' 
+#'
+#' @return
+#' For regression or binary classification, it returns a vector of length \code{nrows(newdata)}.
+#'
+#' @seealso
+#' \code{\link{gbt.train}}
+#'
+#' @references
+#'
+#' B. Å. S. Lunde, T. S. Kleppe and H. J. Skaug, "An information criterion for gradient boosted trees"
+#' publishing details,
+#'
+#' @examples
+#' ## A simple gtb.train example with linear regression:
+#' ## Random generation of zero-inflated poisson
+#' 2+2
+#'
+#' @rdname predict.Rcpp_GBT_COUNT_AUTO
+#' @export
+
+#' @export
+predict.Rcpp_GBT_COUNT_AUTO <- function(object, newdata, ...){
+    # object - pointer to class ENSEMBLE
+    # newdata - design matrix of type matrix
+    
+    # checks on newdata and e.ptr
+    error_messages <- c()
+    error_messages_type <- c(
+        "Error: object must be a GBTorch GBT_COUNT_AUTO \n",
+        "Error: GBTorch model must be trained, see function documentation gbt.train \n",
+        "Error: newdata must be a matrix \n"
+    )
+    # check object
+    if(class(object)!="Rcpp_GBT_COUNT_AUTO"){
+        error_messages <- c(error_messages, error_messages_type[1])
+    }#else{
+    #   # test if trained
+    #   if(object$get_num_trees()==0)
+    #       error_messages <- c(error_messages, error_messages_type[2])
+    #}
+    
+    # check x
+    if(!is.matrix(newdata))
+        error_messages <- c(error_messages, error_messages_type[3])
+    
+    # Any error messages?
+    if(length(error_messages)>0)
+        stop(error_messages)
+    
+    # Get input
+    input_list <- list(...)
+    type <- ""
+    if(length(input_list)>0){
+        if("type" %in% names(input_list)){
+            type <- input_list$type
+            if(!(type %in% c("response", "link_response"))){
+                warning(paste0("Ignoring unknown input type: ", type))
+                type <- ""
+            }
+        }else{
+            warning(paste0("Ignoring unknown input: ", names(input_list)))
+        }
+    }
+    
+    if(type %in% c("", "response")){
+        # predict mean
+        res <- object$predict(newdata)
+        res <- exp(res)
+    }else if(type == "link_response"){
+        # predict response on log (link) level
+        res <- object$predict(newdata)
+    }
+    
+    
+    
+    return(res)
+} 
