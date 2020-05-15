@@ -16,23 +16,28 @@
 class node
 {
 public:
+    
     int split_feature; // j
+    int obs_in_node; // |I_t|
+    
     double split_value; // s_j
     double node_prediction; // w_t
-    double node_tr_loss; // -G_t^2 / H_t
-    double local_optimism; // C(t|q)
-    double expected_max_S; // E[S_max]
-    double split_point_optimism; // C(\hat{s}) = C(t|q) / 2 * ( E[S_max] - 2)
+    double node_tr_loss; // -G_t^2 / (2*H_t)
     double prob_node; // p(q(x)=t)
-    int obs_in_node; // |I_t|
+    double local_optimism; // C(t|q) = E[(g+hw_0)^2]/(n_tE[h])
+    double expected_max_S; // E[S_max]
+    //double split_point_optimism; // C(\hat{s}) = C(t|q)*p(q(x)=t)*(E[S_max]-1)
+    double CRt; // p(q(x)=t) * C(t|q) * E[S_max]
+    double p_split_CRt; // p(split(left,right) | q(x)=t) * CRt, p(split(left,right) | q(x)=t) \approx nl/nt for left node
+    
     node* left;
     node* right;
     
-    node* createLeaf(double node_prediction, double node_tr_loss, double local_optimism, 
-                     double prob_node, int obs_in_node); // possibly more as well...
+    node* createLeaf(double node_prediction, double node_tr_loss, double local_optimism, double CRt,
+                     int obs_in_node, int obs_in_parent, int obs_tot);
     
-    void setLeft(double node_prediction, double node_tr_loss, double local_optimism, double prob_node, int obs_in_node);
-    void setRight(double node_prediction, double node_tr_loss, double local_optimism, double prob_node, int obs_in_node);
+    //void setLeft(double node_prediction, double node_tr_loss, double local_optimism, double prob_node, int obs_in_node);
+    //void setRight(double node_prediction, double node_tr_loss, double local_optimism, double prob_node, int obs_in_node);
     node* getLeft();
     node* getRight();
     
@@ -55,14 +60,16 @@ public:
 
 // METHODS
 
-node* node::createLeaf(double node_prediction, double node_tr_loss, double local_optimism, 
-                       double prob_node, int obs_in_node)
+node* node::createLeaf(double node_prediction, double node_tr_loss, double local_optimism, double CRt,
+                       int obs_in_node, int obs_in_parent, int obs_tot)
 {
     node* n = new node;
     n->node_prediction = node_prediction;
     n->node_tr_loss = node_tr_loss;
     n->local_optimism = local_optimism;
-    n->prob_node = prob_node;
+    n->prob_node = (double)obs_in_node / obs_tot; // prob_node;
+    prob_split_complement = 1.0 - (double)obs_in_node / obs_in_parent; // if left: p(right, not left), oposite for right
+    n->p_split_CRt = prob_split_complement * CRt;
     n->obs_in_node = obs_in_node;
     n->left = NULL;
     n->right = NULL;
@@ -70,6 +77,7 @@ node* node::createLeaf(double node_prediction, double node_tr_loss, double local
     return n;
 }
 
+/*                           
 void node::setLeft(double node_prediction, double node_tr_loss, double local_optimism, double prob_node, int obs_in_node)
 {
     this->left = createLeaf(node_prediction, node_tr_loss, local_optimism, prob_node, obs_in_node);
@@ -79,6 +87,7 @@ void node::setRight(double node_prediction, double node_tr_loss, double local_op
 {
     this->right = createLeaf(node_prediction, node_tr_loss, local_optimism, prob_node, obs_in_node);
 }
+*/
 
 node* node::getLeft()
 {
@@ -100,6 +109,12 @@ double node::expected_reduction()
     double loss_l = left->node_tr_loss;
     double loss_r = right->node_tr_loss;
     
+    double R = (loss_parent - loss_l - loss_r);
+    double CR = left->p_split_CRt + right->p_split_CRt;
+    
+    return R-CR;
+    
+    /*
     double cond_optimism_parent = this->local_optimism * this->prob_node;
     double cond_optimism_left = left->local_optimism * left->prob_node;
     double cond_optimism_right = right->local_optimism * right->prob_node;
@@ -110,6 +125,7 @@ double node::expected_reduction()
     //(cond_optimism_parent - S/2.0*(cond_optimism_left+cond_optimism_right));
     
     return res;
+    */
 }
 
 void node::reset_node()
@@ -119,7 +135,9 @@ void node::reset_node()
     this->expected_max_S = 0.0;
     this->split_feature = 0;
     this->split_value = 0.0;
-    this->split_point_optimism = 0.0;
+    this->p_split_CRt = 0.0;
+    this->CRt = 0.0;
+    //this->split_point_optimism = 0.0;
     this->left = NULL;
     this->right = NULL;
     
@@ -139,7 +157,7 @@ bool node::split_information(const Tvec<double> &g, const Tvec<double> &h, const
     // 3.3.2 Update joint cdf of max max cir over all features
     // 4. Estimate E[S]
     // 5. Estimate local optimism and probabilities
-    // 6. Update split information in child nodes
+    // 6. Update split information in child nodes, importantly p_split_CRt
     // 7. Returns false if no split happened, else true
     
     int split_feature =0, n_indices = g.size(), n_left = 0, n_right = 0, n_features = X.cols(), n_sim = cir_sim.rows();
@@ -259,7 +277,7 @@ bool node::split_information(const Tvec<double> &g, const Tvec<double> &h, const
                 
                 // Estimate cdf of max cir for feature j
                 for(int k=0; k<grid_size; k++){ 
-                    gum_cdf_grid[k] = R::pgamma(grid[k], 1.0, 2.0, 1, 0); // lower tail, not log
+                    gum_cdf_grid[k] = R::pgamma(grid[k], 0.5, 2.0, 1, 0); // lower tail, not log
                 }
                 
             }else{
@@ -292,11 +310,12 @@ bool node::split_information(const Tvec<double> &g, const Tvec<double> &h, const
         this->split_feature = split_feature;
         this->split_value = split_val;
         // C(s) = C(w|q)p(q)/2 * (E[S_max]-2)
-        this->split_point_optimism = (local_opt_l*n_left + local_opt_r*n_right)/(2*n) * (this->expected_max_S - 2.0);
+        this->CRt = (this->prob_node)*(this->local_optimism)*(this->expected_max_S);
+        //this->split_point_optimism = (local_opt_l*n_left + local_opt_r*n_right)/(2*n) * (this->expected_max_S - 2.0);
         
         // 6. Update split information in child nodes
-        left = createLeaf(w_l, tr_loss_l, local_opt_l, (double)n_left/n, n_left); // Update createLeaf()
-        right = createLeaf(w_r, tr_loss_r, local_opt_r, (double)n_right/n, n_right);
+        left = createLeaf(w_l, tr_loss_l, local_opt_l, this->CRt, n_left, n_left+n_right, n); // Update createLeaf()
+        right = createLeaf(w_r, tr_loss_r, local_opt_r, this->CRt, n_right, n_left+n_right, n);
         
         // 7. update childs to left right
         this->left = left;
