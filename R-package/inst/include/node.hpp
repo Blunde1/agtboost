@@ -68,7 +68,7 @@ node* node::createLeaf(double node_prediction, double node_tr_loss, double local
     n->node_tr_loss = node_tr_loss;
     n->local_optimism = local_optimism;
     n->prob_node = (double)obs_in_node / obs_tot; // prob_node;
-    prob_split_complement = 1.0 - (double)obs_in_node / obs_in_parent; // if left: p(right, not left), oposite for right
+    double prob_split_complement = 1.0 - (double)obs_in_node / obs_in_parent; // if left: p(right, not left), oposite for right
     n->p_split_CRt = prob_split_complement * CRt;
     n->obs_in_node = obs_in_node;
     n->left = NULL;
@@ -311,11 +311,14 @@ bool node::split_information(const Tvec<double> &g, const Tvec<double> &h, const
         this->split_value = split_val;
         // C(s) = C(w|q)p(q)/2 * (E[S_max]-2)
         this->CRt = (this->prob_node)*(this->local_optimism)*(this->expected_max_S);
+        //Rcpp::Rcout << "E[S]: " << this->expected_max_S << "\n" << "CRt: " << this->CRt << std::endl;
         //this->split_point_optimism = (local_opt_l*n_left + local_opt_r*n_right)/(2*n) * (this->expected_max_S - 2.0);
+        
         
         // 6. Update split information in child nodes
         left = createLeaf(w_l, tr_loss_l, local_opt_l, this->CRt, n_left, n_left+n_right, n); // Update createLeaf()
         right = createLeaf(w_r, tr_loss_r, local_opt_r, this->CRt, n_right, n_left+n_right, n);
+        //Rcpp::Rcout << "p_left_CRt: " << left->p_split_CRt << "\n" <<  "p_right_CRt:"  << right->p_split_CRt << std::endl;
         
         // 7. update childs to left right
         this->left = left;

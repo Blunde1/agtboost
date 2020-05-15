@@ -30,6 +30,7 @@ Tvec<double> cir_sim_vec(int m)
     double b = 1.0;
     double sigma = 2.0*sqrt(2.0);
     double ncchisq;
+    double c = 0.0;
     /*
     double kappa=2.0, sigma = 2.0*sqrt(2.0);
     double a = kappa;
