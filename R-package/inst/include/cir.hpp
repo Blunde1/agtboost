@@ -25,18 +25,27 @@ Tvec<double> cir_sim_vec(int m)
     // Find cir delta
     Tvec<double> tau_delta = tau.tail(m-1) - tau.head(m-1);
     
-    // Simulate first observation
-    Tvec<double> res(m);
-    res[0] = R::rgamma( 1.0, 2.0 );
-    
-    // Simulate remaining observatins
-    
+    // Parameters of CIR
+    double a = 2.0;
+    double b = 1.0;
+    double sigma = 2.0*sqrt(2.0);
+    double ncchisq;
+    double c = 0.0;
+    /*
     double kappa=2.0, sigma = 2.0*sqrt(2.0);
     double a = kappa;
     double b = 2.0 * sigma*sigma / (4.0 * kappa);
     double c = 0;
     double ncchisq;
+    */
     
+    // Simulate first observation
+    // scale = 1/rate = 1/(2a/sigma^2) = sigma^2/(2*a)
+    // shape = 2*a*b/sigma^2
+    Tvec<double> res(m);
+    res[0] = R::rgamma( 0.5, 2.0 );
+    
+    // Simulate remaining observatins
     for(int i=1; i<m; i++){
         
         c = 2.0 * a / ( sigma*sigma * (1.0 - exp(-a*tau_delta[i-1])) );

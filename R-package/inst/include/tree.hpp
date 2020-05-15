@@ -62,7 +62,7 @@ void GBTREE::train(Tvec<double> &g, Tvec<double> &h, Tmat<double> &X, Tmat<doubl
             gxh += g[i]*h[i];
         }
         double local_optimism = (G2 - 2.0*gxh*(G/H) + G*G*H2/(H*H)) / (H*n);
-        root = root->createLeaf(-G/H, -G*G/(2*H*n), local_optimism, 1.0, n);
+        root = root->createLeaf(-G/H, -G*G/(2*H*n), local_optimism, local_optimism, n, n, n);
     }
     
     root->split_node(g, h, X, cir_sim, root, n, 0.0, greedy_complexities, learning_rate, 0, maxDepth);
@@ -197,9 +197,11 @@ double GBTREE::getConditionalOptimism(){
             return conditional_opt_leaves;
 }
 
-double GBTREE::getFeatureMapOptimism(){
-    // Recurse tree and sum split-point optimism
-    double feature_map_optimism = 0.0;
+
+double GBTREE::getTreeOptimism(){
+    
+    // Recurse tree and sum p_split_CRt in leaf-nodes
+    double tree_optimism = 0.0;
     
     node* current = this->root;
     node* pre;
@@ -234,21 +236,53 @@ double GBTREE::getFeatureMapOptimism(){
              of predecssor */
             else { 
                 pre->right = NULL; 
-                feature_map_optimism += current->split_point_optimism;
+                tree_optimism += current->CRt; // current->split_point_optimism;
                 current = current->right; 
             } /* End of if condition pre->right == NULL */
         } /* End of if condition current->left == NULL*/
     } /* End of while */
-            
-            return feature_map_optimism;
-}
-
-double GBTREE::getTreeOptimism(){
     
-    double conditional_leaf_optimism = this->getConditionalOptimism();
-    double feature_map_optimism = this->getFeatureMapOptimism();
-    return conditional_leaf_optimism + feature_map_optimism;
-    //return feature_map_optimism; // CHECK 
+    
+    
+    // node* current = this->root;
+    // node* pre;
+    // 
+    // if(current == NULL){
+    //     return 0;
+    // }
+    // 
+    // while (current != NULL) { 
+    //     
+    //     if (current->left == NULL) { 
+    //         //std::cout <<  current->node_prediction << std::endl; 
+    //         tree_optimism += current->p_split_CRt; // current->local_optimism * current->prob_node;
+    //         current = current->right; 
+    //     } 
+    //     else { 
+    //         
+    //         /* Find the inorder predecessor of current */
+    //         pre = current->left; 
+    //         while (pre->right != NULL && pre->right != current) 
+    //             pre = pre->right; 
+    //         
+    //         /* Make current as right child of its inorder 
+    //          predecessor */
+    //         if (pre->right == NULL) { 
+    //             pre->right = current; 
+    //             current = current->left; 
+    //         } 
+    //         
+    //         /* Revert the changes made in if part to restore 
+    //          the original tree i.e., fix the right child 
+    //          of predecssor */
+    //         else { 
+    //             pre->right = NULL; 
+    //             current = current->right; 
+    //         } /* End of if condition pre->right == NULL */
+    //     } /* End of if condition current->left == NULL*/
+    // } /* End of while */
+            
+    return tree_optimism;
     
 }
 
@@ -292,7 +326,7 @@ int GBTREE::getNumLeaves(){
         } /* End of if condition current->left == NULL*/
     } /* End of while */
             
-            return numLeaves;
+    return numLeaves;
 }
 
 
