@@ -42,7 +42,8 @@ double ENSEMBLE::initial_prediction(Tvec<double> &y, std::string loss_function, 
     
     double pred=0;
     int n = y.size();
-    double pred_g_transform = (y*w).sum()/n; // Only initialize once, transform given link
+    //double pred_g_transform = (y*w).sum()/n; // Only initialize once, transform given link
+    double pred_g_transform = y.sum()/w.sum(); // should be optim given weights...
     
     if(loss_function=="mse"){
         pred = pred_g_transform;
