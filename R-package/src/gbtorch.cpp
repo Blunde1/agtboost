@@ -41,7 +41,7 @@ Rcpp::List ENSEMBLE::get_param(){
 double ENSEMBLE::initial_prediction(Tvec<double> &y, std::string loss_function, Tvec<double> &w){
     
     double pred=0;
-    int n = y.size();
+    //int n = y.size();
     //double pred_g_transform = (y*w).sum()/n; // Only initialize once, transform given link
     double pred_g_transform = y.sum()/w.sum(); // should be optim given weights...
     
