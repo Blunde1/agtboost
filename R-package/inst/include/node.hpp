@@ -48,7 +48,7 @@ public:
     bool split_information(const Tvec<double> &g, const Tvec<double> &h, const Tmat<double> &X,
                            const Tmat<double> &cir_sim, const int n);
     
-    double expected_reduction();
+    double expected_reduction(double learning_rate = 1.0);
     
     void reset_node(); // if no-split, reset j, s_j, E[S] and child nodes
     
@@ -99,7 +99,7 @@ node* node::getRight()
     return this->right;
 }
 
-double node::expected_reduction()
+double node::expected_reduction(double learning_rate)
 {
     // Calculate expected reduction on node
     node* left = this->left;
@@ -112,7 +112,7 @@ double node::expected_reduction()
     double R = (loss_parent - loss_l - loss_r);
     double CR = left->p_split_CRt + right->p_split_CRt;
     
-    return R-CR;
+    return learning_rate*(2.0-learning_rate)*R-learning_rate*CR;
     
     /*
     double cond_optimism_parent = this->local_optimism * this->prob_node;
@@ -378,10 +378,14 @@ void node::split_node(Tvec<double> &g, Tvec<double> &h, Tmat<double> &X, Tmat<do
         // depth==0: calculate next_tree_score
         if(depth==0){
             // Quadratic approximation
-            next_tree_score = std::max(0.0, expected_reduction * (1.0 - learning_rate*(2.0-learning_rate)) );
+            // Compare with this root loss = next root loss
+            // Can perhaps be done a little better...
+            next_tree_score = std::max(0.0, nptr->expected_reduction(1.0));
+            //next_tree_score = std::max(0.0, expected_reduction * (1.0 - learning_rate*(2.0-learning_rate)) );
         }
         
-        double expected_reduction_normalized = expected_reduction / (nptr->prob_node);
+        double expected_reduction_normalized = nptr->expected_reduction(1.0) / nptr->prob_node;
+        //double expected_reduction_normalized = expected_reduction / (nptr->prob_node);
         
         // Check trade-off
         if(expected_reduction_normalized < next_tree_score && depth > 0){

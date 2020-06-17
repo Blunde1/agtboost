@@ -21,7 +21,7 @@
 #'   }
 #' @param nrounds a just-in-case max number of boosting iterations. Default: 50000
 #' @param verbose Enable boosting tracing information at i-th iteration? Default: \code{0}.
-#' @param greedy_complexities Boolean: \code{FALSE} means standard GTB, \code{TRUE} means greedy complexity tree-building. Default: \code{FALSE} (temporary).
+#' @param gsub_compare Boolean: Global-subset comparisons. \code{FALSE} means standard GTB, \code{TRUE} compare subset-splits with global splits (next root split). Default: \code{TRUE}.
 #' @param previous_pred prediction vector for training. Boosted training given predictions from another model.
 #' @param weights weights vector for scaling contributions of individual observations. Default \code{NULL} (the unit vector).
 #' @param force_continued_learning Boolean: \code{FALSE} (default) stops at information stopping criterion, \code{TRUE} stops at \code{nround} iterations.
@@ -79,7 +79,7 @@
 #' @importFrom methods new
 gbt.train <- function(y, x, learning_rate = 0.01,
                       loss_function = "mse", nrounds = 50000,
-                      verbose=0, greedy_complexities=FALSE, 
+                      verbose=0, gsub_compare=TRUE, 
                       previous_pred=NULL,
                       weights = NULL,
                       force_continued_learning=FALSE,
@@ -95,7 +95,7 @@ gbt.train <- function(y, x, learning_rate = 0.01,
         "\n Error: loss_function must be a valid loss function. See documentation for valid parameters \n",
         "\n Error: nrounds must be an integer >= 1 \n",
         "\n Error: verbose must be of type numeric with length 1",
-        "\n Error: greedy_complexities must be of type logical with length 1",
+        "\n Error: gsub_compare must be of type logical with length 1",
         "\n Error: previous_pred must be a vector of type numeric",
         "\n Error: previous_pred must correspond to length of y",
         "\n Error: force_continued_learning must be of type logical with length 1",
@@ -159,8 +159,8 @@ gbt.train <- function(y, x, learning_rate = 0.01,
         error_messages <- c(error_messages, error_messages_type[7])
     }
 
-    # greedy_complexities
-    if(is.logical(greedy_complexities) && length(greedy_complexities)==1){
+    # gsub_compare
+    if(is.logical(gsub_compare) && length(gsub_compare)==1){
         #ok
     }else{
         # error
@@ -215,12 +215,12 @@ gbt.train <- function(y, x, learning_rate = 0.01,
         
         mod <- new(GBT_ZI_MIX)
         mod$set_param(param)
-        mod$train(y,x, verbose, greedy_complexities)   
+        mod$train(y,x, verbose, gsub_compare)   
         
     }else if(loss_function %in% c("count::auto")){
         mod <- new(GBT_COUNT_AUTO)
         mod$set_param(param)
-        mod$train(y,x, verbose, greedy_complexities)   
+        mod$train(y,x, verbose, gsub_compare)   
         
     }else{
         # create gbtorch ensemble object
@@ -231,11 +231,11 @@ gbt.train <- function(y, x, learning_rate = 0.01,
         if(is.null(previous_pred)){
             
             # train from scratch
-            mod$train(y,x, verbose, greedy_complexities, force_continued_learning, weights)   
+            mod$train(y,x, verbose, gsub_compare, force_continued_learning, weights)   
         }else{
             
             # train from previous predictions
-            mod$train_from_preds(previous_pred,y,x, verbose, greedy_complexities, weights)
+            mod$train_from_preds(previous_pred,y,x, verbose, gsub_compare, weights)
         }
         
     }
