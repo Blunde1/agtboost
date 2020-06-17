@@ -21,7 +21,7 @@ y.test <- rnorm(n, x.test[,1], 1)
 
 # train model
 cat("Training a gbtorch model on one feature")
-mod <- gbt.train(y.train, x.train, verbose=10, greedy_complexities=T, learning_rate = 0.01)
+mod <- gbt.train(y.train, x.train, verbose=10, gsub_compare =T, learning_rate = 0.01)
 mod$get_param() # standard parameters
 mod$get_num_trees()
 pred.test <- predict( mod, x.test)
@@ -62,7 +62,7 @@ df_sub <- data.frame(x1=x.train2[,1], x50=x.train2[,50], #x100=x.train2[,100],
 pairs(~., data=df_sub)
 
 cat("Training a second gbtorch model: give it a few seconds")
-mod2 <- gbt.train(y.train, x.train2, verbose=1, greedy_complexities=T)
+mod2 <- gbt.train(y.train, x.train2, verbose=1, gsub_compare=T)
 pred.test2 <- predict( mod2, x.test2 )
 
 
@@ -127,7 +127,7 @@ cat("The dimensions of training and test:")
 dim(x.train3); dim(x.test3) 
 
 cat("Training a third gbtorch model: give it a few seconds")
-mod3 <- gbt.train(y.train, x.train3, verbose=1, greedy_complexities=T)
+mod3 <- gbt.train(y.train, x.train3, verbose=1, gsub_compare=T)
 pred.test3 <- predict( mod3, x.test3 )
 
 # Training a GLMNET Lasso
