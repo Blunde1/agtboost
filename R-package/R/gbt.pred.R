@@ -111,7 +111,7 @@ predict.Rcpp_ENSEMBLE <- function(object, newdata, ...){
             link_type = "identity"
         }
         
-        if(link_type == "mse"){
+        if(link_type == "identity"){
             res <- pred
         }else if(link_type == "logit"){
             res <- 1/(1+exp(-pred))
