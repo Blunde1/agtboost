@@ -28,8 +28,7 @@ x.train <- as.matrix(x)
 mod <- gbt.train(y.train, x.train, loss_function = "gamma::neginv", verbose=20)
 
 # predict
-pred <- predict(mod, x.train) # predictions before transform
-pred.mu <- -1/pred # negative inverse link
+pred.mu <- predict(mod, x.train)
 
 # add predictions to plot
 points(x.train, pred.mu, col=3)
@@ -50,7 +49,6 @@ plot(x.train, y.train, main="Gamma glm observations, log-link")
 points(x.train, mu, col=2)
 
 mod <- gbt.train(y.train, x.train, loss_function = "gamma::log", verbose=50)
-pred <- predict(mod, x.train) # predictions before transform
-pred.mu <- exp(pred) # log-link
+pred.mu <- predict(mod, x.train) 
 points(x.train, pred.mu, col=3)
 legend("topleft", c("data", "true mean", "gbt estimated mean"), col=1:3, pch=rep(1,3))

@@ -11,6 +11,5 @@ x.train <- as.matrix(mtcars[,-11])
 
 gbt_mod <- gbt.train(y.train, x.train, loss_function = "poisson", verbose=10)
 pred <- predict(gbt_mod, x.train) # predict log(lambda)
-pred_lambda <- exp(pred) # E[y] = lambda, y~Pois(lambda)
 
-plot(pred_lambda, y.train)
+plot(pred, y.train)
