@@ -72,7 +72,59 @@ predict.Rcpp_ENSEMBLE <- function(object, newdata, ...){
         stop(error_messages)
     
     # predict
-    res <- object$predict(newdata)
+    pred <- object$predict(newdata)
+    res <- NULL
+    
+    # Check if transformation of input
+    # Get and check input
+    input_list <- list(...)
+    type <- ""
+    if(length(input_list)>0){
+        if("type" %in% names(input_list)){
+            type <- input_list$type
+            if(!(type %in% c("response", "link_response"))){
+                warning(paste0("Ignoring unknown input type: ", type))
+                type <- ""
+            }
+        }else{
+            warning(paste0("Ignoring unknown input: ", names(input_list)))
+        }
+    }
+    
+    if(type %in% c("", "response")){
+        
+        # This is default: Predict g^{-1}(preds)
+        # Get link function
+        loss_fun_type <- object$get_param()$loss_function
+        link_type = ""
+        if(loss_fun_type %in% c("mse")){
+            link_type = "identity"
+        }else if(loss_fun_type %in% c("logloss")){
+            link_type = "logit"
+        }else if(loss_fun_type %in% c("poisson", "gamma::log", "negbinom")){
+            link_type = "log"
+        }else if(loss_fun_type %in% c("gamma::neginv")){
+            link_type = "neginv"
+        }else{
+            # if no match
+            warning(paste0("No link-function match for loss: ", loss_fun_type, " Using identity"))
+            link_type = "identity"
+        }
+        
+        if(link_type == "mse"){
+            res <- pred
+        }else if(link_type == "logit"){
+            res <- 1/(1+exp(-pred))
+        }else if(link_type == "log"){
+            res <- exp(pred)
+        }else if(link_type == "neginv"){
+            res <- -1/pred
+        }
+    }else if(type == "link_response"){
+        # predict response on log (link) level
+        res <- object$predict(newdata)
+    }
+    
     
     return(res)
 } 
