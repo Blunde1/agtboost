@@ -1,6 +1,6 @@
 boost-from-predictions            Create a gbtorch model on top of a previous model
 gamma-regression                  Simple gamma regression
 high-dimensions                   Performance with p>>n
-greedy-complexities-illustration  Illustration of field greedy_complexities
+global-subset-comparison          Illustration of field greedy_complexities
 poisson-regression                Simple poisson regression
 stock-market-classification       Performance under (almost) complete noise
