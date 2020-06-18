@@ -22,7 +22,7 @@
 //#include "gtbic.hpp"
 #include "optimization.hpp"
 #include "loss_functions.hpp"
-#include "gbt_zi_mix.hpp"
+//#include "gbt_zi_mix.hpp"
 #include "gbt_count_auto.hpp"
 
 
