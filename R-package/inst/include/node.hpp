@@ -55,10 +55,77 @@ public:
     void print_child_branches(const std::string& prefix, const node* nptr, bool isLeft);
     void print_child_branches_2(const std::string& prefix, const node* nptr, bool isLeft);
     
+    void serialize(node* nptr, FILE *fp);
+    void deSerialize(node *&nptr, FILE *fp);
 };
 
 
 // METHODS
+
+void node::serialize(node* nptr, FILE *fp)
+{
+    int MARKER = -1;
+    
+    // If current is NULL, store marker
+    if(nptr == NULL)
+    {
+        fprintf(fp, "%d ", MARKER);
+        return;
+    }
+    
+    // Else, store current node and recur for children
+    fprintf(fp, "%d ", nptr->split_feature);
+    fprintf(fp, "%d ", nptr->obs_in_node);
+    fprintf(fp, "%lf ", nptr->split_value);
+    fprintf(fp, "%lf ", nptr->node_prediction);
+    fprintf(fp, "%lf ", nptr->node_tr_loss);
+    fprintf(fp, "%lf ", nptr->prob_node);
+    fprintf(fp, "%lf ", nptr->local_optimism);
+    fprintf(fp, "%lf ", nptr->expected_max_S);
+    fprintf(fp, "%lf ", nptr->CRt);
+    fprintf(fp, "%lf ", nptr->p_split_CRt);
+    
+    serialize(nptr->left, fp);
+    serialize(nptr->right, fp);
+    
+}
+
+void node::deSerialize(node *&nptr, FILE *fp)
+{
+    // Read next item from file. If theere are no more items or next 
+    // item is marker, then return
+    int MARKER = -1;
+    int val;
+    if( !fscanf(fp, "%d ", &val) || val == MARKER)
+        return;
+    
+    // Else read more from file and recur for children
+    nptr->split_feature = val;
+    fscanf(fp, "%d ", &val);
+    nptr->obs_in_node = val;
+    
+    double dval;
+    fscanf(fp, "%lf ", &dval);
+    nptr->split_value = dval;
+    fscanf(fp, "%lf ", &dval);
+    nptr->node_prediction = dval;
+    fscanf(fp, "%lf ", &dval);
+    nptr->node_tr_loss = dval;
+    fscanf(fp, "%lf ", &dval);
+    nptr->prob_node = dval;
+    fscanf(fp, "%lf ", &dval);
+    nptr->local_optimism = dval;
+    fscanf(fp, "%lf ", &dval);
+    nptr->expected_max_S = dval;
+    fscanf(fp, "%lf ", &dval);
+    nptr->CRt = dval;
+    fscanf(fp, "%lf ", &dval);
+    nptr->p_split_CRt = dval;
+    
+    nptr->left = nptr->right = NULL;
+    deSerialize(nptr->left, fp);
+    deSerialize(nptr->right, fp);
+}
 
 node* node::createLeaf(double node_prediction, double node_tr_loss, double local_optimism, double CRt,
                        int obs_in_node, int obs_in_parent, int obs_tot)

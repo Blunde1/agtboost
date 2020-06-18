@@ -30,12 +30,45 @@ public:
     double getTreeOptimism(); // sum of the conditional and feature map optimism
     int getNumLeaves();
     void print_tree(int type);
+    void serialize(GBTREE *tptr, FILE *fp);
+    void deSerialize(GBTREE *&tptr, FILE *fp);
     
 };
 
 
 // METHODS
 
+void GBTREE::serialize(GBTREE *tptr, FILE *fp)
+{
+    int MARKER = -1;
+    // If current tree is NULL, store marker
+    if(tptr == NULL)
+    {
+        fprintf(fp, "%d ", MARKER);
+        return;
+    }
+    
+    // Else, store current tree, recur on next tree
+    tptr->root->serialize(tptr->root, fp);
+    serialize(tptr->next_tree, fp);
+}
+
+void GBTREE::deSerialize(GBTREE *&tptr, FILE *fp)
+{
+    int MARKER = -1;
+    // Read next item from file. If theere are no more items or next 
+    // item is marker, then return 
+    int val;
+    if ( !fscanf(fp, "%d ", &val) || val == MARKER) 
+        return; 
+    
+    // Else create root-node from file and recur on next tree
+    tptr->root->deSerialize(tptr->root, fp);
+    deSerialize(tptr->next_tree, fp);
+    
+}
+
+    
 GBTREE::GBTREE(){
     this->root = NULL;
     this->next_tree = NULL;
