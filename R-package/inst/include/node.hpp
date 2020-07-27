@@ -36,8 +36,6 @@ public:
     node* createLeaf(double node_prediction, double node_tr_loss, double local_optimism, double CRt,
                      int obs_in_node, int obs_in_parent, int obs_tot);
     
-    //void setLeft(double node_prediction, double node_tr_loss, double local_optimism, double prob_node, int obs_in_node);
-    //void setRight(double node_prediction, double node_tr_loss, double local_optimism, double prob_node, int obs_in_node);
     node* getLeft();
     node* getRight();
     
@@ -55,76 +53,104 @@ public:
     void print_child_branches(const std::string& prefix, const node* nptr, bool isLeft);
     void print_child_branches_2(const std::string& prefix, const node* nptr, bool isLeft);
     
-    void serialize(node* nptr, FILE *fp);
-    void deSerialize(node *&nptr, FILE *fp);
+    void serialize(node* nptr, std::ofstream& f);
+    bool deSerialize(node *nptr, std::ifstream& f, int& lineNum);
 };
 
 
 // METHODS
 
-void node::serialize(node* nptr, FILE *fp)
+void node::serialize(node* nptr, std::ofstream& f)
 {
+    // Check for null
     int MARKER = -1;
-    
-    // If current is NULL, store marker
     if(nptr == NULL)
     {
-        fprintf(fp, "%d ", MARKER);
+        f << MARKER << "\n";
         return;
     }
     
-    // Else, store current node and recur for children
-    fprintf(fp, "%d ", nptr->split_feature);
-    fprintf(fp, "%d ", nptr->obs_in_node);
-    fprintf(fp, "%lf ", nptr->split_value);
-    fprintf(fp, "%lf ", nptr->node_prediction);
-    fprintf(fp, "%lf ", nptr->node_tr_loss);
-    fprintf(fp, "%lf ", nptr->prob_node);
-    fprintf(fp, "%lf ", nptr->local_optimism);
-    fprintf(fp, "%lf ", nptr->expected_max_S);
-    fprintf(fp, "%lf ", nptr->CRt);
-    fprintf(fp, "%lf ", nptr->p_split_CRt);
-    
-    serialize(nptr->left, fp);
-    serialize(nptr->right, fp);
+    // Else, store information on node
+    f << std::fixed << nptr->split_feature << " ";
+    f << std::fixed << nptr->obs_in_node << " ";
+    f << std::fixed << nptr->split_value << " ";
+    f << std::fixed << nptr->node_prediction << " ";
+    f << std::fixed << nptr->node_tr_loss << " ";
+    f << std::fixed << nptr->prob_node << " ";
+    f << std::fixed << nptr->local_optimism << " ";
+    f << std::fixed << nptr->expected_max_S << " ";
+    f << std::fixed << nptr->CRt << " ";
+    f << std::fixed << nptr->p_split_CRt << "\n";
+
+    // Recurrence
+    serialize(nptr->left, f);
+    serialize(nptr->right, f);
     
 }
 
-void node::deSerialize(node *&nptr, FILE *fp)
+bool node::deSerialize(node *nptr, std::ifstream& f, int& lineNum)
 {
-    // Read next item from file. If theere are no more items or next 
-    // item is marker, then return
+    
     int MARKER = -1;
+    
+    // Start at beginning
+    f.seekg(0, std::ios::beg);
+    
+    // Run until line lineNum is found
+    std::string stemp;
+    for(int i=0; i<= lineNum; i++)
+    {
+        if(!std::getline(f,stemp)){
+            nptr = NULL;
+            return false;
+        }
+    }
+    
+    // Check stemp for MARKER
+    std::istringstream istemp(stemp);
     int val;
-    if( !fscanf(fp, "%d ", &val) || val == MARKER)
-        return;
+    istemp >> val;
+    if(val == MARKER){
+        nptr = NULL;
+        // Increment lineNum
+        lineNum++;
+        return false;
+    }
     
-    // Else read more from file and recur for children
+    // Load node
     nptr->split_feature = val;
-    fscanf(fp, "%d ", &val);
-    nptr->obs_in_node = val;
+    istemp >> nptr->obs_in_node >> nptr->split_value >> nptr->node_prediction >>
+        nptr->node_tr_loss >> nptr->prob_node >> nptr->local_optimism >>
+        nptr->expected_max_S >> nptr->CRt >> nptr->p_split_CRt;
+
+    // Increment lineNum
+    lineNum++;
     
-    double dval;
-    fscanf(fp, "%lf ", &dval);
-    nptr->split_value = dval;
-    fscanf(fp, "%lf ", &dval);
-    nptr->node_prediction = dval;
-    fscanf(fp, "%lf ", &dval);
-    nptr->node_tr_loss = dval;
-    fscanf(fp, "%lf ", &dval);
-    nptr->prob_node = dval;
-    fscanf(fp, "%lf ", &dval);
-    nptr->local_optimism = dval;
-    fscanf(fp, "%lf ", &dval);
-    nptr->expected_max_S = dval;
-    fscanf(fp, "%lf ", &dval);
-    nptr->CRt = dval;
-    fscanf(fp, "%lf ", &dval);
-    nptr->p_split_CRt = dval;
+    // Node check value
+    bool node_success = false;
     
-    nptr->left = nptr->right = NULL;
-    deSerialize(nptr->left, fp);
-    deSerialize(nptr->right, fp);
+    // Left node
+    node* new_left = new node;
+    node_success = deSerialize(new_left, f, lineNum);
+    if(node_success)
+    {
+        nptr->left = new_left;
+    }else{
+        nptr->left = NULL;
+    }
+    
+    // Right node
+    node_success = false;
+    node* new_right = new node;
+    node_success = deSerialize(new_right, f, lineNum);
+    if(node_success)
+    {
+        nptr->right = new_right;
+    }else{
+        nptr->right = NULL;
+    }
+    
+    return true;
 }
 
 node* node::createLeaf(double node_prediction, double node_tr_loss, double local_optimism, double CRt,
@@ -144,17 +170,6 @@ node* node::createLeaf(double node_prediction, double node_tr_loss, double local
     return n;
 }
 
-/*                           
-void node::setLeft(double node_prediction, double node_tr_loss, double local_optimism, double prob_node, int obs_in_node)
-{
-    this->left = createLeaf(node_prediction, node_tr_loss, local_optimism, prob_node, obs_in_node);
-}
-
-void node::setRight(double node_prediction, double node_tr_loss, double local_optimism, double prob_node, int obs_in_node)
-{
-    this->right = createLeaf(node_prediction, node_tr_loss, local_optimism, prob_node, obs_in_node);
-}
-*/
 
 node* node::getLeft()
 {
@@ -181,18 +196,6 @@ double node::expected_reduction(double learning_rate)
     
     return learning_rate*(2.0-learning_rate)*R-learning_rate*CR;
     
-    /*
-    double cond_optimism_parent = this->local_optimism * this->prob_node;
-    double cond_optimism_left = left->local_optimism * left->prob_node;
-    double cond_optimism_right = right->local_optimism * right->prob_node;
-    double s_hat_optimism = this->split_point_optimism;
-    
-    double res = (loss_parent - loss_l - loss_r) + 
-        cond_optimism_parent - ( cond_optimism_left + cond_optimism_right + s_hat_optimism );
-    //(cond_optimism_parent - S/2.0*(cond_optimism_left+cond_optimism_right));
-    
-    return res;
-    */
 }
 
 void node::reset_node()

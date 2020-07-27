@@ -2,6 +2,8 @@
 
 S3method(predict,Rcpp_ENSEMBLE)
 S3method(predict,Rcpp_GBT_COUNT_AUTO)
+export(gbt.load)
+export(gbt.save)
 export(gbt.train)
 import(Rcpp)
 importFrom(methods,new)

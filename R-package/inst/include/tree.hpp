@@ -3,6 +3,7 @@
 #ifndef __TREE_HPP_INCLUDED__
 #define __TREE_HPP_INCLUDED__
 
+
 #include "gtbic.hpp"
 #include "node.hpp"
 #include "external_rcpp.hpp"
@@ -30,42 +31,70 @@ public:
     double getTreeOptimism(); // sum of the conditional and feature map optimism
     int getNumLeaves();
     void print_tree(int type);
-    void serialize(GBTREE *tptr, FILE *fp);
-    void deSerialize(GBTREE *&tptr, FILE *fp);
+    void serialize(GBTREE* tptr, std::ofstream& f);
+    bool deSerialize(GBTREE* tptr,  std::ifstream& f, int& lineNum);
     
 };
 
 
 // METHODS
 
-void GBTREE::serialize(GBTREE *tptr, FILE *fp)
+void GBTREE::serialize(GBTREE *tptr, std::ofstream& f)
 {
+    
     int MARKER = -1;
     // If current tree is NULL, store marker
     if(tptr == NULL)
     {
-        fprintf(fp, "%d ", MARKER);
+        f << MARKER;
         return;
     }
     
     // Else, store current tree, recur on next tree
-    tptr->root->serialize(tptr->root, fp);
-    serialize(tptr->next_tree, fp);
+    tptr->root->serialize(tptr->root, f);
+    serialize(tptr->next_tree, f);
 }
 
-void GBTREE::deSerialize(GBTREE *&tptr, FILE *fp)
+bool GBTREE::deSerialize(GBTREE *tptr, std::ifstream& f, int& lineNum)
 {
+    
     int MARKER = -1;
-    // Read next item from file. If theere are no more items or next 
-    // item is marker, then return 
+    
+    // Start at beginning
+    f.seekg(0, std::ios::beg);
+    
+    // Run until line lineNum is found
+    std::string stemp;
+    for(int i=0; i<= lineNum; i++)
+    {
+        if(!std::getline(f,stemp)){
+            tptr = NULL;
+            return false;
+        }
+    }
+    
+    // Check stemp for MARKER
+    std::istringstream istemp(stemp);
     int val;
-    if ( !fscanf(fp, "%d ", &val) || val == MARKER) 
-        return; 
+    istemp >> val;
+    if(val == MARKER){ 
+        tptr = NULL;
+        return false;
+    }
+
+    // If not MARKER, deserialize root node (unincremented lineNum)
+    tptr->root = new node;
+    tptr->root->deSerialize(tptr->root, f, lineNum); // lineNum passed by reference and incremented
+    GBTREE* new_tree = new GBTREE;
+    bool new_tree_exist = deSerialize(new_tree, f, lineNum);
+    if(new_tree_exist)
+    {
+        tptr->next_tree = new_tree;
+    }else{
+        tptr->next_tree = NULL;
+    }
     
-    // Else create root-node from file and recur on next tree
-    tptr->root->deSerialize(tptr->root, fp);
-    deSerialize(tptr->next_tree, fp);
-    
+    return true;
 }
 
     
@@ -274,46 +303,6 @@ double GBTREE::getTreeOptimism(){
             } /* End of if condition pre->right == NULL */
         } /* End of if condition current->left == NULL*/
     } /* End of while */
-    
-    
-    
-    // node* current = this->root;
-    // node* pre;
-    // 
-    // if(current == NULL){
-    //     return 0;
-    // }
-    // 
-    // while (current != NULL) { 
-    //     
-    //     if (current->left == NULL) { 
-    //         //std::cout <<  current->node_prediction << std::endl; 
-    //         tree_optimism += current->p_split_CRt; // current->local_optimism * current->prob_node;
-    //         current = current->right; 
-    //     } 
-    //     else { 
-    //         
-    //         /* Find the inorder predecessor of current */
-    //         pre = current->left; 
-    //         while (pre->right != NULL && pre->right != current) 
-    //             pre = pre->right; 
-    //         
-    //         /* Make current as right child of its inorder 
-    //          predecessor */
-    //         if (pre->right == NULL) { 
-    //             pre->right = current; 
-    //             current = current->left; 
-    //         } 
-    //         
-    //         /* Revert the changes made in if part to restore 
-    //          the original tree i.e., fix the right child 
-    //          of predecssor */
-    //         else { 
-    //             pre->right = NULL; 
-    //             current = current->right; 
-    //         } /* End of if condition pre->right == NULL */
-    //     } /* End of if condition current->left == NULL*/
-    // } /* End of while */
             
     return tree_optimism;
     

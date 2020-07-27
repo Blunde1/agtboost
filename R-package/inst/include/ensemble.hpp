@@ -42,7 +42,10 @@ public:
     double estimate_generalization_loss(int num_trees);
     int get_num_trees();
     Tvec<double> get_num_leaves();
-    //double get_extra_param();
+    void serialize(ENSEMBLE *eptr, std::ofstream& f);
+    void deSerialize(ENSEMBLE *eptr, std::ifstream& f);
+    void save_model(std::string filepath);
+    void load_model(std::string filepath);
 };
 
 
