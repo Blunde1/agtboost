@@ -4,3 +4,4 @@ high-dimensions                   Performance with p>>n
 global-subset-comparison          Illustration of field greedy_complexities
 poisson-regression                Simple poisson regression
 stock-market-classification       Performance under (almost) complete noise
+save-load-model                   Store/load a model to/from a txt file
