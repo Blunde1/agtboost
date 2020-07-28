@@ -46,7 +46,7 @@ gbt.ksval <- function(object, y, x)
     
     # Model specifics
     loss_type <- object$get_loss_function()
-    mu_pred <- predict(mod, x)
+    mu_pred <- predict(object, x)
     
     
     # cdf transform
