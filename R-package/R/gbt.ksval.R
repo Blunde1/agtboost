@@ -89,10 +89,10 @@ gbt.ksval <- function(object, y, x)
     # ks.test and histogram
     res <- ks.test(u, "punif")
     hist(u, freq=FALSE, oma=c(2, 3, 5, 2)+0.1, main=NULL, xlab="CDF transformed observations")
-    mytitle="Histogram: Model-CDF transfored observations" 
+    mytitle="Histogram: Model-CDF transformed observations" 
     mysubtitle=paste0(res$method, ": ", format(res$p.value))
-    mtext(side=3, line=3, at=-0.07, adj=0, cex=1, mytitle)
-    mtext(side=3, line=2, at=-0.07, adj=0, cex=0.7, mysubtitle)
+    mtext(side=3, line=2.5, at=-0.07, adj=0, cex=1.1, mytitle)
+    mtext(side=3, line=1.5, at=-0.07, adj=0, cex=0.8, mysubtitle)
     
     return(res)
 }

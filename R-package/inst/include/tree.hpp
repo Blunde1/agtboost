@@ -33,6 +33,7 @@ public:
     void print_tree(int type);
     void serialize(GBTREE* tptr, std::ofstream& f);
     bool deSerialize(GBTREE* tptr,  std::ifstream& f, int& lineNum);
+    void importance(Tvec<double> &importance_vector, double learning_rate);
     
 };
 
@@ -305,6 +306,55 @@ double GBTREE::getTreeOptimism(){
     } /* End of while */
             
     return tree_optimism;
+    
+}
+
+void GBTREE::importance(Tvec<double> &importance_vector, double learning_rate){
+    
+    // Recurse tree and sum importance (reduction in generalization loss)
+    int importance_feature = 0;
+    
+    node* current = this->root;
+    node* pre;
+    
+    if(current == NULL){
+        return;
+    }
+    
+    while (current != NULL) { 
+        
+        if (current->left == NULL) { 
+            //std::cout <<  current->node_prediction << std::endl; 
+            //conditional_opt_leaves += current->local_optimism * current->prob_node;
+            current = current->right; 
+        } 
+        else { 
+            
+            /* Find the inorder predecessor of current */
+            pre = current->left; 
+            while (pre->right != NULL && pre->right != current) 
+                pre = pre->right; 
+            
+            /* Make current as right child of its inorder 
+             predecessor */
+            if (pre->right == NULL) { 
+                pre->right = current; 
+                current = current->left; 
+            } 
+            
+            /* Revert the changes made in if part to restore 
+             the original tree i.e., fix the right child 
+             of predecssor */
+            else { 
+                pre->right = NULL; 
+                importance_feature = current->split_feature;
+                importance_vector[importance_feature] += current->expected_reduction(learning_rate);
+                current = current->right; 
+            } /* End of if condition pre->right == NULL */
+        } /* End of if condition current->left == NULL*/
+    } /* End of while */
+            
+    return;
     
 }
 

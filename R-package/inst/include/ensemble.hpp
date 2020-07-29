@@ -46,6 +46,7 @@ public:
     void deSerialize(ENSEMBLE *eptr, std::ifstream& f);
     void save_model(std::string filepath);
     void load_model(std::string filepath);
+    Tvec<double> importance(int ncols);
 };
 
 

@@ -344,6 +344,26 @@ void ENSEMBLE::train_from_preds(Tvec<double> &pred, Tvec<double> &y, Tmat<double
     }
 }
 
+Tvec<double> ENSEMBLE::importance(int ncols)
+{
+    // Vector with importance
+    Tvec<double> importance_vector(ncols);
+    importance_vector.setZero();
+    
+    // Go through each tree to fill importance vector
+    GBTREE* current = this->first_tree;
+    while(current != NULL)
+    {
+        current->importance(importance_vector, this->learning_rate);
+        current = current->next_tree;
+    }
+    
+    // Scale and return percentwise
+    Tvec<double> importance_vec_percent = importance_vector.array()/importance_vector.sum();
+    
+    return importance_vec_percent;
+}
+
 Tvec<double> ENSEMBLE::predict(Tmat<double> &X){
     int n = X.rows();
     Tvec<double> pred(n);
@@ -597,6 +617,7 @@ RCPP_MODULE(MyModule) {
         .method("get_num_leaves", &ENSEMBLE::get_num_leaves)
         .method("save_model", &ENSEMBLE::save_model)
         .method("load_model", &ENSEMBLE::load_model)
+        .method("importance", &ENSEMBLE::importance)
     ;
     
     class_<GBT_COUNT_AUTO>("GBT_COUNT_AUTO")
