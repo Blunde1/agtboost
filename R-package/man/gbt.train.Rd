@@ -5,7 +5,7 @@
 \title{GBTorch Training.}
 \usage{
 gbt.train(y, x, learning_rate = 0.01, loss_function = "mse",
-  nrounds = 50000, verbose = 0, greedy_complexities = FALSE,
+  nrounds = 50000, verbose = 0, gsub_compare = TRUE,
   previous_pred = NULL, weights = NULL,
   force_continued_learning = FALSE, ...)
 }
@@ -24,10 +24,6 @@ gbt.train(y, x, learning_rate = 0.01, loss_function = "mse",
 \item \code{gamma::neginv} gamma regression using the canonical negative inverse link. Scaling independent of y.
 \item \code{gamma::log} gamma regression using the log-link. Constant information parametrisation. 
 \item \code{negbinom} Negative binomial regression for count data with overdispersion. Log-link.
-\item \code{poisson::zip} Conditional Zero-Inflated Poisson (ZIP) regression, for modelling the Poisson intensity in a ZIP regression model. Log-link.
-\item \code{zero_inflation::poisson} Zero-inflated Poisson. Mean predictions.
-\item \code{zero_inflation::negbinom} Zero-inflated negative binomial (Poisson-gamma mixture). Mean predictions.
-\item \code{zero_inflation::auto} Zero inflation that automatically chooses between the ordinary Poisson and a mixture as the conditional count process. Mean predictions.
 \item \code{count::auto} Chooses automatically between Poisson or negative binomial regression.
 }}
 
@@ -35,7 +31,7 @@ gbt.train(y, x, learning_rate = 0.01, loss_function = "mse",
 
 \item{verbose}{Enable boosting tracing information at i-th iteration? Default: \code{0}.}
 
-\item{greedy_complexities}{Boolean: \code{FALSE} means standard GTB, \code{TRUE} means greedy complexity tree-building. Default: \code{FALSE} (temporary).}
+\item{gsub_compare}{Boolean: Global-subset comparisons. \code{FALSE} means standard GTB, \code{TRUE} compare subset-splits with global splits (next root split). Default: \code{TRUE}.}
 
 \item{previous_pred}{prediction vector for training. Boosted training given predictions from another model.}
 
@@ -44,12 +40,11 @@ gbt.train(y, x, learning_rate = 0.01, loss_function = "mse",
 \item{force_continued_learning}{Boolean: \code{FALSE} (default) stops at information stopping criterion, \code{TRUE} stops at \code{nround} iterations.}
 }
 \value{
-An object of class \code{ENSEMBLE} or \code{GBT_ZI_MIX} with some or all of the following elements:
+An object of class \code{ENSEMBLE} with some or all of the following elements:
 \itemize{
   \item \code{handle} a handle (pointer) to the gbtorch model in memory.
   \item \code{initialPred} a field containing the initial prediction of the ensemble.
   \item \code{set_param} function for changing the parameters of the ensemble.
-  \item \code{get_param} function for looking up the parameters of the ensemble.
   \item \code{train} function for re-training (or from scratch) the ensemble directly on vector \code{y} and design matrix \code{x}.
   \item \code{predict} function for predicting observations given a design matrix
   \item \code{predict2} function as above, but takes a parameter max number of boosting ensemble iterations.

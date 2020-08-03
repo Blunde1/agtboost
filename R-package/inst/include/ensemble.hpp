@@ -11,20 +11,28 @@
 class ENSEMBLE
 {
 public:
+    int nrounds;
     double initialPred;
     double learning_rate;
     double initial_score;
     double extra_param; // Needed for certain distributions s.a. negative binomial, typically a dispersion param
+    std::string loss_function;
     GBTREE* first_tree;
-    Rcpp::List param;
+    //Rcpp::List param;
     
     // constructors
     ENSEMBLE();
     ENSEMBLE(double learning_rate_);
     
     // Functions
-    void set_param(Rcpp::List par_list);
-    Rcpp::List get_param();
+    //void set_param(Rcpp::List par_list);
+    //Rcpp::List get_param();
+    void set_param(int nrounds_, double learning_rate_, double extra_param_, std::string loss_function_);
+    int get_nrounds();
+    double get_learning_rate();
+    double get_extra_param();
+    std::string get_loss_function();
+    
     double initial_prediction(Tvec<double> &y, std::string loss_function, Tvec<double> &w);
     void train(Tvec<double> &y, Tmat<double> &X, int verbose, bool greedy_complexities,
                bool force_continued_learning, Tvec<double> &w);
@@ -34,7 +42,11 @@ public:
     double estimate_generalization_loss(int num_trees);
     int get_num_trees();
     Tvec<double> get_num_leaves();
-    double get_extra_param();
+    void serialize(ENSEMBLE *eptr, std::ofstream& f);
+    void deSerialize(ENSEMBLE *eptr, std::ifstream& f);
+    void save_model(std::string filepath);
+    void load_model(std::string filepath);
+    Tvec<double> importance(int ncols);
 };
 
 

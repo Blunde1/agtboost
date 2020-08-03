@@ -36,8 +36,6 @@ public:
     node* createLeaf(double node_prediction, double node_tr_loss, double local_optimism, double CRt,
                      int obs_in_node, int obs_in_parent, int obs_tot);
     
-    //void setLeft(double node_prediction, double node_tr_loss, double local_optimism, double prob_node, int obs_in_node);
-    //void setRight(double node_prediction, double node_tr_loss, double local_optimism, double prob_node, int obs_in_node);
     node* getLeft();
     node* getRight();
     
@@ -48,17 +46,112 @@ public:
     bool split_information(const Tvec<double> &g, const Tvec<double> &h, const Tmat<double> &X,
                            const Tmat<double> &cir_sim, const int n);
     
-    double expected_reduction();
+    double expected_reduction(double learning_rate = 1.0);
     
     void reset_node(); // if no-split, reset j, s_j, E[S] and child nodes
     
     void print_child_branches(const std::string& prefix, const node* nptr, bool isLeft);
     void print_child_branches_2(const std::string& prefix, const node* nptr, bool isLeft);
     
+    void serialize(node* nptr, std::ofstream& f);
+    bool deSerialize(node *nptr, std::ifstream& f, int& lineNum);
 };
 
 
 // METHODS
+
+void node::serialize(node* nptr, std::ofstream& f)
+{
+    // Check for null
+    int MARKER = -1;
+    if(nptr == NULL)
+    {
+        f << MARKER << "\n";
+        return;
+    }
+    
+    // Else, store information on node
+    f << std::fixed << nptr->split_feature << " ";
+    f << std::fixed << nptr->obs_in_node << " ";
+    f << std::fixed << nptr->split_value << " ";
+    f << std::fixed << nptr->node_prediction << " ";
+    f << std::fixed << nptr->node_tr_loss << " ";
+    f << std::fixed << nptr->prob_node << " ";
+    f << std::fixed << nptr->local_optimism << " ";
+    f << std::fixed << nptr->expected_max_S << " ";
+    f << std::fixed << nptr->CRt << " ";
+    f << std::fixed << nptr->p_split_CRt << "\n";
+
+    // Recurrence
+    serialize(nptr->left, f);
+    serialize(nptr->right, f);
+    
+}
+
+bool node::deSerialize(node *nptr, std::ifstream& f, int& lineNum)
+{
+    
+    int MARKER = -1;
+    
+    // Start at beginning
+    f.seekg(0, std::ios::beg);
+    
+    // Run until line lineNum is found
+    std::string stemp;
+    for(int i=0; i<= lineNum; i++)
+    {
+        if(!std::getline(f,stemp)){
+            nptr = NULL;
+            return false;
+        }
+    }
+    
+    // Check stemp for MARKER
+    std::istringstream istemp(stemp);
+    int val;
+    istemp >> val;
+    if(val == MARKER){
+        nptr = NULL;
+        // Increment lineNum
+        lineNum++;
+        return false;
+    }
+    
+    // Load node
+    nptr->split_feature = val;
+    istemp >> nptr->obs_in_node >> nptr->split_value >> nptr->node_prediction >>
+        nptr->node_tr_loss >> nptr->prob_node >> nptr->local_optimism >>
+        nptr->expected_max_S >> nptr->CRt >> nptr->p_split_CRt;
+
+    // Increment lineNum
+    lineNum++;
+    
+    // Node check value
+    bool node_success = false;
+    
+    // Left node
+    node* new_left = new node;
+    node_success = deSerialize(new_left, f, lineNum);
+    if(node_success)
+    {
+        nptr->left = new_left;
+    }else{
+        nptr->left = NULL;
+    }
+    
+    // Right node
+    node_success = false;
+    node* new_right = new node;
+    node_success = deSerialize(new_right, f, lineNum);
+    if(node_success)
+    {
+        nptr->right = new_right;
+    }else{
+        nptr->right = NULL;
+    }
+    
+    return true;
+}
 
 node* node::createLeaf(double node_prediction, double node_tr_loss, double local_optimism, double CRt,
                        int obs_in_node, int obs_in_parent, int obs_tot)
@@ -77,17 +170,6 @@ node* node::createLeaf(double node_prediction, double node_tr_loss, double local
     return n;
 }
 
-/*                           
-void node::setLeft(double node_prediction, double node_tr_loss, double local_optimism, double prob_node, int obs_in_node)
-{
-    this->left = createLeaf(node_prediction, node_tr_loss, local_optimism, prob_node, obs_in_node);
-}
-
-void node::setRight(double node_prediction, double node_tr_loss, double local_optimism, double prob_node, int obs_in_node)
-{
-    this->right = createLeaf(node_prediction, node_tr_loss, local_optimism, prob_node, obs_in_node);
-}
-*/
 
 node* node::getLeft()
 {
@@ -99,7 +181,7 @@ node* node::getRight()
     return this->right;
 }
 
-double node::expected_reduction()
+double node::expected_reduction(double learning_rate)
 {
     // Calculate expected reduction on node
     node* left = this->left;
@@ -112,20 +194,8 @@ double node::expected_reduction()
     double R = (loss_parent - loss_l - loss_r);
     double CR = left->p_split_CRt + right->p_split_CRt;
     
-    return R-CR;
+    return learning_rate*(2.0-learning_rate)*R-learning_rate*CR;
     
-    /*
-    double cond_optimism_parent = this->local_optimism * this->prob_node;
-    double cond_optimism_left = left->local_optimism * left->prob_node;
-    double cond_optimism_right = right->local_optimism * right->prob_node;
-    double s_hat_optimism = this->split_point_optimism;
-    
-    double res = (loss_parent - loss_l - loss_r) + 
-        cond_optimism_parent - ( cond_optimism_left + cond_optimism_right + s_hat_optimism );
-    //(cond_optimism_parent - S/2.0*(cond_optimism_left+cond_optimism_right));
-    
-    return res;
-    */
 }
 
 void node::reset_node()
@@ -378,10 +448,14 @@ void node::split_node(Tvec<double> &g, Tvec<double> &h, Tmat<double> &X, Tmat<do
         // depth==0: calculate next_tree_score
         if(depth==0){
             // Quadratic approximation
-            next_tree_score = std::max(0.0, expected_reduction * (1.0 - learning_rate*(2.0-learning_rate)) );
+            // Compare with this root loss = next root loss
+            // Can perhaps be done a little better...
+            next_tree_score = std::max(0.0, nptr->expected_reduction(1.0));
+            //next_tree_score = std::max(0.0, expected_reduction * (1.0 - learning_rate*(2.0-learning_rate)) );
         }
         
-        double expected_reduction_normalized = expected_reduction / (nptr->prob_node);
+        double expected_reduction_normalized = nptr->expected_reduction(1.0) / nptr->prob_node;
+        //double expected_reduction_normalized = expected_reduction / (nptr->prob_node);
         
         // Check trade-off
         if(expected_reduction_normalized < next_tree_score && depth > 0){

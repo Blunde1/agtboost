@@ -22,18 +22,18 @@ y.test <- rnorm(500, 5* x.test, 1)
 
 
 # -- Train models --
-greedy_tree_mod <- gbt.train(y, x, verbose=1, greedy_complexities=F)
-greedy_complexities_mod <- gbt.train(y, x, verbose=1, greedy_complexities=T)
+mod_vanilla <- gbt.train(y, x, verbose=1, gsub_compare=F)
+mod_gsubc <- gbt.train(y, x, verbose=1, gsub_compare=T)
 
 
 # -- Predict on test --
 # greedy tree
-y.pred.vanilla <- predict( greedy_tree_mod, as.matrix( x.test ) )
+y.pred.vanilla <- predict( mod_vanilla, as.matrix( x.test ) )
 plot(x.test, y.test)
 points(x.test, y.pred.vanilla, col="red")
 mean((y.test - y.pred.vanilla)^2)
 # greedy complexities
-y.pred.modified <- predict( greedy_complexities_mod, as.matrix( x.test ) )
+y.pred.modified <- predict( mod_gsubc, as.matrix( x.test ) )
 #plot(x.test, y.test)
 points(x.test, y.pred.modified, col="blue")
 mean((y.test - y.pred.modified)^2)
@@ -42,22 +42,22 @@ mean((y.test - y.pred.modified)^2)
 # -- ILLUSTRATION --
 # Greedy tree algorithm
 plot(x,y)
-k1 <- greedy_tree_mod$get_num_trees()
+k1 <- mod_vanilla$get_num_trees()
 for(k in ceiling(seq(1,k1, length.out = 10))){
     # pred
     cat("Predictions from the ", k, " first trees in the ensemble \n")
-    preds <- greedy_tree_mod$predict2(x, k)
+    preds <- mod_vanilla$predict2(x, k)
     points(x,preds, col=k)
     Sys.sleep(1)
 }
 
 # Greedy complexities algorithm
 plot(x,y)
-k2 <- greedy_complexities_mod$get_num_trees()
+k2 <- mod_gsubc$get_num_trees()
 for(k in ceiling(seq(1,k2, length.out = 10))){
     # pred
     cat("Predictions from the ", k, " first trees in the ensemble \n")
-    preds <- greedy_complexities_mod$predict2(x, k)
+    preds <- mod_gsubc$predict2(x, k)
     points(x,preds, col=k)
     Sys.sleep(1)
 }

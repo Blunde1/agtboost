@@ -9,74 +9,75 @@
 #include "external_rcpp.hpp"
 #include "ensemble.hpp"
 
-// Use optimization to find solution lambda = lambertW1(-a*exp(-a))+a, where a=mean(y)
-double poisson_zip_start(double a){
-    // a is mean
-    // Optimize on log-level
-    
-    double pred = log(a);
-    int NITER = 100;
-    double TRESH = 1e-9;
-    double step, g, h;
-    int i=0;
-    for(i=0; i<NITER; i++){
-        
-        // Grad and Hess of likelihood
-        g = exp(pred) - a + exp(pred)/(exp(exp(pred))-1.0);
-        h = exp(pred) + exp(pred)*(exp(exp(pred))-exp(pred+exp(pred))-1.0) / 
-            ( (exp(exp(pred))-1.0)*(exp(exp(pred))-1.0) );
-        
-        step = -g/h;
-        pred += step;
-        //Rcpp::Rcout << "lambda initial: " << exp(pred) << " - step: " << step << std::endl;
-        
-        if(std::abs(step)<TRESH){
-            break;
-        }
-        
-    }
-    Rcpp::Rcout << "Estimated Poisson intensity: " << exp(pred) << " - After " << i << " iterations" << std::endl;
-    return pred;
-}
+// // Use optimization to find solution lambda = lambertW1(-a*exp(-a))+a, where a=mean(y)
+// double poisson_zip_start(double a){
+//     // a is mean
+//     // Optimize on log-level
+//     
+//     double pred = log(a);
+//     int NITER = 100;
+//     double TRESH = 1e-9;
+//     double step, g, h;
+//     int i=0;
+//     for(i=0; i<NITER; i++){
+//         
+//         // Grad and Hess of likelihood
+//         g = exp(pred) - a + exp(pred)/(exp(exp(pred))-1.0);
+//         h = exp(pred) + exp(pred)*(exp(exp(pred))-exp(pred+exp(pred))-1.0) / 
+//             ( (exp(exp(pred))-1.0)*(exp(exp(pred))-1.0) );
+//         
+//         step = -g/h;
+//         pred += step;
+//         //Rcpp::Rcout << "lambda initial: " << exp(pred) << " - step: " << step << std::endl;
+//         
+//         if(std::abs(step)<TRESH){
+//             break;
+//         }
+//         
+//     }
+//     Rcpp::Rcout << "Estimated Poisson intensity: " << exp(pred) << " - After " << i << " iterations" << std::endl;
+//     return pred;
+// }
+// 
+// // Use optimization to find starting point of negbinom::zinb (minimize likelihood w.r.t. mu:= exp(pred))
+// double negbinom_zinb_start(double a, double dispersion){
+//     
+//     // a is mean
+//     // optimize on log-level
+//     double pred = log(a);
+//     int NITER = 100;
+//     double TRESH = 1e-9;
+//     double step, g, h;
+//     int i=0;
+//     for(i=0; i<NITER; i++){
+//         
+//         // Grad and Hess of likelihood
+//         g = -a + (a+dispersion)*exp(pred) / (dispersion + exp(pred)) + 
+//             dispersion*exp(pred) / 
+//             ( (dispersion+exp(pred))*( exp(dispersion*(log(dispersion+exp(pred))-log(dispersion))) -1.0 ));
+//         h = (a+dispersion)*dispersion*exp(pred) / 
+//             ( (dispersion + exp(pred))*(dispersion + exp(pred)) ) - 
+//             // d^2/dx^2 log(p(y>0))
+//             -dispersion*dispersion*exp(pred)*
+//             ((exp(pred)-1.0)*exp(dispersion*(log(dispersion+exp(pred))-log(dispersion))) +1.0 ) / 
+//             (exp(2.0*log(dispersion+exp(pred))) * 
+//             pow(exp(dispersion*(log(dispersion+exp(pred))-log(dispersion))) - 1.0, 2.0 )  );
+//         
+//         step = -g/h;
+//         pred += step;
+//         //Rcpp::Rcout << "lambda initial: " << exp(pred) << " - step: " << step << std::endl;
+//         
+//         if(std::abs(step)<TRESH){
+//             break;
+//         }
+//         
+//     }
+//     Rcpp::Rcout << "Estimated negbinom mean: " << exp(pred) << " - After " << i << " iterations" << std::endl;
+//     
+//     return pred;
+// }
 
-// Use optimization to find starting point of negbinom::zinb (minimize likelihood w.r.t. mu:= exp(pred))
-double negbinom_zinb_start(double a, double dispersion){
-    
-    // a is mean
-    // optimize on log-level
-    double pred = log(a);
-    int NITER = 100;
-    double TRESH = 1e-9;
-    double step, g, h;
-    int i=0;
-    for(i=0; i<NITER; i++){
-        
-        // Grad and Hess of likelihood
-        g = -a + (a+dispersion)*exp(pred) / (dispersion + exp(pred)) + 
-            dispersion*exp(pred) / 
-            ( (dispersion+exp(pred))*( exp(dispersion*(log(dispersion+exp(pred))-log(dispersion))) -1.0 ));
-        h = (a+dispersion)*dispersion*exp(pred) / 
-            ( (dispersion + exp(pred))*(dispersion + exp(pred)) ) - 
-            // d^2/dx^2 log(p(y>0))
-            -dispersion*dispersion*exp(pred)*
-            ((exp(pred)-1.0)*exp(dispersion*(log(dispersion+exp(pred))-log(dispersion))) +1.0 ) / 
-            (exp(2.0*log(dispersion+exp(pred))) * 
-            pow(exp(dispersion*(log(dispersion+exp(pred))-log(dispersion))) - 1.0, 2.0 )  );
-        
-        step = -g/h;
-        pred += step;
-        //Rcpp::Rcout << "lambda initial: " << exp(pred) << " - step: " << step << std::endl;
-        
-        if(std::abs(step)<TRESH){
-            break;
-        }
-        
-    }
-    Rcpp::Rcout << "Estimated negbinom mean: " << exp(pred) << " - After " << i << " iterations" << std::endl;
-    
-    return pred;
-}
-
+/*
 double zero_inflation_start(Tvec<double>& y, ENSEMBLE* ens_ptr)
 {
     // retrieve lambda_est
@@ -100,6 +101,7 @@ double zero_inflation_start(Tvec<double>& y, ENSEMBLE* ens_ptr)
     
     return log(prob) - log(1.0-prob); // logit transform
 }
+*/
 
 // nll negbinom
 double nll_negbinom(Tvec<double>& y, Tvec<double>& lambda, double alpha)
@@ -133,22 +135,22 @@ double gdnbinom(Tvec<double>& y, Tvec<double>& lambda, double alpha)
     return g/n;
 }
 
-// grad w.r.t. alpha := log(dispersion)
-double gdnbinom_zi(Tvec<double>& y, Tvec<double>& lambda, double alpha)
-{
-    // lambda := log(mu)
-    // alpha := log(dispersion) = log(size)
-    double g = 0.0;
-    int n = y.size();
-    for(int i=0; i<n; i++){
-        g += y[i]-exp(lambda[i]-alpha)*(exp(alpha)+y[i])/(exp(lambda[i]-alpha)+1) + 
-            exp(alpha)*log(exp(lambda[i]-alpha)+1) - 
-            exp(alpha)*R::digamma(y[i]+exp(alpha)) + exp(alpha)*R::digamma(exp(alpha)) -
-            (exp(lambda[i])/(exp(lambda[i]-alpha)+1.0)-exp(alpha)*log(exp(lambda[i]-alpha) + 1.0)) / 
-            (exp(exp(alpha)*log(exp(lambda[i]-alpha)+1.0)) - 1.0);
-    }
-    return g/n;
-}
+// // grad w.r.t. alpha := log(dispersion)
+// double gdnbinom_zi(Tvec<double>& y, Tvec<double>& lambda, double alpha)
+// {
+//     // lambda := log(mu)
+//     // alpha := log(dispersion) = log(size)
+//     double g = 0.0;
+//     int n = y.size();
+//     for(int i=0; i<n; i++){
+//         g += y[i]-exp(lambda[i]-alpha)*(exp(alpha)+y[i])/(exp(lambda[i]-alpha)+1) + 
+//             exp(alpha)*log(exp(lambda[i]-alpha)+1) - 
+//             exp(alpha)*R::digamma(y[i]+exp(alpha)) + exp(alpha)*R::digamma(exp(alpha)) -
+//             (exp(lambda[i])/(exp(lambda[i]-alpha)+1.0)-exp(alpha)*log(exp(lambda[i]-alpha) + 1.0)) / 
+//             (exp(exp(alpha)*log(exp(lambda[i]-alpha)+1.0)) - 1.0);
+//     }
+//     return g/n;
+// }
 
 // hess w.r.t. alpha := log(dispersion)
 double hdnbinom(Tvec<double>& y, Tvec<double>& lambda, double alpha){
@@ -167,33 +169,33 @@ double hdnbinom(Tvec<double>& y, Tvec<double>& lambda, double alpha){
     return h/n;
 }
 
-// hess w.r.t. alpha := log(dispersion)
-double hdnbinom_zi(Tvec<double>& y, Tvec<double>& lambda, double alpha){
-    
-    // lambda := log(mu)
-    // alpha := log(dispersion) = log(size)
-    double h = 0.0;
-    int n = y.size();
-    for(int i=0; i<n; i++){
-        h += (exp(lambda[i]-alpha)/(exp(lambda[i]-alpha)+1) - exp(2*(lambda[i]-alpha))/pow(exp(lambda[i]-alpha)+1,2))*(exp(alpha)+y[i]) - 
-            2*exp(lambda[i])/(exp(lambda[i]-alpha)+1) + exp(alpha)*log(exp(lambda[i]-alpha)+1) - 
-            exp(alpha)*R::digamma(y[i]+exp(alpha)) - exp(2*alpha)*R::trigamma(y[i]+exp(alpha)) + 
-            exp(alpha)*R::digamma(exp(alpha)) + exp(2*alpha)*R::trigamma(exp(alpha)) -
-        // d^2/dx^2 log(p(y>0)) where x is log(dispersion)
-        // First fraction
-        exp(-2.0*exp(alpha)*log(exp(lambda[i]-alpha)+1.0))*(exp(lambda[i])/(exp(lambda[i]-alpha)+1.0)-exp(alpha)*log(exp(lambda[i]-alpha)+1.0)) * 
-        (exp(lambda[i])/(exp(lambda[i]-alpha)+1.0)-exp(alpha)*log(exp(lambda[i]-alpha)+1.0)) / 
-        pow(1.0-exp(-exp(lambda[i])*log(exp(lambda[i]-alpha)+1.0)), 2.0) - 
-        // Second fraction
-        exp(-exp(alpha)*log(exp(lambda[i]-alpha)+1.0)) * 
-        (exp(lambda[i])/(exp(lambda[i]-alpha)+1.0) + exp(2.0*lambda[i]-alpha)/pow(exp(lambda[i]-alpha)+1.0,2.0)  -exp(alpha)*log(exp(lambda[i]-alpha)+1.0)) / 
-        (1.0-exp(-exp(lambda[i])*log(exp(lambda[i]-alpha)+1.0)));
-        // Third fraction
-        
-    }
-        
-    return h/n;
-}
+// // hess w.r.t. alpha := log(dispersion)
+// double hdnbinom_zi(Tvec<double>& y, Tvec<double>& lambda, double alpha){
+//     
+//     // lambda := log(mu)
+//     // alpha := log(dispersion) = log(size)
+//     double h = 0.0;
+//     int n = y.size();
+//     for(int i=0; i<n; i++){
+//         h += (exp(lambda[i]-alpha)/(exp(lambda[i]-alpha)+1) - exp(2*(lambda[i]-alpha))/pow(exp(lambda[i]-alpha)+1,2))*(exp(alpha)+y[i]) - 
+//             2*exp(lambda[i])/(exp(lambda[i]-alpha)+1) + exp(alpha)*log(exp(lambda[i]-alpha)+1) - 
+//             exp(alpha)*R::digamma(y[i]+exp(alpha)) - exp(2*alpha)*R::trigamma(y[i]+exp(alpha)) + 
+//             exp(alpha)*R::digamma(exp(alpha)) + exp(2*alpha)*R::trigamma(exp(alpha)) -
+//         // d^2/dx^2 log(p(y>0)) where x is log(dispersion)
+//         // First fraction
+//         exp(-2.0*exp(alpha)*log(exp(lambda[i]-alpha)+1.0))*(exp(lambda[i])/(exp(lambda[i]-alpha)+1.0)-exp(alpha)*log(exp(lambda[i]-alpha)+1.0)) * 
+//         (exp(lambda[i])/(exp(lambda[i]-alpha)+1.0)-exp(alpha)*log(exp(lambda[i]-alpha)+1.0)) / 
+//         pow(1.0-exp(-exp(lambda[i])*log(exp(lambda[i]-alpha)+1.0)), 2.0) - 
+//         // Second fraction
+//         exp(-exp(alpha)*log(exp(lambda[i]-alpha)+1.0)) * 
+//         (exp(lambda[i])/(exp(lambda[i]-alpha)+1.0) + exp(2.0*lambda[i]-alpha)/pow(exp(lambda[i]-alpha)+1.0,2.0)  -exp(alpha)*log(exp(lambda[i]-alpha)+1.0)) / 
+//         (1.0-exp(-exp(lambda[i])*log(exp(lambda[i]-alpha)+1.0)));
+//         // Third fraction
+//         
+//     }
+//         
+//     return h/n;
+// }
 
 double learn_dispersion(Tvec<double>& y, Tvec<double>& lambda, double disp_init=0.5)
 {
@@ -204,7 +206,7 @@ double learn_dispersion(Tvec<double>& y, Tvec<double>& lambda, double disp_init=
     Tvec<double> ldisp_check = Tvec<double>::LinSpaced(200, -2.0, 10.0);
     //Tvec<double> disp = exp(ldisp_check.array()).matrix();
     int nd=ldisp_check.size();
-    double best_ldisp, best_nll, nll_check;
+    double best_ldisp=1.0, best_nll, nll_check;
     for(int i=0; i<nd; i++)
     {
         // Check all values og log-likelihood for values of disp
@@ -256,39 +258,39 @@ double learn_dispersion(Tvec<double>& y, Tvec<double>& lambda, double disp_init=
     return exp(ldisp);
 }
 
-double learn_dispersion_zi(Tvec<double>& y, Tvec<double>& lambda)
-{
-    // lambda := log(mu)
-    // alpha := log(dispersion) = log(size)
-    double ldisp = log(1.0);
-    int NITER = 100;
-    double TRESH = 1e-9;
-    double MAXTRESH = 1e7;
-    int i=0;
-    double step, g, h;
-    for(i=0; i<NITER; i++){
-        
-        // Grad and Hess of likelihood
-        g = gdnbinom_zi(y, lambda, ldisp);
-        h = hdnbinom_zi(y, lambda, ldisp); // Hopefully okay...
-        
-        step = -g/h;
-        ldisp += step;
-        //Rcpp::Rcout << "dispersion initial: " << exp(ldisp) << " - step: " << step << std::endl;
-        
-        if(std::abs(step)<TRESH){
-            // Convergence
-            break;
-        }
-        if(std::isnan(exp(ldisp)) || exp(ldisp)>MAXTRESH){
-            // Divergence -- When Poisson is correct
-            ldisp = log(MAXTRESH);
-            break;
-        }
-
-    }
-    Rcpp::Rcout << "Estimated dispersion: " << exp(ldisp) << " - After " << i << " iterations" << std::endl;
-    return exp(ldisp);
-}
+// double learn_dispersion_zi(Tvec<double>& y, Tvec<double>& lambda)
+// {
+//     // lambda := log(mu)
+//     // alpha := log(dispersion) = log(size)
+//     double ldisp = log(1.0);
+//     int NITER = 100;
+//     double TRESH = 1e-9;
+//     double MAXTRESH = 1e7;
+//     int i=0;
+//     double step, g, h;
+//     for(i=0; i<NITER; i++){
+//         
+//         // Grad and Hess of likelihood
+//         g = gdnbinom_zi(y, lambda, ldisp);
+//         h = hdnbinom_zi(y, lambda, ldisp); // Hopefully okay...
+//         
+//         step = -g/h;
+//         ldisp += step;
+//         //Rcpp::Rcout << "dispersion initial: " << exp(ldisp) << " - step: " << step << std::endl;
+//         
+//         if(std::abs(step)<TRESH){
+//             // Convergence
+//             break;
+//         }
+//         if(std::isnan(exp(ldisp)) || exp(ldisp)>MAXTRESH){
+//             // Divergence -- When Poisson is correct
+//             ldisp = log(MAXTRESH);
+//             break;
+//         }
+// 
+//     }
+//     Rcpp::Rcout << "Estimated dispersion: " << exp(ldisp) << " - After " << i << " iterations" << std::endl;
+//     return exp(ldisp);
+// }
 
 #endif

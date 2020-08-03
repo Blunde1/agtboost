@@ -65,7 +65,7 @@ LogLossBinary = function(y, x) {
 # Does the models beat the average constant prediction from train?
 # Or do they overfit?
 LogLossBinary(y.test, mean(y.train))
-LogLossBinary(y.test, 1/(1+exp(-iegtb.pred))) # score is before logistic transformation
+LogLossBinary(y.test, iegtb.pred) # score is before logistic transformation
 LogLossBinary(y.test, glm.pred)
 LogLossBinary(y.test, rf.pred)
 LogLossBinary(y.test, xgb.pred)
