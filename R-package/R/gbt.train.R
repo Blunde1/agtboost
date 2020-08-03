@@ -24,7 +24,7 @@
 #' @param ... additional parameters passed.
 #'   \itemize{
 #'   \item if loss_function is 'negbinom', dispersion must be provided in \code{...}
-#'   }
+#'   } 
 #'
 #' @details
 #' These are the training functions for an \code{agtboost}.
