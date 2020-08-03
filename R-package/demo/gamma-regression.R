@@ -1,9 +1,9 @@
-# gbtorch gamma regression
+# agtboost gamma regression
 # log and negative inverse link functions
 # Berent Lunde
 # 10.11.2019
 
-library(gbtorch)
+library(agtboost)
 
 # NEGATIVE INVERSE LINK
 # Simulate gamma glm data with negative inverse link

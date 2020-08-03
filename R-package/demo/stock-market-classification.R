@@ -1,5 +1,5 @@
 # Libraries
-library(gbtorch)
+library(agtboost)
 library(xgboost)
 library(randomForest)
 library(ISLR) # Contains the "Smarket" data

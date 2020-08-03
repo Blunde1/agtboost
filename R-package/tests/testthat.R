@@ -1,4 +1,4 @@
 library(testthat)
-library(gbtorch)
+library(agtboost)
 
-test_check("gbtorch")
+test_check("agtboost")

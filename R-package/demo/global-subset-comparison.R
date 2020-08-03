@@ -3,13 +3,13 @@
 # 26.09.2019
 
 # Description: Illustrates the difference of standard gradient tree boosting 
-# which is implemented in V1 GBTorch (greedy_complexities = FALSE) and the 
-# V2 GBTorch greedy complexities algorithm (greedy_complexities = TRUE).
+# which is implemented in V1 aGTBoost (greedy_complexities = FALSE) and the 
+# V2 aGTBoost greedy complexities algorithm (greedy_complexities = TRUE).
 # References to future paper is coming...!
 
 
-# Load GBTorch library
-library(gbtorch)
+# Load aGTBoost library
+library(agtboost)
 
 
 # Simulate data

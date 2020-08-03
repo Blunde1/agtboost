@@ -1,4 +1,4 @@
 #' @import Rcpp
 NULL
 
-loadModule("MyModule", TRUE)
+loadModule("aGTBModule", TRUE)

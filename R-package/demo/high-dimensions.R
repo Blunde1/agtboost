@@ -2,8 +2,8 @@
 # 15.10.2019
 # Berent Lunde
 
-# load gbtorch and other libraries needed
-library(gbtorch)
+# load agtboost and other libraries needed
+library(agtboost)
 library(glmnet)
 library(ggplot2)
 library(dplyr)
