@@ -7,14 +7,14 @@
 using namespace Rcpp;
 
 
-RcppExport SEXP _rcpp_module_boot_MyModule();
+RcppExport SEXP _rcpp_module_boot_aGTBModule();
 
 static const R_CallMethodDef CallEntries[] = {
-    {"_rcpp_module_boot_MyModule", (DL_FUNC) &_rcpp_module_boot_MyModule, 0},
+    {"_rcpp_module_boot_aGTBModule", (DL_FUNC) &_rcpp_module_boot_aGTBModule, 0},
     {NULL, NULL, 0}
 };
 
-RcppExport void R_init_gbtorch(DllInfo *dll) {
+RcppExport void R_init_agtboost(DllInfo *dll) {
     R_registerRoutines(dll, NULL, CallEntries, NULL, NULL);
     R_useDynamicSymbols(dll, FALSE);
 }

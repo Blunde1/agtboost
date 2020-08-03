@@ -1,4 +1,4 @@
-GBTorch R Package for Adaptive GTB
+aGTBoost R Package for Adaptive GTB
 ==================================
 
 [![Lifecycle: experimental](https://img.shields.io/badge/lifecycle-experimental-orange.svg)](https://www.tidyverse.org/lifecycle/#experimental)

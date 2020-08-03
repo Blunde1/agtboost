@@ -1,5 +1,4 @@
-\name{Caravan}
-\alias{Caravan}
+\name{caravan.train}
 \alias{caravan.train}
 \alias{caravan.test}
 \docType{data}
@@ -16,7 +15,7 @@
   be obtained at  http://www.liacs.nl/~putten/library/cc2000/data.html
 %%  ~~ A concise (1-5 lines) description of the dataset. ~~
 }
-\usage{Caravan}
+\usage{caravan.train}
 \format{
   A data frame with 5822 observations on 86 variables.
   }

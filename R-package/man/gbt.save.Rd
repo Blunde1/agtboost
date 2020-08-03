@@ -15,10 +15,10 @@ gbt.save(gbt_model, file)
 Txt file that can be loaded using \code{gbt.load}.
 }
 \description{
-\code{gbt.save} is an interface for storing a \code{gbtorch} model.
+\code{gbt.save} is an interface for storing a \code{agtboost} model.
 }
 \details{
-The model-storage function for \code{gbtorch}.
+The model-storage function for \code{agtboost}.
 Saves a GBT model a a txt file. Might be retrieved using \code{gbt.load}
 }
 \seealso{

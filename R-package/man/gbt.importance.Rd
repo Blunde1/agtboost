@@ -24,7 +24,7 @@ the feature the node is split on. Returns result in terms of percents.
 }
 \examples{
 ## Load data
-data(caravan.train, package = "gbtorch")
+data(caravan.train, package = "agtboost")
 train <- caravan.train
 mod <- gbt.train(train$y, train$x, loss_function = "logloss", verbose=10)
 feature_names <- colnames(train$x)

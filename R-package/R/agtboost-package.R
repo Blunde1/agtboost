@@ -1,6 +1,6 @@
 #' Adaptive and Automatic Gradient Boosting Computations
 #' 
-#' \code{gbtorch} is a lightning fast gradient boosting library designed to avoid 
+#' \code{agtboost} is a lightning fast gradient boosting library designed to avoid 
 #' manual tuning and cross-validation by utilizing an information theoretic 
 #' approach. This makes the algorithm adaptive to the dataset at hand; it is 
 #' completely automatic, and with minimal worries of overfitting. 
@@ -11,16 +11,16 @@
 #' Important functions:
 #' 
 #' \itemize{
-#' \item \code{\link{gbt.train}}: function for training a \code{gbtorch} ensemble
-#' \item \code{\link{predict.Rcpp_ENSEMBLE}}: function for predicting from a \code{gbtorch} ensemble
+#' \item \code{\link{gbt.train}}: function for training an \code{agtboost} ensemble
+#' \item \code{\link{predict.Rcpp_ENSEMBLE}}: function for predicting from an \code{agtboost} ensemble
 #' }
 #' 
 #' See individual function documentation for usage.
 #'
 #' @docType package
-#' @name gbtorch
+#' @name agtboost
 #' @title Adaptive and automatic gradient boosting computations.
 #'
 #' @author Berent Ånund Strømnes Lunde
-#' @useDynLib gbtorch, .registration = TRUE
+#' @useDynLib agtboost, .registration = TRUE
 NULL

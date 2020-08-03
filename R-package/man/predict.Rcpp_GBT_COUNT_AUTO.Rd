@@ -2,7 +2,7 @@
 % Please edit documentation in R/gbt.pred.R
 \name{predict.Rcpp_GBT_COUNT_AUTO}
 \alias{predict.Rcpp_GBT_COUNT_AUTO}
-\title{GBTorch Count-Regression Auto Prediction}
+\title{aGTBoost Count-Regression Auto Prediction}
 \usage{
 \method{predict}{Rcpp_GBT_COUNT_AUTO}(object, newdata, ...)
 }
@@ -17,10 +17,10 @@
 For regression or binary classification, it returns a vector of length \code{nrows(newdata)}.
 }
 \description{
-\code{predict} is an interface for predicting from a \code{gbtorch} model.
+\code{predict} is an interface for predicting from a \code{agtboost} model.
 }
 \details{
-The prediction function for \code{gbtorch}.
+The prediction function for \code{agtboost}.
 Using the generic \code{predict} function in R is also possible, using the same arguments.
 }
 \examples{

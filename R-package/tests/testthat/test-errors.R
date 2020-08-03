@@ -1,5 +1,5 @@
 context("Error handling")
-library(gbtorch)
+library(agtboost)
 
 test_that("gbt.train throws appropriate errors", {
     

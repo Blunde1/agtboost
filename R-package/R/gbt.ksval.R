@@ -36,6 +36,8 @@
 #' mod <- gbt.train(y_tr, x_tr)
 #' gbt.ksval(mod, y_te, x_te)
 #'
+#' @importFrom graphics hist mtext
+#' @importFrom stats dgamma dnbinom dnorm dpois ks.test pgamma pnbinom pnorm ppois runif
 #' @rdname gbt.ksval
 #' @export
 gbt.ksval <- function(object, y, x)

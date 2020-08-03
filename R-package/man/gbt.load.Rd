@@ -13,10 +13,10 @@ gbt.load(file)
 Trained GBTorch model.
 }
 \description{
-\code{gbt.load} is an interface for loading a \code{gbtorch} model.
+\code{gbt.load} is an interface for loading a \code{agtboost} model.
 }
 \details{
-The load function for \code{gbtorch}.
+The load function for \code{agtboost}.
 Loades a GBT model from a txt file.
 }
 \seealso{

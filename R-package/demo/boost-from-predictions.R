@@ -3,12 +3,12 @@
 # 29.09.2019
 
 # Description: Illustrates boosted training given previous predictions from some model.
-# GBTorch will immediately calculate derivatives to train from, and try to find what complexity
+# aGTBoost will immediately calculate derivatives to train from, and try to find what complexity
 # still not added to the previous model (e.g. non-linearity, interactions, ...)
 # Useful if previous model is relatively simple, e.g. a sparse (regularized) linear model
 
-# Load GBTorch library
-library(gbtorch)
+# Load aGTBoost library
+library(agtboost)
 
 # Simulate y~N(x, 4), x~U(0,4)
 x <- runif(500, 0, 4)

@@ -1,11 +1,11 @@
 
 /*
- * gbtorch: Adaptive and automatic gradient boosting computations.
+ * agtboost: Adaptive and automatic gradient tree boosting computations.
  * Berent Lunde
  * 07.09.2019
  */
 
-#include "gbtorch.hpp"
+#include "agtboost.hpp"
 
 
 
@@ -16,13 +16,6 @@ ENSEMBLE::ENSEMBLE(){
     this->learning_rate=0.01;
     this->extra_param = 0.0;
     this->loss_function = "mse";
-    
-    // this->param = Rcpp::List::create(
-    //     Named("learning_rate")  = 0.01,
-    //     Named("loss_function")  = "mse",
-    //     Named("nrounds") = 5000
-    // );
-    
 }
 
 ENSEMBLE::ENSEMBLE(double learning_rate_){
@@ -31,11 +24,6 @@ ENSEMBLE::ENSEMBLE(double learning_rate_){
     this->learning_rate=learning_rate_;
     this->extra_param = 0.0;
     this->loss_function = "mse";
-    // this->param = Rcpp::List::create(
-    //     Named("learning_rate") = learning_rate_,
-    //     Named("loss_function") = "mse",
-    //     Named("nrounds") = 5000
-    // );
 }
 
 void ENSEMBLE::set_param(int nrounds_, double learning_rate_, double extra_param_, std::string loss_function_)
@@ -67,7 +55,7 @@ void ENSEMBLE::serialize(ENSEMBLE *eptr, std::ofstream& f)
     // If current ENSEMBLE is NULL, return
     if(eptr == NULL)
     {
-        std::cout << "Trying to save NULL pointer" << std::endl;
+        //Rcpp::Rcout << "Trying to save NULL pointer" << std::endl;
         return;
     }
     
@@ -249,14 +237,6 @@ void ENSEMBLE::train(Tvec<double> &y, Tmat<double> &X, int verbose, bool greedy_
         current_tree->next_tree = new_tree;
         current_tree = new_tree;
         
-        /*
-        if(expected_loss < EPS){ // && NUM_BINTREE_CONSECUTIVE < MAX_NUM_BINTREE_CONSECUTIVE){
-            current_tree->next_tree = new_tree;
-            current_tree = new_tree;
-        }else{
-            break;
-        }
-         */
     }
 }
 
@@ -596,7 +576,7 @@ Tvec<double> GBT_COUNT_AUTO::predict(Tmat<double> &X)
 
 
 // Expose the classes
-RCPP_MODULE(MyModule) {
+RCPP_MODULE(aGTBModule) {
     using namespace Rcpp;
     
     class_<ENSEMBLE>("ENSEMBLE")

@@ -1,4 +1,4 @@
-// Includes all header files for gmGTB
+// Includes all header files for agtboost
 // Berent Lunde
 // 25.07.2019
 

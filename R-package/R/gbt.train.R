@@ -1,6 +1,6 @@
-#' GBTorch Training.
+#' aGTBoost Training.
 #'
-#' \code{gbt.train} is an interface for training a \code{gbtorch} model.
+#' \code{gbt.train} is an interface for training an \code{agtboost} model.
 #'
 #' @param y response vector for training. Must correspond to the design matrix \code{x}.
 #' @param x design matrix for training. Must be of type \code{matrix}.
@@ -21,9 +21,13 @@
 #' @param previous_pred prediction vector for training. Boosted training given predictions from another model.
 #' @param weights weights vector for scaling contributions of individual observations. Default \code{NULL} (the unit vector).
 #' @param force_continued_learning Boolean: \code{FALSE} (default) stops at information stopping criterion, \code{TRUE} stops at \code{nround} iterations.
+#' @param ... additional parameters passed.
+#'   \itemize{
+#'   \item if loss_function is 'negbinom', dispersion must be provided in \code{...}
+#'   }
 #'
 #' @details
-#' These are the training functions for \code{gbtorch}.
+#' These are the training functions for an \code{agtboost}.
 #' 
 #' Explain the philosophy and the algorithm and a little math
 #' 
@@ -37,7 +41,7 @@
 #' @return
 #' An object of class \code{ENSEMBLE} with some or all of the following elements:
 #' \itemize{
-#'   \item \code{handle} a handle (pointer) to the gbtorch model in memory.
+#'   \item \code{handle} a handle (pointer) to the agtboost model in memory.
 #'   \item \code{initialPred} a field containing the initial prediction of the ensemble.
 #'   \item \code{set_param} function for changing the parameters of the ensemble.
 #'   \item \code{train} function for re-training (or from scratch) the ensemble directly on vector \code{y} and design matrix \code{x}.
@@ -219,7 +223,7 @@ gbt.train <- function(y, x, learning_rate = 0.01,
         mod$train(y,x, verbose, gsub_compare)   
         
     }else{
-        # create gbtorch ensemble object
+        # create agtboost ensemble object
         mod <- new(ENSEMBLE)
         mod$set_param(nrounds, learning_rate, extra_param, loss_function)
         
@@ -237,6 +241,6 @@ gbt.train <- function(y, x, learning_rate = 0.01,
     }
     
     
-    # return trained gbtorch ensemble
+    # return trained agtboost ensemble
     return(mod)
 }
