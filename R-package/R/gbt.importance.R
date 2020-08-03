@@ -27,13 +27,32 @@
 #' @export
 gbt.importance <- function(feature_names, object)
 {
-    m <- length(feature_names)
+    # Check input
+    error_messages <- c()
+    error_messages_type <- c(
+        "object_type" = "Error: object must be a GBTorch ensemble \n",
+        "model_not_trained" = "Error: GBTorch ensemble must be trained, see function documentation gbt.train \n"
+    )
+    # check object
+    if(class(object)!="Rcpp_ENSEMBLE"){
+        error_messages <- c(error_messages, error_messages_type["object_type"])
+    }else{
+        # test if trained
+        if(object$get_num_trees()==0)
+            error_messages <- c(error_messages, error_messages_type["model_not_trained"])
+    }
+    # Any error messages?
+    if(length(error_messages)>0)
+        stop(error_messages)
+    
+    
+    m <- length(feature_names) # should have a check that $m > max_j in ensemble$
     importance_vec <- object$importance(m);
     names(importance_vec) <- feature_names
     
     # Plot
     importance_vec <- importance_vec[order(importance_vec, decreasing = FALSE)]
-    importance_vec <- importance_vec[importance_vec != 0]
+    importance_vec <- importance_vec[importance_vec != 0] * 100
     old.par <- par(mar=c(0,0,0,0))
     par(las=2)
     par(mar=c(5,6.5,3.5,2))

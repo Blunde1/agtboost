@@ -42,12 +42,43 @@ gbt.ksval <- function(object, y, x)
 {
     
     # Check input
+    error_messages <- c()
+    error_messages_type <- c(
+        "object_type" = "Error: object must be a GBTorch ensemble \n",
+        "model_not_trained" = "Error: GBTorch ensemble must be trained, see function documentation gbt.train \n",
+        "response_not_vec" = "Error: y must be a vector of type numeric or matrix with dimension 1 \n",
+        "dmat_not_mat" = "Error: x must be a matrix \n",
+        "y_x_correspondance" = "Error: length of y must correspond to the number of rows in x \n"
+    )
+    # check object
+    if(class(object)!="Rcpp_ENSEMBLE"){
+        error_messages <- c(error_messages, error_messages_type["object_type"])
+    }else{
+        # test if trained
+        if(object$get_num_trees()==0)
+            error_messages <- c(error_messages, error_messages_type["model_not_trained"])
+    }
+    
+    # Check y, x
+    if(!is.vector(y, mode="numeric")){
+        if(is.matrix(y) && ncol(y)>1 ){
+            error_messages <- c(error_messages, error_messages_type["response_not_vec"])
+        }
+    }
+    if(!is.matrix(x))
+        error_messages <- c(error_messages, error_messages_type["dmat_not_mat"])
+    # dimensions
+    if(length(y) != nrow(x))
+        error_messages <- c(error_messages, error_messages_type["y_x_correspondance"])
+    
+    # Any error messages?
+    if(length(error_messages)>0)
+        stop(error_messages)
     
     
     # Model specifics
     loss_type <- object$get_loss_function()
     mu_pred <- predict(object, x)
-    
     
     # cdf transform
     n <- length(y)
