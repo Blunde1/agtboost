@@ -23,6 +23,7 @@
 #' imp <- gbt.importance(feature_names, mod)
 #' imp
 #'
+#' @importFrom graphics barplot mtext par
 #' @rdname gbt.importance
 #' @export
 gbt.importance <- function(feature_names, object)

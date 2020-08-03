@@ -38,6 +38,11 @@ gbt.train(y, x, learning_rate = 0.01, loss_function = "mse",
 \item{weights}{weights vector for scaling contributions of individual observations. Default \code{NULL} (the unit vector).}
 
 \item{force_continued_learning}{Boolean: \code{FALSE} (default) stops at information stopping criterion, \code{TRUE} stops at \code{nround} iterations.}
+
+\item{...}{additional parameters passed.
+\itemize{
+\item if loss_function is 'negbinom', dispersion must be provided in \code{...}
+}}
 }
 \value{
 An object of class \code{ENSEMBLE} with some or all of the following elements:

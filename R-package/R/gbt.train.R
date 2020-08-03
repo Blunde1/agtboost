@@ -21,6 +21,10 @@
 #' @param previous_pred prediction vector for training. Boosted training given predictions from another model.
 #' @param weights weights vector for scaling contributions of individual observations. Default \code{NULL} (the unit vector).
 #' @param force_continued_learning Boolean: \code{FALSE} (default) stops at information stopping criterion, \code{TRUE} stops at \code{nround} iterations.
+#' @param ... additional parameters passed.
+#'   \itemize{
+#'   \item if loss_function is 'negbinom', dispersion must be provided in \code{...}
+#'   }
 #'
 #' @details
 #' These are the training functions for an \code{agtboost}.

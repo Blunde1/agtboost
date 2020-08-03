@@ -1,5 +1,4 @@
-\name{Caravan}
-\alias{Caravan}
+\name{caravan.train}
 \alias{caravan.train}
 \alias{caravan.test}
 \docType{data}
