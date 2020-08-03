@@ -20,7 +20,7 @@ plot(x,y, main="Gamma glm observations, negative inverse link")
 points(x, mu, col=2)
 #hist(y)
 
-# prepare for gbtorch
+# prepare for agtboost
 y.train <- y
 x.train <- as.matrix(x)
 

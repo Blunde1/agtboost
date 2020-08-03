@@ -33,7 +33,7 @@ y.test <<- as.matrix(ifelse(Smarket[-ind_train, "Direction"]=="Up", 1, 0))
 
 
 # -- Model building --
-# gbtorch
+# agtboost
 gbt.mod <- gbt.train(y.train, x.train, learning_rate = 0.01, loss_function = "logloss")
 gbt.mod$get_num_trees()
 

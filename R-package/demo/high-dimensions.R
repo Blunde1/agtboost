@@ -20,7 +20,7 @@ x.test <- as.matrix( runif(n, 0, 4))
 y.test <- rnorm(n, x.test[,1], 1)
 
 # train model
-cat("Training a gbtorch model on one feature")
+cat("Training an agtboost model on one feature")
 mod <- gbt.train(y.train, x.train, verbose=10, gsub_compare =T, learning_rate = 0.01)
 mod$get_param() # standard parameters
 mod$get_num_trees()
@@ -61,7 +61,7 @@ df_sub <- data.frame(x1=x.train2[,1], x50=x.train2[,50], #x100=x.train2[,100],
                      x200=x.train2[,200], x1000=x.train2[,1000], x10000=x.train2[,10000])
 pairs(~., data=df_sub)
 
-cat("Training a second gbtorch model: give it a few seconds")
+cat("Training a second agtboost model: give it a few seconds")
 mod2 <- gbt.train(y.train, x.train2, verbose=1, gsub_compare=T)
 pred.test2 <- predict( mod2, x.test2 )
 
@@ -107,7 +107,7 @@ plot2 <- preds %>%
 
 grid.arrange(plot1, plot2, ncol=2, 
              top="Test data and predictions, vs. the predictive feature: 
-             Ridge seem to adapt slightly more to noise than GBTorch")
+             Ridge seem to adapt slightly more to noise than agtboost")
     
 
 # p >> n: independence ####
@@ -126,7 +126,7 @@ close(pb)
 cat("The dimensions of training and test:")
 dim(x.train3); dim(x.test3) 
 
-cat("Training a third gbtorch model: give it a few seconds")
+cat("Training a third agtboost model: give it a few seconds")
 mod3 <- gbt.train(y.train, x.train3, verbose=1, gsub_compare=T)
 pred.test3 <- predict( mod3, x.test3 )
 
@@ -169,7 +169,7 @@ plot4 <- preds %>%
 
 grid.arrange(plot3, plot4, ncol=2, 
              top="Test data and predictions, vs. the predictive feature: 
-             Lasso seem to adapt similarly to noise in comparison to GBTorch")
+             Lasso seem to adapt similarly to noise in comparison to agtboost")
 
-cat("The information theoretic approach behind GBTorch is developed under independence assumptions")
+cat("The information theoretic approach behind agtboost is developed under independence assumptions")
 cat("But luckily also works under dependence. :) ")

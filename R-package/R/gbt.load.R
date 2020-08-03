@@ -1,12 +1,12 @@
 #' Load a GBTorch Model
 #'
-#' \code{gbt.load} is an interface for loading a \code{gbtorch} model.
+#' \code{gbt.load} is an interface for loading a \code{agtboost} model.
 #'
 #' @param file Valid file-path to a stored GBTorch model
 #'
 #' @details
 #' 
-#' The load function for \code{gbtorch}.
+#' The load function for \code{agtboost}.
 #' Loades a GBT model from a txt file.
 #' 
 #'

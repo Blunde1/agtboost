@@ -1,6 +1,6 @@
-#' GBTorch Prediction
+#' aGTBoost Prediction
 #'
-#' \code{predict} is an interface for predicting from a \code{gbtorch} model.
+#' \code{predict} is an interface for predicting from a \code{agtboost} model.
 #'
 #' @param object Object or pointer to object of class \code{ENSEMBLE}
 #' @param newdata Design matrix of data to be predicted. Type \code{matrix}
@@ -8,7 +8,7 @@
 #'
 #' @details
 #' 
-#' The prediction function for \code{gbtorch}.
+#' The prediction function for \code{agtboost}.
 #' Using the generic \code{predict} function in R is also possible, using the same arguments.
 #' 
 #'
@@ -50,8 +50,8 @@ predict.Rcpp_ENSEMBLE <- function(object, newdata, ...){
     # checks on newdata and e.ptr
     error_messages <- c()
     error_messages_type <- c(
-        "Error: object must be a GBTorch ensemble \n",
-        "Error: GBTorch ensemble must be trained, see function documentation gbt.train \n",
+        "Error: object must be a agtboost ensemble \n",
+        "Error: agtboost ensemble must be trained, see function documentation gbt.train \n",
         "Error: newdata must be a matrix \n"
     )
     # check object
@@ -130,9 +130,9 @@ predict.Rcpp_ENSEMBLE <- function(object, newdata, ...){
 } 
 
 
-#' GBTorch Count-Regression Auto Prediction
+#' aGTBoost Count-Regression Auto Prediction
 #'
-#' \code{predict} is an interface for predicting from a \code{gbtorch} model.
+#' \code{predict} is an interface for predicting from a \code{agtboost} model.
 #'
 #' @param object Object or pointer to object of class \code{GBT_ZI_MIX}
 #' @param newdata Design matrix of data to be predicted. Type \code{matrix}
@@ -140,7 +140,7 @@ predict.Rcpp_ENSEMBLE <- function(object, newdata, ...){
 #'
 #' @details
 #' 
-#' The prediction function for \code{gbtorch}.
+#' The prediction function for \code{agtboost}.
 #' Using the generic \code{predict} function in R is also possible, using the same arguments.
 #' 
 #'
@@ -171,8 +171,8 @@ predict.Rcpp_GBT_COUNT_AUTO <- function(object, newdata, ...){
     # checks on newdata and e.ptr
     error_messages <- c()
     error_messages_type <- c(
-        "Error: object must be a GBTorch GBT_COUNT_AUTO \n",
-        "Error: GBTorch model must be trained, see function documentation gbt.train \n",
+        "Error: object must be a agtboost GBT_COUNT_AUTO \n",
+        "Error: agtboost model must be trained, see function documentation gbt.train \n",
         "Error: newdata must be a matrix \n"
     )
     # check object
