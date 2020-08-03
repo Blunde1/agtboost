@@ -5,7 +5,7 @@
 MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 ---------
 
-# GBTorch
+# aGTBoost
 
 <dl>
   <dt>Torch</dt>
@@ -13,7 +13,7 @@ MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.or
     </dd>
 </dl>
 
-GBTorch is a lightning fast gradient boosting library designed to **avoid manual tuning** and **cross-validation** by utilizing an information theoretic approach.
+aGTBoost is a lightning fast gradient boosting library designed to **avoid manual tuning** and **cross-validation** by utilizing an information theoretic approach.
 This makes the algorithm **adaptive** to the dataset at hand; it is **completely automatic**, and with **minimal worries of overfitting**.
 Consequently, the speed-ups relative to state-of-the-art implementations are in the thousands while mathematical and technical knowledge required on the user are minimized.
 
@@ -22,7 +22,7 @@ Consequently, the speed-ups relative to state-of-the-art implementations are in 
 
 **R**: Install the development version from GitHub
 ```r
-devtools::install_github("Blunde1/gbtorch/R-package")
+devtools::install_github("Blunde1/agtboost/R-package")
 ```
 Users experiencing errors after warnings during installlation, may be helped by the following command prior to installation:
 
@@ -32,14 +32,14 @@ Sys.setenv(R_REMOTES_NO_ERRORS_FROM_WARNINGS="true")
 
 ## Example code and documentation
 
-`gbtorch` essentially has two functions, a train function `gbt.train` and a predict function `predict`.
-From the code below it should be clear how to train a GBTorch model using a design matrix `x` and a response vector `y`, write `?gbt.train` in the console for detailed documentation. 
+`agtboost` essentially has two functions, a train function `gbt.train` and a predict function `predict`.
+From the code below it should be clear how to train an aGTBoost model using a design matrix `x` and a response vector `y`, write `?gbt.train` in the console for detailed documentation. 
 ```r
-library(gbtorch)
+library(agtboost)
 
 # -- Load data --
-data(caravan.train, package = "gbtorch")
-data(caravan.test, package = "gbtorch")
+data(caravan.train, package = "agtboost")
+data(caravan.test, package = "agtboost")
 train <- caravan.train
 test <- caravan.test
 
@@ -51,7 +51,7 @@ pred <- predict(mod, test$x) # Score before logistic transformation
 prob <- 1/(1+exp(-pred)) # Probabilities
 ```
 
-Furthermore, a GBTorch model is (see example code)
+Furthermore, an aGTBoost model is (see example code)
 
 - highly robust to dimensions: [Comparisons to (penalized) linear regression in (very) high dimensions](R-package/demo/high-dimensions.R)
 - has minimal worries of overfitting: [Stock market classificatin](R-package/demo/stock-market-classification.R)
