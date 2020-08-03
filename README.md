@@ -7,11 +7,7 @@ MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.or
 
 # aGTBoost
 
-<dl>
-  <dt>Torch</dt>
-  <dd>something considered as a source of illumination, enlightenment, guidance, etc.
-    </dd>
-</dl>
+**Adaptive and automatic gradient tree boosting computations**
 
 aGTBoost is a lightning fast gradient boosting library designed to **avoid manual tuning** and **cross-validation** by utilizing an information theoretic approach.
 This makes the algorithm **adaptive** to the dataset at hand; it is **completely automatic**, and with **minimal worries of overfitting**.
