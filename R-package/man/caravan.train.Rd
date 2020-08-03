@@ -15,7 +15,7 @@
   be obtained at  http://www.liacs.nl/~putten/library/cc2000/data.html
 %%  ~~ A concise (1-5 lines) description of the dataset. ~~
 }
-\usage{caravan.Ctrain}
+\usage{caravan.train}
 \format{
   A data frame with 5822 observations on 86 variables.
   }
