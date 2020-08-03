@@ -55,7 +55,7 @@ void ENSEMBLE::serialize(ENSEMBLE *eptr, std::ofstream& f)
     // If current ENSEMBLE is NULL, return
     if(eptr == NULL)
     {
-        std::cout << "Trying to save NULL pointer" << std::endl;
+        //Rcpp::Rcout << "Trying to save NULL pointer" << std::endl;
         return;
     }
     
