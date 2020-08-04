@@ -1,5 +1,7 @@
 /presentation export-ignore
 presentation/* linguist-vendored
+/article-supplementary-material export-ignore
+article-supplementary-material/* linguist-vendored
 
 /.gitattributes export-ignore
 /.gitignore export-ignore
