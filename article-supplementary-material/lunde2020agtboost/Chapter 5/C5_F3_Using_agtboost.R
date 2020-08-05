@@ -24,8 +24,8 @@ mod <- gbt.train(y=caravan.train$y, x=caravan.train$x,
 prob_te <- predict(mod, caravan.test$x)
 
 # Store plots
-setwd("C:/Users/lunde/OneDrive/Dokumenter/Projects/Github repositories/gbtorch-package-article/gbtorch-package-article-scripts")
-pdf(file="../figures/using_agtboost_validation.pdf", width = 9,height = 5)
+#setwd("C:/Users/lunde/OneDrive/Dokumenter/Projects/Github repositories/gbtorch-package-article/gbtorch-package-article-scripts")
+pdf(file="../../../../gbtorch-package-article/figures/using_agtboost_validation.pdf", width = 9,height = 5)
 par(mfrow=c(1,2))
 
 # Model validation
