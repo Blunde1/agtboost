@@ -124,8 +124,8 @@ gbt.ksval <- function(object, y, x)
     hist(u, freq=FALSE, oma=c(2, 3, 5, 2)+0.1, main=NULL, xlab="CDF transformed observations")
     mytitle="Histogram: Model-CDF transformed observations" 
     mysubtitle=paste0(res$method, ": ", format(res$p.value))
-    mtext(side=3, line=2.5, at=-0.07, adj=0, cex=1.1, mytitle)
-    mtext(side=3, line=1.5, at=-0.07, adj=0, cex=0.8, mysubtitle)
+    mtext(side=3, line=2.2, at=-0.07, adj=0, cex=1.1, mytitle)
+    mtext(side=3, line=1.2, at=-0.07, adj=0, cex=0.8, mysubtitle)
     
     return(res)
 }
