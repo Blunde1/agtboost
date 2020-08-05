@@ -37,7 +37,7 @@
 #' gbt.ksval(mod, y_te, x_te)
 #'
 #' @importFrom graphics hist mtext
-#' @importFrom stats dgamma dnbinom dnorm dpois ks.test pgamma pnbinom pnorm ppois runif
+#' @importFrom stats dgamma dnbinom dnorm dpois ks.test pgamma pnbinom pnorm ppois runif dbinom pbinom
 #' @rdname gbt.ksval
 #' @export
 gbt.ksval <- function(object, y, x)
@@ -198,10 +198,6 @@ upois <- function(X, lambda){
 ubernoulli <- function(X, p)
 {
     n <- length(X)
-    U <- numeric(n)
-    v <- runif(n)
-    ind_zero <- X==0
-    U[ind_zero] = v[ind_zero]*(1-p[ind_zero])
-    U[!ind_zero] = v[!ind_zero]*p[!ind_zero]
+    U <- pbinom(X-1, 1, p) + runif(n)*dbinom(X, 1, p)
     return(U)
 }
