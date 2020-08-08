@@ -47,6 +47,7 @@ public:
     void save_model(std::string filepath);
     void load_model(std::string filepath);
     Tvec<double> importance(int ncols);
+    Tvec<double> convergence(Tvec<double> &y, Tmat<double> &X);
 };
 
 

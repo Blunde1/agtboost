@@ -434,6 +434,47 @@ Tvec<double> ENSEMBLE::get_num_leaves(){
     return num_leaves;
 }
 
+Tvec<double> ENSEMBLE::convergence(Tvec<double> &y, Tmat<double> &X){
+    
+    // Number of trees
+    int K = this->get_num_trees();
+    Tvec<double> loss_val(K+1);
+    loss_val.setZero();
+    
+    // Prepare prediction vector
+    int n = X.rows();
+    Tvec<double> pred(n);
+    pred.setConstant(this->initialPred);
+    
+    // Unit weights
+    Tvec<double> w(n);
+    w.setOnes();
+    
+    // After each update (tree), compute loss
+    loss_val[0] = loss(y, pred, this->loss_function, w, this);
+    
+    GBTREE* current = this->first_tree;
+    for(int k=1; k<(K+1); k++)
+    {
+        // Update predictions with k'th tree
+        pred = pred + (this->learning_rate) * (current->predict_data(X));
+        
+        // Compute loss
+        loss_val[k] = loss(y, pred, this->loss_function, w, this);
+        
+        // Update to next tree
+        current = current->next_tree;
+        
+        // Check if NULL ptr
+        if(current == NULL)
+        {
+            break;
+        }
+    }
+    
+    return loss_val;
+}
+
 
 // --- GBT_COUNT_AUTO ----
 void GBT_COUNT_AUTO::set_param(Rcpp::List par_list){
@@ -598,6 +639,7 @@ RCPP_MODULE(aGTBModule) {
         .method("save_model", &ENSEMBLE::save_model)
         .method("load_model", &ENSEMBLE::load_model)
         .method("importance", &ENSEMBLE::importance)
+        .method("convergence", &ENSEMBLE::convergence)
     ;
     
     class_<GBT_COUNT_AUTO>("GBT_COUNT_AUTO")
