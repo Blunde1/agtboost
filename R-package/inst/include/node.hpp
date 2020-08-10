@@ -39,11 +39,11 @@ public:
     node* getLeft();
     node* getRight();
     
-    void split_node(Tvec<double> &g, Tvec<double> &h, Tmat<double> &X, Tmat<double> &cir_sim, node* nptr, int n, 
+    void split_node(Tvec<double> &g, Tvec<double> &h, Tvec<int> &ind, Tmat<double> &X, Tmat<double> &cir_sim, node* nptr, int n, 
                     double next_tree_score, bool greedy_complexities, double learning_rate,
                     int depth=0, int maxDepth = 1); // take out from node?
     
-    bool split_information(const Tvec<double> &g, const Tvec<double> &h, const Tmat<double> &X,
+    bool split_information(const Tvec<double> &g, const Tvec<double> &h, const Tvec<int> &ind, const Tmat<double> &X,
                            const Tmat<double> &cir_sim, const int n);
     
     double expected_reduction(double learning_rate = 1.0);
@@ -215,7 +215,7 @@ void node::reset_node()
 
 
 // Algorithm 2 in Appendix C
-bool node::split_information(const Tvec<double> &g, const Tvec<double> &h, const Tmat<double> &X,
+bool node::split_information(const Tvec<double> &g, const Tvec<double> &h, const Tvec<int> &ind, const Tmat<double> &X,
                              const Tmat<double> &cir_sim, const int n)
 {
     // 1. Creates left right node
@@ -230,7 +230,7 @@ bool node::split_information(const Tvec<double> &g, const Tvec<double> &h, const
     // 6. Update split information in child nodes, importantly p_split_CRt
     // 7. Returns false if no split happened, else true
     
-    int split_feature =0, n_indices = g.size(), n_left = 0, n_right = 0, n_features = X.cols(), n_sim = cir_sim.rows();
+    int split_feature =0, n_indices = ind.size(), n_left = 0, n_right = 0, n_features = X.cols(), n_sim = cir_sim.rows();
     double split_val=0.0, observed_reduction=0.0, split_score=0.0, w_l=0.0, w_r=0.0, tr_loss_l=0.0, tr_loss_r=0.0;
     
     // Return value
@@ -240,8 +240,9 @@ bool node::split_information(const Tvec<double> &g, const Tvec<double> &h, const
     int j, i;
     
     // Sorting 
-    Tvec<double> vm(n_indices);
+    //Tvec<double> vm(n_indices);
     Tvec<size_t> idx(n_indices);
+    std::iota(idx.data(), idx.data()+idx.size(), 0);
     
     // Local optimism
     double local_opt_l=0.0, local_opt_r=0.0;
@@ -268,9 +269,9 @@ bool node::split_information(const Tvec<double> &g, const Tvec<double> &h, const
     
     // 2. Calculations under null hypothesis
     for(i=0; i<n_indices; i++){
-        G += g[i]; H+=h[i];
-        G2 += g[i]*g[i]; H2 += h[i]*h[i];
-        gxh += g[i]*h[i];
+        G += g[ind[i]]; H+=h[ind[i]];
+        G2 += g[ind[i]]*g[ind[i]]; H2 += h[ind[i]]*h[ind[i]];
+        gxh += g[ind[i]]*h[ind[i]];
     }
     
     // 3. Loop over features
@@ -278,8 +279,9 @@ bool node::split_information(const Tvec<double> &g, const Tvec<double> &h, const
         
         // 3.1 Profiles over all possible splits
         Gl = 0.0; Hl=0.0; Gl2=0; Hl2=0, gxhl=0;
-        vm = X.col(j);
-        idx = sort_indexes(vm);
+        //vm = X.col(j);
+        std::sort(idx.data(), idx.data() + idx.size(), [&](int a, int b){return X(ind[a],j) < X(ind[b],j);});
+        //idx = sort_indexes(vm);
         
         // 3.2 Simultaniously build observations vectors
         u_store.setZero();
@@ -288,9 +290,9 @@ bool node::split_information(const Tvec<double> &g, const Tvec<double> &h, const
         for(i=0; i<(n_indices-1); i++){
             
             // Left split calculations
-            Gl += g[idx[i]]; Hl+=h[idx[i]];
-            Gl2 += g[idx[i]]*g[idx[i]]; Hl2 += h[idx[i]]*h[idx[i]];
-            gxhl += g[idx[i]]*h[idx[i]];
+            Gl += g[ind[idx[i]]]; Hl+=h[ind[idx[i]]];
+            Gl2 += g[ind[idx[i]]]*g[ind[idx[i]]]; Hl2 += h[ind[idx[i]]]*h[ind[idx[i]]];
+            gxhl += g[ind[idx[i]]]*h[ind[idx[i]]];
             
             // Right split calculations
             Gr = G - Gl; Hr = H - Hl;
@@ -298,7 +300,8 @@ bool node::split_information(const Tvec<double> &g, const Tvec<double> &h, const
             gxhr = gxh - gxhl;
             
             // Is x_i the same as next?
-            if(vm[idx[i+1]] > vm[idx[i]]){
+            if(X(ind[idx[i+1]],j) > X(ind[idx[i]],j)){
+            //if(vm[idx[i+1]] > vm[idx[i]]){
                 
                 // Update observation vector
                 u_store[num_splits] = (i+1)*prob_delta;
@@ -313,7 +316,7 @@ bool node::split_information(const Tvec<double> &g, const Tvec<double> &h, const
                     
                     // Populate nodes with information
                     split_feature = j;
-                    split_val = vm[idx[i]];
+                    split_val = X(ind[idx[i]],j);
                     w_l = -Gl/Hl;
                     w_r = -Gr/Hr;
                     tr_loss_l = -Gl*Gl / (Hl*2.0*n);
@@ -400,14 +403,14 @@ bool node::split_information(const Tvec<double> &g, const Tvec<double> &h, const
     
 }
 
-void node::split_node(Tvec<double> &g, Tvec<double> &h, Tmat<double> &X, Tmat<double> &cir_sim, 
+void node::split_node(Tvec<double> &g, Tvec<double> &h, Tvec<int> &ind, Tmat<double> &X, Tmat<double> &cir_sim, 
                       node* nptr, int n, 
                       double next_tree_score, bool greedy_complexities, double learning_rate,
                       int depth, int maxDepth)
 {
     
     // if flags stop
-    if(g.size()<2){
+    if(ind.size()<2){
         return;
     }
     
@@ -420,7 +423,7 @@ void node::split_node(Tvec<double> &g, Tvec<double> &h, Tmat<double> &X, Tmat<do
     
     //else check split
     // Calculate split information
-    bool any_split = nptr->split_information(g, h, X, cir_sim, n);
+    bool any_split = nptr->split_information(g, h, ind, X, cir_sim, n);
     
     // Check if a split happened
     if(!any_split){
@@ -465,6 +468,36 @@ void node::split_node(Tvec<double> &g, Tvec<double> &h, Tmat<double> &X, Tmat<do
         
     }
     
+    // Tests ok: create new left right indices for partition
+    int n_left = nptr->left->obs_in_node;
+    int n_right = nptr->right->obs_in_node;
+    Tvec<int> ind_left(n_left), ind_right(n_right);
+    // Any way to get the idx from split_information?...
+    Tvec<size_t> idx(ind.size());
+    std::iota(idx.data(), idx.data()+idx.size(), 0);
+    std::sort(idx.data(), idx.data() + idx.size(), 
+              [&](int a, int b){
+                  return X(ind[a],nptr->split_feature) < X(ind[b],nptr->split_feature);
+                  }
+              );
+    for(int i=0; i<n_left; i++){
+        ind_left[i] = ind[idx[i]];
+    }
+    for(int i=n_left; i<(n_left+n_right); i++){
+        ind_right[i-n_left] = ind[idx[i]];
+    }
+    
+    // Run recursively on left
+    split_node(g, h, ind_left, X, cir_sim, nptr->left, n, 
+               next_tree_score, greedy_complexities, learning_rate, 
+               depth+1, maxDepth);
+    
+    // Run recursively on right 
+    split_node(g, h, ind_right, X, cir_sim, nptr->right, n, 
+               next_tree_score, greedy_complexities, learning_rate, 
+               depth+1, maxDepth);
+    
+    /*
     // Tests ok: partition data and split child-nodes
     // Create new g, h, and X partitions
     int n_left = nptr->left->obs_in_node;
@@ -494,6 +527,7 @@ void node::split_node(Tvec<double> &g, Tvec<double> &h, Tmat<double> &X, Tmat<do
     split_node(gr, hr, xr, cir_sim, nptr->right, n, 
                next_tree_score, greedy_complexities, learning_rate, 
                depth+1, maxDepth);
+     */
     
 }
 

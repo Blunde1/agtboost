@@ -128,7 +128,11 @@ void GBTREE::train(Tvec<double> &g, Tvec<double> &h, Tmat<double> &X, Tmat<doubl
         root = root->createLeaf(-G/H, -G*G/(2*H*n), local_optimism, local_optimism, n, n, n);
     }
     
-    root->split_node(g, h, X, cir_sim, root, n, 0.0, greedy_complexities, learning_rate, 0, maxDepth);
+    // Root-node indices
+    Tvec<int> ind(n);
+    std::iota(ind.data(), ind.data()+ind.size(), 0);
+    
+    root->split_node(g, h, ind, X, cir_sim, root, n, 0.0, greedy_complexities, learning_rate, 0, maxDepth);
     
 }
 
