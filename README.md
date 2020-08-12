@@ -60,7 +60,7 @@ gbt.importance(feature_names=colnames(caravan.train$x), object=mod)
 gbt.ksval(object=mod, y=caravan.test$y, x=caravan.test$x)
 ```
 The functions `gbt.ksval` and `gbt.importance` create the following plots:
-![THIS IS AN AMAZING PICTURE](docs/img/agtboost_validation.png)
+<img src="docs/img/agtboost_validation.png" width="700" height="300" />
 
 Furthermore, an aGTBoost model is (see example code)
 
