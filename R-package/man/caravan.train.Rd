@@ -21,7 +21,7 @@
   be obtained at  http://www.liacs.nl/~putten/library/cc2000/data.html
 %%  ~~ A concise (1-5 lines) description of the dataset. ~~
 }
-\usage{caravan.train caravan.test}
+\usage{caravan.train; caravan.test}
 \format{
   Lists with a design matrix \code{x} and response \code{y}
   }

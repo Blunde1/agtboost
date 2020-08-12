@@ -15,6 +15,7 @@
 #' \code{data.frame} with percentwise reduction in loss of total attributed to each feature.
 #' 
 #' @examples
+#' \dontrun{
 #' ## Load data
 #' data(caravan.train, package = "agtboost")
 #' train <- caravan.train
@@ -22,7 +23,8 @@
 #' feature_names <- colnames(train$x)
 #' imp <- gbt.importance(feature_names, mod)
 #' imp
-#'
+#' }
+#' 
 #' @importFrom graphics barplot mtext par
 #' @rdname gbt.importance
 #' @export

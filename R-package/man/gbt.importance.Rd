@@ -23,6 +23,7 @@ at each node for each tree in the model, and attributes it to
 the feature the node is split on. Returns result in terms of percents.
 }
 \examples{
+\dontrun{
 ## Load data
 data(caravan.train, package = "agtboost")
 train <- caravan.train
@@ -30,5 +31,6 @@ mod <- gbt.train(train$y, train$x, loss_function = "logloss", verbose=10)
 feature_names <- colnames(train$x)
 imp <- gbt.importance(feature_names, mod)
 imp
+}
 
 }

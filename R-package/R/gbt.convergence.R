@@ -26,7 +26,7 @@
 #' which.min(convergence) # Should be fairly similar to boosting iterations + 1
 #' mod$get_num_trees() +1 # num_trees does not include initial prediction
 #'
-#' @importFrom graphics mtext
+#' @importFrom graphics mtext plot
 #' @rdname gbt.convergence
 #' @export
 gbt.convergence <- function(object, y, x)
