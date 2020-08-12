@@ -5,7 +5,7 @@ Version: 0.9.0
 Date: 2019-09-07
 Author: Berent Ånund Strømnes Lunde
 Maintainer: Berent Ånund Strømnes Lunde <berent.a.lunde@uis.no>
-Description: aGTBoost is a fast gradient boosting library designed
+Description: aGTBoost is a fast gradient tree boosting library designed
     to avoid manual tuning and cross-validation by utilizing an information
     theoretic approach. This makes the algorithm adaptive to the dataset at
     hand; it is completely automatic, and with minimal worries of overfitting.
