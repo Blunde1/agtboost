@@ -10,7 +10,7 @@ Description: aGTBoost is a fast gradient tree boosting library designed
     theoretic approach. This makes the algorithm adaptive to the dataset at
     hand; it is completely automatic, and with minimal worries of overfitting.
     Consequently, the speed-ups relative to state-of-the-art implementations
-    are in the thousands while mathematical and technical knowledge required
+    can be in the thousands while mathematical and technical knowledge required
     on the user are minimized.
 License: GPL-3
 Encoding: UTF-8
