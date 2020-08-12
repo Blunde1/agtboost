@@ -14,7 +14,6 @@
 
 // Internal
 #include "cir.hpp"
-#include "sorting.hpp"
 #include "gumbel.hpp"
 #include "node.hpp"
 #include "tree.hpp"
