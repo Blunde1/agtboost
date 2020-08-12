@@ -4,7 +4,6 @@
 #define __TREE_HPP_INCLUDED__
 
 
-#include "gtbic.hpp"
 #include "node.hpp"
 #include "external_rcpp.hpp"
 

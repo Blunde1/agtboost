@@ -6,8 +6,6 @@
 
 #include "cir.hpp"
 #include "external_rcpp.hpp"
-#include "sorting.hpp"
-#include "gtbic.hpp"
 #include "gumbel.hpp"
 
 
