@@ -43,9 +43,24 @@ test <- caravan.test
 mod <- gbt.train(train$y, train$x, loss_function = "logloss", verbose=10)
 
 # -- Predictions --
-pred <- predict(mod, test$x) # Score before logistic transformation
-prob <- 1/(1+exp(-pred)) # Probabilities
+prob <- predict(mod, test$x) # Score after logistic transformation: Probabilities
 ```
+`agtboost`also contain functions for model inspection and validation. 
+
+- Feature importance: `gbt.importance` generates a typical feature importance plot. 
+Techniques like inserting noise-features are redundant due to computations w.r.t. approximate generalization (test) loss.
+- Convergence: `gbt.convergence` computes the loss over the path of boosting iterations. Check visually for convergence on test loss.
+- Model validation: `gbt.ksval` transforms observations to standard uniformly distributed random variables, if the model is specified 
+correctly. Perform a formal Kolmogorov-Smirnov test and plots transformed observations for visual inspection.
+```r
+# -- Feature importance --
+gbt.importance(feature_names=colnames(caravan.train$x), object=mod)
+
+# -- Model validation --
+gbt.ksval(object=mod, y=caravan.test$y, x=caravan.test$x)
+```
+The functions `gbt.ksval` and `gbt.importance` create the following plots:
+![THIS IS AN AMAZING PICTURE](docs/img/agtboost_validation.png)
 
 Furthermore, an aGTBoost model is (see example code)
 
