@@ -5,7 +5,13 @@
 \title{The Insurance Company (TIC) Benchmark
 %%   ~~ data name/kind ... ~~
 }
-\description{The data contains 5822 real customer records. Each record
+\description{
+  \code{caravan.train} and \code{caravan.test} both contain a design
+  matrix with 85 columns and a response vector. The train set consists
+  of 70\% of the data, with 4075 rows. The test set consists of the
+  remaining 30\% with 1747 rows. The following references the documentation
+  within the \pkg{ISLR} package: 
+  The original data contains 5822 real customer records. Each record
   consists of 86 variables, containing sociodemographic data (variables
   1-43) and product ownership (variables 44-86). The sociodemographic
   data is derived from zip codes. All customers living in areas with the
@@ -15,9 +21,9 @@
   be obtained at  http://www.liacs.nl/~putten/library/cc2000/data.html
 %%  ~~ A concise (1-5 lines) description of the dataset. ~~
 }
-\usage{caravan.train}
+\usage{caravan.train caravan.test}
 \format{
-  A data frame with 5822 observations on 86 variables.
+  Lists with a design matrix \code{x} and response \code{y}
   }
 \source{The data was originally supplied by Sentient Machine Research
   and was used in the CoIL Challenge 2000.
