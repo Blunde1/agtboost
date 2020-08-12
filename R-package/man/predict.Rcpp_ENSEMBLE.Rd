@@ -17,10 +17,10 @@
 For regression or binary classification, it returns a vector of length \code{nrows(newdata)}.
 }
 \description{
-\code{predict} is an interface for predicting from a \code{agtboost} model.
+\code{predict} is an interface for predicting from a \pkg{agtboost} model.
 }
 \details{
-The prediction function for \code{agtboost}.
+The prediction function for \pkg{agtboost}.
 Using the generic \code{predict} function in R is also possible, using the same arguments.
 }
 \examples{

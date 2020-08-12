@@ -1,13 +1,13 @@
 #' Save a GBTorch Model
 #'
-#' \code{gbt.save} is an interface for storing a \code{agtboost} model.
+#' \code{gbt.save} is an interface for storing a \pkg{agtboost} model.
 #'
 #' @param gbt_model Model object or pointer to object of class \code{ENSEMBLE}
 #' @param file Valid file-path
 #'
 #' @details
 #' 
-#' The model-storage function for \code{agtboost}.
+#' The model-storage function for \pkg{agtboost}.
 #' Saves a GBT model a a txt file. Might be retrieved using \code{gbt.load}
 #' 
 #'

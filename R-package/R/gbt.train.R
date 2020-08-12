@@ -1,6 +1,6 @@
 #' aGTBoost Training.
 #'
-#' \code{gbt.train} is an interface for training an \code{agtboost} model.
+#' \code{gbt.train} is an interface for training an \pkg{agtboost} model.
 #'
 #' @param y response vector for training. Must correspond to the design matrix \code{x}.
 #' @param x design matrix for training. Must be of type \code{matrix}.
@@ -27,7 +27,7 @@
 #'   } 
 #'
 #' @details
-#' These are the training functions for an \code{agtboost}.
+#' These are the training functions for an \pkg{agtboost}.
 #' 
 #' Explain the philosophy and the algorithm and a little math
 #' 
@@ -41,7 +41,7 @@
 #' @return
 #' An object of class \code{ENSEMBLE} with some or all of the following elements:
 #' \itemize{
-#'   \item \code{handle} a handle (pointer) to the agtboost model in memory.
+#'   \item \code{handle} a handle (pointer) to the \pkg{agtboost} model in memory.
 #'   \item \code{initialPred} a field containing the initial prediction of the ensemble.
 #'   \item \code{set_param} function for changing the parameters of the ensemble.
 #'   \item \code{train} function for re-training (or from scratch) the ensemble directly on vector \code{y} and design matrix \code{x}.

@@ -1,6 +1,6 @@
 #' Adaptive and Automatic Gradient Boosting Computations
 #' 
-#' \code{agtboost} is a lightning fast gradient boosting library designed to avoid 
+#' \pkg{agtboost} is a lightning fast gradient boosting library designed to avoid 
 #' manual tuning and cross-validation by utilizing an information theoretic 
 #' approach. This makes the algorithm adaptive to the dataset at hand; it is 
 #' completely automatic, and with minimal worries of overfitting. 
@@ -11,8 +11,8 @@
 #' Important functions:
 #' 
 #' \itemize{
-#' \item \code{\link{gbt.train}}: function for training an \code{agtboost} ensemble
-#' \item \code{\link{predict.Rcpp_ENSEMBLE}}: function for predicting from an \code{agtboost} ensemble
+#' \item \code{\link{gbt.train}}: function for training an \pkg{agtboost} ensemble
+#' \item \code{\link{predict.Rcpp_ENSEMBLE}}: function for predicting from an \pkg{agtboost} ensemble
 #' }
 #' 
 #' See individual function documentation for usage.
