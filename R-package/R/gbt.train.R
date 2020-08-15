@@ -17,7 +17,12 @@
 #'   }
 #' @param nrounds a just-in-case max number of boosting iterations. Default: 50000
 #' @param verbose Enable boosting tracing information at i-th iteration? Default: \code{0}.
-#' @param gsub_compare Boolean: Global-subset comparisons. \code{FALSE} means standard GTB, \code{TRUE} compare subset-splits with global splits (next root split). Default: \code{TRUE}.
+#' @param gsub_compare Deprecated. Boolean: Global-subset comparisons. \code{FALSE} means standard GTB, \code{TRUE} compare subset-splits with global splits (next root split). Default: \code{TRUE}.
+#' @param algorithm specify the algorithm used for gradient tree boosting.
+#'   \itemize{
+#'   \item \code{vanilla} ordinary gradient tree boosting. Trees are optimized as if they were the last tree.
+#'   \item \code{global_subset} function-change to target maximized reduction in generalization loss for individual datapoints
+#'   }
 #' @param previous_pred prediction vector for training. Boosted training given predictions from another model.
 #' @param weights weights vector for scaling contributions of individual observations. Default \code{NULL} (the unit vector).
 #' @param force_continued_learning Boolean: \code{FALSE} (default) stops at information stopping criterion, \code{TRUE} stops at \code{nround} iterations.
@@ -78,39 +83,52 @@
 #' @importFrom methods new
 gbt.train <- function(y, x, learning_rate = 0.01,
                       loss_function = "mse", nrounds = 50000,
-                      verbose=0, gsub_compare=TRUE, 
+                      verbose=0, gsub_compare,
+                      algorithm = "global_subset",
                       previous_pred=NULL,
                       weights = NULL,
                       force_continued_learning=FALSE,
                       ...){
     
+    # Deprecated messages
+    if (!missing(gsub_compare)) {
+        warning("argument gsub_compare is deprecated; please use algorithm instead.", 
+                call. = FALSE)
+        if(gsub_compare){
+            algorithm = "global_subset"
+        }else{
+            algorithm = "vanilla"
+        }
+    }
+    
     error_messages <- c()
     error_messages_type <- c(
-        "\n Error: y must be a vector of type numeric or matrix with dimension 1",
-        "\n Error: x must be a matrix",
-        "\n Error: length of y must correspond to the number of rows in x \n",
+        "response" = "\n Error: y must be a vector of type numeric or matrix with dimension 1",
+        "dmat" = "\n Error: x must be a matrix",
+        "response_dmat" = "\n Error: length of y must correspond to the number of rows in x \n",
         #"Error: param must be provided as a list \n",
-        "\n Error: learning_rate must be a number between 0 and 1 \n",
-        "\n Error: loss_function must be a valid loss function. See documentation for valid parameters \n",
-        "\n Error: nrounds must be an integer >= 1 \n",
-        "\n Error: verbose must be of type numeric with length 1",
-        "\n Error: gsub_compare must be of type logical with length 1",
-        "\n Error: previous_pred must be a vector of type numeric",
-        "\n Error: previous_pred must correspond to length of y",
-        "\n Error: force_continued_learning must be of type logical with length 1",
-        "negbinom"= "\n Error: if loss_function is 'negbinom', dispersion must be provided in ..."
+        "learning_rate" = "\n Error: learning_rate must be a number between 0 and 1 \n",
+        "loss_fun" = "\n Error: loss_function must be a valid loss function. See documentation for valid parameters \n",
+        "nrounds" = "\n Error: nrounds must be an integer >= 1 \n",
+        "verbose" = "\n Error: verbose must be of type numeric with length 1",
+        #"\n Error: gsub_compare must be of type logical with length 1",
+        "prev_pred_type" = "\n Error: previous_pred must be a vector of type numeric",
+        "prev_pred_length" = "\n Error: previous_pred must correspond to length of y",
+        "force_continued" = "\n Error: force_continued_learning must be of type logical with length 1",
+        "negbinom"= "\n Error: if loss_function is 'negbinom', dispersion must be provided in ...",
+        "algorithm" = "\n Error: algorithm must be a valid algorithm. See documentation for valid arguments \n"
     )
     # Check y, x
     if(!is.vector(y, mode="numeric")){
         if(is.matrix(y) && ncol(y)>1 ){
-            error_messages <- c(error_messages, error_messages_type[1])
+            error_messages <- c(error_messages, error_messages_type["response"])
         }
     }
     if(!is.matrix(x))
-        error_messages <- c(error_messages, error_messages_type[2])
+        error_messages <- c(error_messages, error_messages_type["dmat"])
     # dimensions
     if(length(y) != nrow(x))
-        error_messages <- c(error_messages, error_messages_type[3])
+        error_messages <- c(error_messages, error_messages_type["response_dmat"])
     
     # learning_rate
     if(is.numeric(learning_rate) && length(learning_rate)==1){
@@ -119,11 +137,11 @@ gbt.train <- function(y, x, learning_rate = 0.01,
             #ok
         }else{
             #error
-            error_messages <- c(error_messages, error_messages_type[4])
+            error_messages <- c(error_messages, error_messages_type["learning_rate"])
         }
     }else{
         #error
-        error_messages <- c(error_messages, error_messages_type[4])
+        error_messages <- c(error_messages, error_messages_type["learning_rate"])
     }
     
     # loss function
@@ -135,19 +153,19 @@ gbt.train <- function(y, x, learning_rate = 0.01,
                                  #"zero_inflation::negbinom", "zero_inflation::auto",
                                  "count::auto")
         ){}else{
-            error_messages <- c(error_messages, error_messages_type[5])
+            error_messages <- c(error_messages, error_messages_type["loss_fun"])
         }   
     }else{
-        error_messages <- c(error_messages, error_messages_type[5])
+        error_messages <- c(error_messages, error_messages_type["loss_fun"])
     }
     
     # nrounds
     if(is.numeric(nrounds) && length(nrounds) == 1){
         if(nrounds >= 1){}else{
-            error_messages <- c(error_messages, error_messages_type[6])
+            error_messages <- c(error_messages, error_messages_type["nrounds"])
         }   
     }else{
-        error_messages <- c(error_messages, error_messages_type[6])
+        error_messages <- c(error_messages, error_messages_type["nrounds"])
     }
     
     
@@ -155,26 +173,26 @@ gbt.train <- function(y, x, learning_rate = 0.01,
     if(is.numeric(verbose) && length(verbose)==1){
         #ok
     }else{
-        error_messages <- c(error_messages, error_messages_type[7])
+        error_messages <- c(error_messages, error_messages_type["verbose"])
     }
 
-    # gsub_compare
-    if(is.logical(gsub_compare) && length(gsub_compare)==1){
-        #ok
-    }else{
-        # error
-        error_messages <- c(error_messages, error_messages_type[8])
-    }
+    # # gsub_compare
+    # if(is.logical(gsub_compare) && length(gsub_compare)==1){
+    #     #ok
+    # }else{
+    #     # error
+    #     error_messages <- c(error_messages, error_messages_type[8])
+    # }
     
     if(!is.null(previous_pred)){
         if(!is.vector(y, mode="numeric")){
             if(is.matrix(y) && ncol(y)>1 ){
-                error_messages <- c(error_messages, error_messages_type[9])
+                error_messages <- c(error_messages, error_messages_type["prev_pred_type"])
             }
         }
         # dimensions
         if(length(previous_pred) != nrow(x))
-            error_messages <- c(error_messages, error_messages_type[10])
+            error_messages <- c(error_messages, error_messages_type["prev_pred_length"])
     }
     
     # force_continued_learning
@@ -182,7 +200,7 @@ gbt.train <- function(y, x, learning_rate = 0.01,
         #ok
     }else{
         # error
-        error_messages <- c(error_messages, error_messages_type[11])
+        error_messages <- c(error_messages, error_messages_type["force_continued"])
     }
     
     # Check for dispersion if negbinom
@@ -197,9 +215,21 @@ gbt.train <- function(y, x, learning_rate = 0.01,
         extra_param <- 0 # default without meaning
     }
     
+    # algorithm
+    if(is.character(algorithm) && length(algorithm) == 1){
+        if(
+            algorithm %in% c("vanilla", "global_subset")
+        ){}else{
+            error_messages <- c(error_messages, error_messages_type["algorithm"])
+        }   
+    }else{
+        error_messages <- c(error_messages, error_messages_type["algorithm"])
+    }
+    
     # Any error messages?
     if(length(error_messages)>0)
         stop(error_messages)
+    
     
     # Weights vector?
     if(is.null(weights))
@@ -209,6 +239,11 @@ gbt.train <- function(y, x, learning_rate = 0.01,
                   "loss_function" = loss_function, 
                   "nrounds"=nrounds,
                   "extra_param" = extra_param)
+    
+    gsub_compare = FALSE
+    if(algorithm %in% c("global_subset")){
+        gsub_compare = TRUE
+    }
     
     # if(loss_function %in% c("zero_inflation::poisson", "zero_inflation::negbinom", "zero_inflation::auto")){
     #     

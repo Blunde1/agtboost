@@ -5,8 +5,8 @@
 \title{aGTBoost Training.}
 \usage{
 gbt.train(y, x, learning_rate = 0.01, loss_function = "mse",
-  nrounds = 50000, verbose = 0, gsub_compare = TRUE,
-  previous_pred = NULL, weights = NULL,
+  nrounds = 50000, verbose = 0, gsub_compare,
+  algorithm = "global_subset", previous_pred = NULL, weights = NULL,
   force_continued_learning = FALSE, ...)
 }
 \arguments{
@@ -31,7 +31,13 @@ gbt.train(y, x, learning_rate = 0.01, loss_function = "mse",
 
 \item{verbose}{Enable boosting tracing information at i-th iteration? Default: \code{0}.}
 
-\item{gsub_compare}{Boolean: Global-subset comparisons. \code{FALSE} means standard GTB, \code{TRUE} compare subset-splits with global splits (next root split). Default: \code{TRUE}.}
+\item{gsub_compare}{Deprecated. Boolean: Global-subset comparisons. \code{FALSE} means standard GTB, \code{TRUE} compare subset-splits with global splits (next root split). Default: \code{TRUE}.}
+
+\item{algorithm}{specify the algorithm used for gradient tree boosting.
+\itemize{
+\item \code{vanilla} ordinary gradient tree boosting. Trees are optimized as if they were the last tree.
+\item \code{global_subset} function-change to target maximized reduction in generalization loss for individual datapoints
+}}
 
 \item{previous_pred}{prediction vector for training. Boosted training given predictions from another model.}
 
