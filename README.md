@@ -78,16 +78,16 @@ Furthermore, an aGTBoost model is (see example code)
 
 ## Scheduled updates
 
-- Adaptive and automatic deterministic frequentist gradient tree boosting. (October/November 2019, planned)
-- Optimal deterministic frequentist gradient tree boosting. (January/February 2020, planned)
-- Optimal deterministic gradient tree boosting. (May/June 2020, planned)
+- [x] Adaptive and automatic deterministic frequentist gradient tree boosting.
+- [ ] Adaptive L2-penalized gradient tree boosting. (Fall 2020, planned)
+- [ ] Automatic stochastic gradient tree boosting. (Fall 2020/Spring 2021, planned)
 
 ## Hopeful updates
 
 - Optimal stochastic gradient tree boosting.
 
 ## References
-are coming.
+- [An information criterion for automatic gradient tree boosting](https://arxiv.org/abs/2008.05926)
 
 ## Contribute
 
