@@ -280,7 +280,7 @@ cols <- c("test response"="#000000",
           "linear model"="#56B4E9",  # light blue
           "lasso" = "#56B4E9",
           "ridge" = "#56B4E9",
-          "gbtorch" = "#E69F00", # orange
+          "agtboost" = "#E69F00", # orange
           "xgboost: cv" = "#009E73", # green?
           "xgboost: val" = "#F0E442"
         
@@ -290,7 +290,7 @@ df_1d <- data.frame(
     predictive_feature = x.test,
     #test_obs = y.test,
     pred.lm = lm_res1$test_pred,
-    gbtorch = gbt_res1$test_pred,
+    agtboost = gbt_res1$test_pred,
     pred.xgb = xgb_res1$test_pred,
     pred.xgb.val = xgbv_res1$test_pred
 )
@@ -299,7 +299,7 @@ df_md_dep <- data.frame(
     predictive_feature = x.test,
     #test_obs = y.test,
     pred.ridge = as.vector(lm_res2$test_pred),
-    gbtorch = gbt_res2$test_pred,
+    agtboost = gbt_res2$test_pred,
     pred.xgb = xgb_res2$test_pred, # create
     pred.xgb.val = xgbv_res2$test_pred
 )
@@ -308,7 +308,7 @@ df_md_indep <- data.frame(
     predictive_feature = x.test,
     #test_obs = y.test,
     pred.lasso = as.vector(lm_res3$test_pred),
-    gbtorch = gbt_res3$test_pred,
+    agtboost = gbt_res3$test_pred,
     pred.xgb = xgb_res3$test_pred, # create
     pred.xgb.val = xgbv_res3$test_pred
 )
@@ -319,7 +319,7 @@ p1 <- df_1d %>%
     geom_point(aes(predictive_feature, pred.xgb.val, colour="xgboost: val"), size=0.5) +
     geom_point(aes(predictive_feature, pred.xgb, colour="xgboost: cv"), size=0.5) +
     geom_point(aes(predictive_feature, pred.lm, colour="linear model"), size=0.5) +
-    geom_point(aes(predictive_feature, gbtorch, colour="gbtorch"), size=0.5) +
+    geom_point(aes(predictive_feature, agtboost, colour="agtboost"), size=0.5) +
     scale_color_manual(name=NULL, values=cols) +
     #xlab("$x_1$") +
     xlab(TeX("$$x_1$$")) + 
@@ -335,7 +335,7 @@ p2 <- df_md_indep %>%
     geom_point(aes(predictive_feature, pred.xgb.val, colour="xgboost: val"), size=0.5) +
     geom_point(aes(predictive_feature, pred.xgb, colour="xgboost: cv"), size=0.5) +
     geom_point(aes(predictive_feature, pred.lasso, colour="linear model"), size=0.5) +
-    geom_point(aes(predictive_feature, gbtorch, colour="gbtorch"), size=0.5) +
+    geom_point(aes(predictive_feature, agtboost, colour="agtboost"), size=0.5) +
     scale_color_manual(name=NULL, values=cols) +
     #xlab("$x_1$") +
     xlab(TeX("$$x_1$$")) + 
@@ -350,7 +350,7 @@ p3 <- df_md_dep %>%
     geom_point(aes(predictive_feature, pred.xgb.val, colour="xgboost: val"), size=0.5) +
     geom_point(aes(predictive_feature, pred.xgb, colour="xgboost: cv"), size=0.5) +
     geom_point(aes(predictive_feature, pred.ridge, colour="linear model"), size=0.5) +
-    geom_point(aes(predictive_feature, gbtorch, colour="gbtorch"), size=0.5) +
+    geom_point(aes(predictive_feature, agtboost, colour="agtboost"), size=0.5) +
     scale_color_manual(name=NULL, values=cols) +
     #xlab("$x_1$ ") +
     xlab(TeX("$$x_1$$")) + 
@@ -364,7 +364,7 @@ plots <- ggarrange(p1, p2, p3, ncol=3, nrow=1, common.legend = TRUE, legend="bot
 plots
 
 if(F){
-    #pdf("../../../gbtree_information/figures/boost_sim_lm_plots.pdf", width=8, height=4, paper="special")
+    #pdf("../../../../../gbtree_information/figures/boost_sim_lm_plots.pdf", width=8, height=4, paper="special")
     print(plots)
     #dev.off()
     
