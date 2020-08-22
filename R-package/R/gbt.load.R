@@ -1,17 +1,17 @@
-#' Load a GBTorch Model
+#' Load an aGTBoost Model
 #'
 #' \code{gbt.load} is an interface for loading a \pkg{agtboost} model.
 #'
-#' @param file Valid file-path to a stored GBTorch model
+#' @param file Valid file-path to a stored aGTBoost model
 #'
 #' @details
 #' 
 #' The load function for \pkg{agtboost}.
-#' Loades a GBT model from a txt file.
+#' Loades a GTB model from a txt file.
 #' 
 #'
 #' @return
-#' Trained GBTorch model.
+#' Trained aGTBoost model.
 #'
 #' @seealso
 #' \code{\link{gbt.save}}

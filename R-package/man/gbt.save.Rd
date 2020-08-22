@@ -2,7 +2,7 @@
 % Please edit documentation in R/gbt.save.R
 \name{gbt.save}
 \alias{gbt.save}
-\title{Save a GBTorch Model}
+\title{Save an aGTBoost Model}
 \usage{
 gbt.save(gbt_model, file)
 }
@@ -19,7 +19,7 @@ Txt file that can be loaded using \code{gbt.load}.
 }
 \details{
 The model-storage function for \pkg{agtboost}.
-Saves a GBT model a a txt file. Might be retrieved using \code{gbt.load}
+Saves a GTB model as a txt file. Might be retrieved using \code{gbt.load}
 }
 \seealso{
 \code{\link{gbt.load}}

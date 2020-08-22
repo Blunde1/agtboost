@@ -2,22 +2,22 @@
 % Please edit documentation in R/gbt.load.R
 \name{gbt.load}
 \alias{gbt.load}
-\title{Load a GBTorch Model}
+\title{Load an aGTBoost Model}
 \usage{
 gbt.load(file)
 }
 \arguments{
-\item{file}{Valid file-path to a stored GBTorch model}
+\item{file}{Valid file-path to a stored aGTBoost model}
 }
 \value{
-Trained GBTorch model.
+Trained aGTBoost model.
 }
 \description{
 \code{gbt.load} is an interface for loading a \pkg{agtboost} model.
 }
 \details{
 The load function for \pkg{agtboost}.
-Loades a GBT model from a txt file.
+Loades a GTB model from a txt file.
 }
 \seealso{
 \code{\link{gbt.save}}
