@@ -23,8 +23,8 @@ y.test <- rnorm(100, 1*x.test, 1)
 
 
 # -- Train models --
-greedy_tree_mod <- gbt.train(y, x, verbose=1, gsub_compare = F)
-greedy_complexities_mod <- gbt.train(y, x, verbose=1, gsub_compare=T)
+greedy_tree_mod <- gbt.train(y, x, verbose=1, algorithm="vanilla")
+greedy_complexities_mod <- gbt.train(y, x, verbose=1, algorithm="global_subset")
 
 
 # -- Predict on test --

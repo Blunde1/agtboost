@@ -17,6 +17,8 @@ d <- 0.01
 set.seed(123)
 x <- as.matrix(runif(n,0,5))
 y <- rnorm(n, x, 1)
+xte <- as.matrix(runif(n,0,5))
+yte <- rnorm(n, xte, 1)
 df <- data.frame(x,y)
 
 p <- df %>%
@@ -35,7 +37,7 @@ p + stat_function(fun = pred.f, colour="black", size=1.5)
 
 #parameters
 param <- list("learning_rate" = d, "loss_function" = "mse", "nrounds"=5000)
-mod <- gbt.train(y=y, x=x, learning_rate = d, verbose=1, gsub_compare = FALSE)
+mod <- gbt.train(y=y, x=x, learning_rate = d, verbose=1, algorithm = "vanilla")
 pred.f.gbt <- function(x){
     mod$predict(as.matrix(x))
 }
@@ -45,26 +47,49 @@ p_gbt_full <- p + stat_function(fun=pred.f.gbt, colour="blue", size=1) +
 p_gbt_full
 
 # convergence
-ntrees <- seq(1, max(mod$get_num_trees()), by=1)
-losstr <- numeric(length(ntrees))
-pb <- txtProgressBar(min=1, max=length(ntrees), style=3)
-for(i in 1:length(losstr)){
-    predtr <- mod$predict2( as.matrix(x), ntrees[i] )
-    losstr[i] <- mean((y - predtr)^2)
-    setTxtProgressBar(pb, i)
-}
-close(pb)
-df <- data.frame("Number of trees in ensemble"=ntrees, "Training loss"=losstr) 
-names(df) = c("Number of trees in ensemble", "Training loss")
+losstr <- gbt.convergence(mod, y, x)
+losste <- gbt.convergence(mod, yte, xte)
+modlm <- lm(y_~., data=data.frame(y_=y, x_=x))
+predlm <- predict(modlm, data.frame(y_=yte, x_=xte))
+losstelm <- mean((yte-predlm)^2)
+df <- data.frame("Boosting iteration"=0:(length(losste)-1), "Test loss"=losste, "Training loss"=losstr)
+names(df) <- c("Boosting iteration", "Test loss", "Training loss")
 p_convergence <- 
     df %>%
-    ggplot(aes(x=`Number of trees in ensemble`, y=`Training loss`)) + 
-    #geom_point() + 
-    geom_line() +
-    #ggtitle("Convergence") + 
-    theme_bw() + 
-    theme(plot.title = element_text(margin = margin(t = 10, b=-20)))
+    ggplot(aes(x=`Boosting iteration`, y=`Test loss`)) + 
+    geom_line() + 
+    geom_hline(yintercept=1) + 
+    theme_bw()# + 
+#theme(plot.title = element_text(margin = margin(t = 10, b=-20)))
 p_convergence
+p_convergence2 <- 
+    df %>% gather("Type", "Loss", `Test loss`:`Training loss`) %>%
+    ggplot(aes(x=`Boosting iteration`, y=Loss, group=Type)) + 
+    geom_line(aes(colour=Type)) + 
+    theme_bw()# + 
+    #theme(plot.title = element_text(margin = margin(t = 10, b=-20)))
+p_convergence2
+
+# ntrees <- seq(1, max(mod$get_num_trees()), by=1)
+# losstr <- numeric(length(ntrees))
+# pb <- txtProgressBar(min=1, max=length(ntrees), style=3)
+# for(i in 1:length(losstr)){
+#     predtr <- mod$predict2( as.matrix(x), ntrees[i] )
+#     losstr[i] <- mean((y - predtr)^2)
+#     setTxtProgressBar(pb, i)
+# }
+# close(pb)
+# df <- data.frame("Number of trees in ensemble"=ntrees, "Training loss"=losstr) 
+# names(df) = c("Number of trees in ensemble", "Training loss")
+# p_convergence <- 
+#     df %>%
+#     ggplot(aes(x=`Number of trees in ensemble`, y=`Training loss`)) + 
+#     #geom_point() + 
+#     geom_line() +
+#     #ggtitle("Convergence") + 
+#     theme_bw() + 
+#     theme(plot.title = element_text(margin = margin(t = 10, b=-20)))
+# p_convergence
 
 # number of trees
 num_leaves <- mod$get_num_leaves()
@@ -82,6 +107,7 @@ gridExtra::grid.arrange(p_gbt_full,p_convergence,p_nleaves, ncol=3)
 K <- mod$get_num_trees()
 res.list <- list()
 p.res.list <- list()
+#ind <- sample(n,100)
 for(k in 1:K){
     res.list[[k]] <- (y-pred)
     
