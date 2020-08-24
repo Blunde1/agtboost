@@ -40,8 +40,6 @@
 #' until the same (but scaled) information criterion tells the algorithm to stop. The data used 
 #' for training at each boosting iteration stems from a second order Taylor expansion to the loss 
 #' function, evaluated at predictions given by ensemble at the previous boosting iteration.
-#' 
-#' Formally, ....
 #'
 #' @return
 #' An object of class \code{ENSEMBLE} with some or all of the following elements:
@@ -61,8 +59,10 @@
 #'
 #' @references
 #'
-#' B. Å. S. Lunde, T. S. Kleppe and H. J. Skaug, "An information criterion for gradient boosted trees"
-#' publishing details, 
+#' Berent Ånund Strømnes Lunde, Tore Selland Kleppe and Hans Julius Skaug,
+#' "An Information Criterion for Automatic Gradient Tree Boosting", 2020, 
+#' \url{https://arxiv.org/abs/2008.05926}
+#' 
 #'
 #' @examples
 #' ## A simple gtb.train example with linear regression:

@@ -20,8 +20,9 @@
 #'
 #' @references
 #'
-#' B. Å. S. Lunde, T. S. Kleppe and H. J. Skaug, "An information criterion for gradient boosted trees"
-#' publishing details,
+#' Berent Ånund Strømnes Lunde, Tore Selland Kleppe and Hans Julius Skaug,
+#' "An Information Criterion for Automatic Gradient Tree Boosting", 2020, 
+#' \url{https://arxiv.org/abs/2008.05926}
 #'
 #' @examples
 #' ## A simple gtb.train example with linear regression:
@@ -152,8 +153,9 @@ predict.Rcpp_ENSEMBLE <- function(object, newdata, ...){
 #'
 #' @references
 #'
-#' B. Å. S. Lunde, T. S. Kleppe and H. J. Skaug, "An information criterion for gradient boosted trees"
-#' publishing details,
+#' Berent Ånund Strømnes Lunde, Tore Selland Kleppe and Hans Julius Skaug,
+#' "An Information Criterion for Automatic Gradient Tree Boosting", 2020, 
+#' \url{https://arxiv.org/abs/2008.05926}
 #'
 #' @examples
 #' ## A simple gtb.train example with linear regression:

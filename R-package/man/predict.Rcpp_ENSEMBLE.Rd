@@ -41,8 +41,9 @@ points(x.test, y.pred, col="red")
 
 }
 \references{
-B. Å. S. Lunde, T. S. Kleppe and H. J. Skaug, "An information criterion for gradient boosted trees"
-publishing details,
+Berent Ånund Strømnes Lunde, Tore Selland Kleppe and Hans Julius Skaug,
+"An Information Criterion for Automatic Gradient Tree Boosting", 2020, 
+\url{https://arxiv.org/abs/2008.05926}
 }
 \seealso{
 \code{\link{gbt.train}}

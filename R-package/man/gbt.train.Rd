@@ -75,8 +75,6 @@ Explain the philosophy and the algorithm and a little math
 until the same (but scaled) information criterion tells the algorithm to stop. The data used 
 for training at each boosting iteration stems from a second order Taylor expansion to the loss 
 function, evaluated at predictions given by ensemble at the previous boosting iteration.
-
-Formally, ....
 }
 \examples{
 ## A simple gtb.train example with linear regression:
@@ -94,8 +92,9 @@ points(x.test, y.pred, col="red")
 
 }
 \references{
-B. Å. S. Lunde, T. S. Kleppe and H. J. Skaug, "An information criterion for gradient boosted trees"
-publishing details,
+Berent Ånund Strømnes Lunde, Tore Selland Kleppe and Hans Julius Skaug,
+"An Information Criterion for Automatic Gradient Tree Boosting", 2020, 
+\url{https://arxiv.org/abs/2008.05926}
 }
 \seealso{
 \code{\link{predict.Rcpp_ENSEMBLE}}
