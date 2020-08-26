@@ -140,7 +140,9 @@ if(F)
          auc_vanilla, auc_gsub, ntrees_vanilla, ntrees_gsub,
          nleaves_gsub, nleaves_vanilla, nfeatures_gsub, nfeatures_vanilla,
          ks_stat_gsub, ks_stat_vanilla, df_nleaves, df_convergence, file="results/res_chap_6.RData")
+    load("results/res_chap_6.RData")
 }
+#df_nleaves <- df_nleaves[nrow(df_nleaves):1,]
 
 # Plot nleaves
 cbp2 <- c("#000000", "#E69F00", "#56B4E9", "#009E73",
@@ -156,16 +158,23 @@ colnames(df_nleaves)[3] <- c("#Training observations")
 
 #names(cbp2) <- names(df[,-1])
 y_axis_max <- max(df_nleaves$nleaves)
+x_axis_max <- 2^11
 p_nleaves_vanilla <- df_nleaves[ind_vanilla,] %>%
+    
+    mutate(`#Training observations`=factor(`#Training observations`, 
+                                           levels=c("100000", "10000", "1000", "100"),
+                                           ordered=TRUE)) %>%
+    
     ggplot(aes(x=iteration, y=nleaves, group=`#Training observations`)) + 
     #geom_point() + 
-    geom_line(aes(linetype=`#Training observations`, colour=`#Training observations`), size=1) + 
+    geom_line(aes(colour=`#Training observations`), size=0.8) + 
     theme_bw() + 
     ylab("Number of leaves") + 
     xlab("Boosting iteration") +
     ggtitle("Method: Vanilla") +
+    scale_x_continuous(trans='log2', breaks=2^seq(2,10,2)) + 
     scale_y_continuous(trans='log2', limits=c(2, y_axis_max)) + 
-    scale_color_manual(values=cbp2) + 
+    scale_color_manual(values=cbp2[4:1], breaks = c("100", "1000", "10000", "100000")) + 
     theme(#legend.position=c(1,1),legend.justification=c(1,1),
           #legend.direction="vertical",
           #legend.box="horizontal",
@@ -174,15 +183,21 @@ p_nleaves_vanilla <- df_nleaves[ind_vanilla,] %>%
 p_nleaves_vanilla
 
 p_nleaves_gsub <- df_nleaves[ind_gsub,] %>%
+    
+    mutate(`#Training observations`=factor(`#Training observations`, 
+                                           levels=c("100000", "10000", "1000", "100"),
+                                           ordered=TRUE)) %>%
+    
     ggplot(aes(x=iteration, y=nleaves, group=`#Training observations`)) + 
     #geom_point() + 
-    geom_line(aes(linetype=`#Training observations`, colour=`#Training observations`), size=1) + 
+    geom_line(aes(colour=`#Training observations`), size=0.8) + 
     theme_bw() + 
     ylab("Number of leaves") + 
     xlab("Boosting iteration") + 
     ggtitle("Method: Global-subset") +
+    scale_x_continuous(trans='log2', breaks=2^seq(2,10,2)) + 
     scale_y_continuous(trans='log2', limits=c(2, y_axis_max)) + 
-    scale_color_manual(values=cbp2) + 
+    scale_color_manual(values=cbp2[4:1], breaks = c("100", "1000", "10000", "100000")) + 
     theme(#legend.position=c(1,1),legend.justification=c(1,1),
         #legend.direction="vertical",
         #legend.box="horizontal",
@@ -206,6 +221,11 @@ if(F)
 
 # Plot convergence
 #names(cbp2) <- names(df[,-1])
+
+#col_conv <- as.vector(sapply(1:4, function(i) rep(cbp2[i],2)))
+col_conv <- c(cbp2[1:4], cbp2[1:4])
+#ltype_conv <- rep(c("solid", "dashed"), 4)
+ltype_conv <- c(rep("solid",4), rep("dashed",4))
 df_convergence$model <- as.character(df_convergence$model)
 df_convergence$model[df_convergence$model == "vanilla100"] = "vanilla-100"
 df_convergence$model[df_convergence$model == "vanilla1000"] = "vanilla-1000"
@@ -221,8 +241,10 @@ p_convergence <- df_convergence %>%
     geom_line(aes(linetype=model, colour=model), size=1) + 
     ylab("Test loss") + 
     xlab("Boosting iteration") + 
+    scale_x_continuous(trans='log2', breaks=2^seq(2,10,2)) + 
     theme_bw() + 
-    scale_color_manual(values=cbp2)  + 
+    scale_color_manual(values=col_conv)  + 
+    scale_linetype_manual(values=ltype_conv) +
     theme(#legend.position=c(1,1),legend.justification=c(1,1),
           #legend.direction="vertical",
           #legend.box="horizontal",
