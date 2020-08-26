@@ -87,35 +87,38 @@ gbt.ksval <- function(object, y, x)
     u <- numeric(n)
     if(loss_type == "mse")
     {
-        cat("Gaussian regression \n")
-        cat("Assuming constant variance \n")
+        msg1 <- c("Gaussian regression \n")
+        msg2 <- c("Assuming constant variance \n")
         lsigma <- 0.0
         lsigma <- stats::nlminb(lsigma, nll_norm, y=y, mu_pred=mu_pred)$par
-        cat("Variance estimate is: ", exp(2*lsigma), "\n")
+        msg3 <- c("Variance estimate is: ", exp(2*lsigma), "\n")
+        message(msg1, msg2, msg3)
         u <- pnorm(y, mean=mu_pred, sd=exp(lsigma))
     }else if(loss_type %in% c("gamma::neginv", "gamma::log"))
     {
-        cat("Gamma regression \n")
-        cat("Assuming constant shape \n")
+        msg1 <- c("Gamma regression \n")
+        msg2 <- c("Assuming constant shape \n")
         lshape <- 0.0
         lshape <- stats::nlminb(lshape, nll_gamma, y=y, mu_pred=mu_pred)$par
-        cat("Shape estimate is: ", exp(lshape), "\n")
+        msg3 <- c("Shape estimate is: ", exp(lshape), "\n")
+        message(msg1, msg2, msg3)
         u <- pgamma(y, shape=exp(lshape), scale=mu_pred/exp(lshape))
     }else if(loss_type == "negbinom")
     {
-        cat("Overdispersed count (negative binomial) regression \n")
-        cat("Assuming constant dispersion \n")
+        msg1 <- c("Overdispersed count (negative binomial) regression \n")
+        msg2 <- c("Assuming constant dispersion \n")
         ldisp <- 0.0
         ldisp <- stats::nlminb(ldisp, nll_nbinom, y=y, mu_pred=mu_pred)$par
-        cat("Dispersion estimate is: ", exp(ldisp), "\n")
+        msg3 <- c("Dispersion estimate is: ", exp(ldisp), "\n")
+        message(msg1, msg2, msg3)
         u <- unbinom(y, mu=mu_pred, dispersion=exp(ldisp))
     }else if(loss_type == "poisson")
     {
-        cat("Count (Poisson) regression \n")
+        message("Count (Poisson) regression \n")
         u <- upois(y, lambda=mu_pred)
     }else if(loss_type == "logloss")
     {
-        cat("Classification \n")
+        message("Classification \n")
         u <- ubernoulli(y, p=mu_pred)   
     }
     

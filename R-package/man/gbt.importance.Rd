@@ -23,7 +23,7 @@ at each node for each tree in the model, and attributes it to
 the feature the node is split on. Returns result in terms of percents.
 }
 \examples{
-\dontrun{
+\donttest{
 ## Load data
 data(caravan.train, package = "agtboost")
 train <- caravan.train

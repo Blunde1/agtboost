@@ -15,7 +15,7 @@
 #' \code{data.frame} with percentwise reduction in loss of total attributed to each feature.
 #' 
 #' @examples
-#' \dontrun{
+#' \donttest{
 #' ## Load data
 #' data(caravan.train, package = "agtboost")
 #' train <- caravan.train
@@ -56,15 +56,15 @@ gbt.importance <- function(feature_names, object)
     # Plot
     importance_vec <- importance_vec[order(importance_vec, decreasing = FALSE)]
     importance_vec <- importance_vec[importance_vec != 0] * 100
-    old.par <- par(mar=c(0,0,0,0))
+    opar <- par(no.readonly =TRUE)       # code line i
+    on.exit(par(opar))                   # code line i+1
     par(las=2)
     par(mar=c(5,6.5,3.5,2))
     barplot(importance_vec, main=NULL, horiz = TRUE, names.arg = names(importance_vec), 
             cex.names = 0.8, xlab = "Importance in percent")
     par(las=1)
     mtext(side=3, line=1.5, at=-0.02, adj=0, cex=1.1, "Feature importance")
-    par(old.par)
-    
+
     # Return val
     importance_vec <- importance_vec[order(importance_vec, decreasing = TRUE)]
     
