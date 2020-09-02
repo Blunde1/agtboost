@@ -16,7 +16,11 @@ Consequently, the speed-ups relative to state-of-the-art implementations are in 
 
 ## Installation
 
-**R**: Install the development version from GitHub
+**R**: Finally on CRAN! Install the stable version with
+```r
+install.packages("agtboost")
+```
+or install the development version from GitHub
 ```r
 devtools::install_github("Blunde1/agtboost/R-package")
 ```
@@ -88,6 +92,7 @@ Furthermore, an aGTBoost model is (see example code)
 
 ## References
 - [An information criterion for automatic gradient tree boosting](https://arxiv.org/abs/2008.05926)
+- [agtboost: Adaptive and Automatic Gradient Tree Boosting Computations](https://arxiv.org/abs/2008.12625)
 
 ## Contribute
 
