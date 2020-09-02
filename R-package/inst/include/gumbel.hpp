@@ -36,7 +36,7 @@ double grad_scale_est_obj(double scale, Tavec<double> &x){
     Tavec<double> exp_x_beta = (-1.0*x/scale).exp();
     //exp_x_beta = exp_x_beta.array().exp();
     double f = scale + (x*exp_x_beta).sum()/exp_x_beta.sum() - x.sum()/n;
-    double grad = 2*f* ( 1.0 + 
+    double grad = 2.0*f* ( 1.0 + 
                          ( (x*x*exp_x_beta).sum() * exp_x_beta.sum() - 
                          pow((x*exp_x_beta).sum(),2.0) ) / 
                          pow(scale*exp_x_beta.sum(), 2.0));
@@ -86,7 +86,7 @@ Tvec<double> par_gumbel_estimates(Tavec<double> &x){
     int n = x.size();
     
     double scale_est = scale_estimate(x);
-    double location_est = scale_est * ( log(n) - log( (-1.0*x/scale_est).exp().sum() ) );
+    double location_est = scale_est * ( log((double)n) - log( (-1.0*x/scale_est).exp().sum() ) );
     
     Tvec<double> res(2);
     res << location_est, scale_est;
