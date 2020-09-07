@@ -172,7 +172,7 @@ p_nleaves_vanilla <- df_nleaves[ind_vanilla,] %>%
     ylab("Number of leaves") + 
     xlab("Boosting iteration") +
     ggtitle("Method: Vanilla") +
-    scale_x_continuous(trans='log2', breaks=2^seq(2,10,2)) + 
+    scale_x_continuous(trans='log2', breaks=2^seq(0,10,2)) + 
     scale_y_continuous(trans='log2', limits=c(2, y_axis_max)) + 
     scale_color_manual(values=cbp2[4:1], breaks = c("100", "1000", "10000", "100000")) + 
     theme(#legend.position=c(1,1),legend.justification=c(1,1),
@@ -195,7 +195,7 @@ p_nleaves_gsub <- df_nleaves[ind_gsub,] %>%
     ylab("Number of leaves") + 
     xlab("Boosting iteration") + 
     ggtitle("Method: Global-subset") +
-    scale_x_continuous(trans='log2', breaks=2^seq(2,10,2)) + 
+    scale_x_continuous(trans='log2', breaks=2^seq(0,10,2)) + 
     scale_y_continuous(trans='log2', limits=c(2, y_axis_max)) + 
     scale_color_manual(values=cbp2[4:1], breaks = c("100", "1000", "10000", "100000")) + 
     theme(#legend.position=c(1,1),legend.justification=c(1,1),
@@ -238,10 +238,10 @@ df_convergence$model[df_convergence$model == "gsub1e+05"] = "global-subset-10000
 p_convergence <- df_convergence %>%
     ggplot(aes(x=iteration, y=loss, group=model)) + 
     #geom_point() + 
-    geom_line(aes(linetype=model, colour=model), size=1) + 
+    geom_line(aes(linetype=model, colour=model), size=0.8) + 
     ylab("Test loss") + 
     xlab("Boosting iteration") + 
-    scale_x_continuous(trans='log2', breaks=2^seq(2,10,2)) + 
+    scale_x_continuous(trans='log2', breaks=2^seq(0,10,2)) + 
     theme_bw() + 
     scale_color_manual(values=col_conv)  + 
     scale_linetype_manual(values=ltype_conv) +
