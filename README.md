@@ -3,6 +3,7 @@
 [![Lifecycle: experimental](https://img.shields.io/badge/lifecycle-experimental-orange.svg)](https://www.tidyverse.org/lifecycle/#experimental)
 [![License:
 MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![CRAN RStudio mirror downloads](https://cranlogs.r-pkg.org/badges/grand-total/agtboost?color=blue)](https://r-pkg.org/pkg/agtboost)
 ---------
 
 # aGTBoost
