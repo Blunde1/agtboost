@@ -31,7 +31,10 @@ public:
     node* left;
     node* right;
     
-    node* createLeaf(double node_prediction, double node_tr_loss, double local_optimism, double CRt,
+    //node(double node_prediction, double node_tr_loss, double local_optimism, double CRt,
+    //     int obs_in_node, int obs_in_parent, int obs_tot);
+    
+    void createLeaf(double node_prediction, double node_tr_loss, double local_optimism, double CRt,
                      int obs_in_node, int obs_in_parent, int obs_tot);
     
     node* getLeft();
@@ -55,6 +58,22 @@ public:
     bool deSerialize(node *nptr, std::ifstream& f, int& lineNum);
 };
 
+/*
+// Constructor
+node::node(double node_prediction, double node_tr_loss, double local_optimism, double CRt,
+                       int obs_in_node, int obs_in_parent, int obs_tot)
+{
+    this->node_prediction = node_prediction;
+    this->node_tr_loss = node_tr_loss;
+    this->local_optimism = local_optimism;
+    this->prob_node = (double)obs_in_node / obs_tot; // prob_node;
+    double prob_split_complement = 1.0 - (double)obs_in_node / obs_in_parent; // if left: p(right, not left), oposite for right
+    this->p_split_CRt = prob_split_complement * CRt;
+    this->obs_in_node = obs_in_node;
+    this->left = NULL;
+    this->right = NULL;
+}
+*/
 
 // METHODS
 
@@ -151,21 +170,21 @@ bool node::deSerialize(node *nptr, std::ifstream& f, int& lineNum)
     return true;
 }
 
-node* node::createLeaf(double node_prediction, double node_tr_loss, double local_optimism, double CRt,
+void node::createLeaf(double node_prediction, double node_tr_loss, double local_optimism, double CRt,
                        int obs_in_node, int obs_in_parent, int obs_tot)
 {
-    node* n = new node;
-    n->node_prediction = node_prediction;
-    n->node_tr_loss = node_tr_loss;
-    n->local_optimism = local_optimism;
-    n->prob_node = (double)obs_in_node / obs_tot; // prob_node;
+    //node* n = new node;
+    this->node_prediction = node_prediction;
+    this->node_tr_loss = node_tr_loss;
+    this->local_optimism = local_optimism;
+    this->prob_node = (double)obs_in_node / obs_tot; // prob_node;
     double prob_split_complement = 1.0 - (double)obs_in_node / obs_in_parent; // if left: p(right, not left), oposite for right
-    n->p_split_CRt = prob_split_complement * CRt;
-    n->obs_in_node = obs_in_node;
-    n->left = NULL;
-    n->right = NULL;
+    this->p_split_CRt = prob_split_complement * CRt;
+    this->obs_in_node = obs_in_node;
+    this->left = NULL;
+    this->right = NULL;
     
-    return n;
+    //return n;
 }
 
 
@@ -387,8 +406,8 @@ bool node::split_information(const Tvec<double> &g, const Tvec<double> &h, const
         
         
         // 6. Update split information in child nodes
-        left = createLeaf(w_l, tr_loss_l, local_opt_l, this->CRt, n_left, n_left+n_right, n); // Update createLeaf()
-        right = createLeaf(w_r, tr_loss_r, local_opt_r, this->CRt, n_right, n_left+n_right, n);
+        left->createLeaf(w_l, tr_loss_l, local_opt_l, this->CRt, n_left, n_left+n_right, n); // Update createLeaf()
+        right->createLeaf(w_r, tr_loss_r, local_opt_r, this->CRt, n_right, n_left+n_right, n);
         //Rcpp::Rcout << "p_left_CRt: " << left->p_split_CRt << "\n" <<  "p_right_CRt:"  << right->p_split_CRt << std::endl;
         
         // 7. update childs to left right
