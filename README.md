@@ -14,6 +14,8 @@ aGTBoost is a lightning fast gradient boosting library designed to **avoid manua
 This makes the algorithm **adaptive** to the dataset at hand; it is **completely automatic**, and with **minimal worries of overfitting**.
 Consequently, the speed-ups relative to state-of-the-art implementations are in the thousands while mathematical and technical knowledge required on the user are minimized.
 
+*Note: Currently for academic purposes: Implementing and testing new innovations w.r.t. information theoretic choices of GTB-complexity. See below for to-do research list.*
+
 
 ## Installation
 
@@ -84,6 +86,7 @@ Furthermore, an aGTBoost model is (see example code)
 ## Scheduled updates
 
 - [x] Adaptive and automatic deterministic frequentist gradient tree boosting.
+- [ ] Information criterion for fast histogram algorithm (non-exact search) (Fall 2020, planned)
 - [ ] Adaptive L2-penalized gradient tree boosting. (Fall 2020, planned)
 - [ ] Automatic stochastic gradient tree boosting. (Fall 2020/Spring 2021, planned)
 
