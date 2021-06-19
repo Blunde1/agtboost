@@ -7,8 +7,6 @@
 
 #include "agtboost.hpp"
 
-
-
 // ---------------- ENSEMBLE ----------------
 ENSEMBLE::ENSEMBLE(){
     this->first_tree = NULL;
@@ -68,12 +66,10 @@ void ENSEMBLE::serialize(ENSEMBLE *eptr, std::ofstream& f)
     
     eptr->first_tree->serialize(eptr->first_tree, f);
     f.close();
-    
 }
 
 void ENSEMBLE::deSerialize(ENSEMBLE *eptr, std::ifstream& f)
 {
-    
     // Check stream
     std::streampos oldpos = f.tellg();
     int val;
@@ -85,13 +81,10 @@ void ENSEMBLE::deSerialize(ENSEMBLE *eptr, std::ifstream& f)
     
     // Read from stream
     f >> eptr->nrounds >> eptr->learning_rate >> eptr->extra_param >>
-        eptr->initialPred >> eptr->initial_score >> eptr->loss_function;
-    
-    // Start recurrence
-    int lineNum = 6;
+        eptr->initialPred >> eptr->initial_score >> eptr->loss_function >> std::ws;
+
     eptr->first_tree = new GBTREE;
-    eptr->first_tree->deSerialize(eptr->first_tree, f, lineNum);
-    
+    eptr->first_tree->deSerialize(eptr->first_tree, f);
 }
 
 void ENSEMBLE::save_model(std::string filepath)
@@ -101,6 +94,7 @@ void ENSEMBLE::save_model(std::string filepath)
     this->serialize(this, f);
     f.close();
 }
+
 void ENSEMBLE::load_model(std::string filepath)
 {
     std::ifstream f;
@@ -108,7 +102,6 @@ void ENSEMBLE::load_model(std::string filepath)
     this->deSerialize(this, f);
     f.close();
 }
-
  
 double ENSEMBLE::initial_prediction(Tvec<double> &y, std::string loss_function, Tvec<double> &w){
     

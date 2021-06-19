@@ -55,7 +55,7 @@ public:
     void print_child_branches_2(const std::string& prefix, const node* nptr, bool isLeft);
     
     void serialize(node* nptr, std::ofstream& f);
-    bool deSerialize(node *nptr, std::ifstream& f, int& lineNum);
+    bool deSerialize(node *nptr, std::ifstream& f);
 };
 
 /*
@@ -105,22 +105,15 @@ void node::serialize(node* nptr, std::ofstream& f)
     
 }
 
-bool node::deSerialize(node *nptr, std::ifstream& f, int& lineNum)
+bool node::deSerialize(node *nptr, std::ifstream& f)
 {
     
     int MARKER = -1;
-    
-    // Start at beginning
-    f.seekg(0, std::ios::beg);
-    
-    // Run until line lineNum is found
+
     std::string stemp;
-    for(int i=0; i<= lineNum; i++)
-    {
-        if(!std::getline(f,stemp)){
-            nptr = NULL;
-            return false;
-        }
+    if(!std::getline(f,stemp)){
+        nptr = NULL;
+        return false;
     }
     
     // Check stemp for MARKER
@@ -129,8 +122,6 @@ bool node::deSerialize(node *nptr, std::ifstream& f, int& lineNum)
     istemp >> val;
     if(val == MARKER){
         nptr = NULL;
-        // Increment lineNum
-        lineNum++;
         return false;
     }
     
@@ -139,16 +130,13 @@ bool node::deSerialize(node *nptr, std::ifstream& f, int& lineNum)
     istemp >> nptr->obs_in_node >> nptr->split_value >> nptr->node_prediction >>
         nptr->node_tr_loss >> nptr->prob_node >> nptr->local_optimism >>
         nptr->expected_max_S >> nptr->CRt >> nptr->p_split_CRt;
-
-    // Increment lineNum
-    lineNum++;
     
     // Node check value
     bool node_success = false;
     
     // Left node
     node* new_left = new node;
-    node_success = deSerialize(new_left, f, lineNum);
+    node_success = deSerialize(new_left, f);
     if(node_success)
     {
         nptr->left = new_left;
@@ -159,7 +147,7 @@ bool node::deSerialize(node *nptr, std::ifstream& f, int& lineNum)
     // Right node
     node_success = false;
     node* new_right = new node;
-    node_success = deSerialize(new_right, f, lineNum);
+    node_success = deSerialize(new_right, f);
     if(node_success)
     {
         nptr->right = new_right;
