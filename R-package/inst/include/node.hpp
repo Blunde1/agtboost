@@ -27,6 +27,8 @@ public:
     //double split_point_optimism; // C(\hat{s}) = C(t|q)*p(q(x)=t)*(E[S_max]-1)
     double CRt; // p(q(x)=t) * C(t|q) * E[S_max]
     double p_split_CRt; // p(split(left,right) | q(x)=t) * CRt, p(split(left,right) | q(x)=t) \approx nl/nt for left node
+    double avg_informtion_left; // Average information let | q(x)=t at boosting iteration k
+    double hess; // sum h_i / n_t {i:q(x_i)=t}
     
     node* left;
     node* right;
@@ -35,16 +37,18 @@ public:
     //     int obs_in_node, int obs_in_parent, int obs_tot);
     
     void createLeaf(double node_prediction, double node_tr_loss, double local_optimism, double CRt,
-                     int obs_in_node, int obs_in_parent, int obs_tot);
+                     int obs_in_node, int obs_in_parent, int obs_tot, double hess);
     
     node* getLeft();
     node* getRight();
     
     void split_node(Tvec<double> &g, Tvec<double> &h, Tvec<int> &ind, Tmat<double> &X, Tmat<double> &cir_sim, node* nptr, int n, 
                     double next_tree_score, bool greedy_complexities, double learning_rate,
+                    Tvec<double> &ensemble_influence,
                     int depth=0, int maxDepth = 1); // take out from node?
     
     bool split_information(const Tvec<double> &g, const Tvec<double> &h, const Tvec<int> &ind, const Tmat<double> &X,
+                           Tvec<double> &ensemble_influence,
                            const Tmat<double> &cir_sim, const int n);
     
     double expected_reduction(double learning_rate = 1.0);
@@ -171,7 +175,7 @@ bool node::deSerialize(node *nptr, std::ifstream& f, int& lineNum)
 }
 
 void node::createLeaf(double node_prediction, double node_tr_loss, double local_optimism, double CRt,
-                       int obs_in_node, int obs_in_parent, int obs_tot)
+                       int obs_in_node, int obs_in_parent, int obs_tot, double hess)
 {
     //node* n = new node;
     this->node_prediction = node_prediction;
@@ -181,10 +185,20 @@ void node::createLeaf(double node_prediction, double node_tr_loss, double local_
     double prob_split_complement = 1.0 - (double)obs_in_node / obs_in_parent; // if left: p(right, not left), oposite for right
     this->p_split_CRt = prob_split_complement * CRt;
     this->obs_in_node = obs_in_node;
+    this->hess = hess;
     this->left = NULL;
     this->right = NULL;
     
     //return n;
+    // Rcpp::Rcout<<
+    //     "Creating new node with values: " <<
+    //         "pred: " << node_prediction << "\n" <<
+    //             "local_optimism: " << local_optimism << "\n" <<
+    //                 "prob_node: " << prob_node << "\n" <<
+    //                     "obs_in_node: " << obs_in_node << "\n" <<
+    //                         "p_split_CRt: " << this->p_split_CRt << "\n" <<
+    //                             "hess: " << hess << "\n" << std::endl;
+    
 }
 
 
@@ -211,7 +225,7 @@ double node::expected_reduction(double learning_rate)
     double R = (loss_parent - loss_l - loss_r);
     double CR = left->p_split_CRt + right->p_split_CRt;
     
-    return learning_rate*(2.0-learning_rate)*R-learning_rate*CR;
+    return learning_rate*(2.0-learning_rate)*R-learning_rate*CR * this->avg_informtion_left;
     
 }
 
@@ -233,6 +247,7 @@ void node::reset_node()
 
 // Algorithm 2 in Appendix C
 bool node::split_information(const Tvec<double> &g, const Tvec<double> &h, const Tvec<int> &ind, const Tmat<double> &X,
+                             Tvec<double> &ensemble_influence,
                              const Tmat<double> &cir_sim, const int n)
 {
     // 1. Creates left right node
@@ -246,6 +261,7 @@ bool node::split_information(const Tvec<double> &g, const Tvec<double> &h, const
     // 5. Estimate local optimism and probabilities
     // 6. Update split information in child nodes, importantly p_split_CRt
     // 7. Returns false if no split happened, else true
+    int MIN_LEFTRIGHT = 1;
     
     int split_feature =0, n_indices = ind.size(), n_left = 0, n_right = 0, n_features = X.cols(), n_sim = cir_sim.rows();
     double split_val=0.0, observed_reduction=0.0, split_score=0.0, w_l=0.0, w_r=0.0, tr_loss_l=0.0, tr_loss_r=0.0;
@@ -265,6 +281,7 @@ bool node::split_information(const Tvec<double> &g, const Tvec<double> &h, const
     double local_opt_l=0.0, local_opt_r=0.0;
     double Gl, Gl2, Hl, Hl2, gxhl, Gr, Gr2, Hr, Hr2, gxhr;    
     double G=0, H=0, G2=0, H2=0, gxh=0;
+    double Hl_avg=0.0, Hr_avg=0.0;
     
     // Prepare for CIR
     Tvec<double> u_store(n_indices);
@@ -326,7 +343,8 @@ bool node::split_information(const Tvec<double> &g, const Tvec<double> &h, const
                 
                 // Check for new maximum reduction
                 split_score = (Gl*Gl/Hl + Gr*Gr/Hr - G*G/H)/(2.0*n);
-                if(observed_reduction < split_score){
+                if(observed_reduction < split_score && 
+                   (i+1)>MIN_LEFTRIGHT && (n_indices-(i+1))>MIN_LEFTRIGHT){
                     
                     any_split = true;
                     observed_reduction = split_score; // update
@@ -343,6 +361,9 @@ bool node::split_information(const Tvec<double> &g, const Tvec<double> &h, const
                     // Eq. 25 in paper
                     local_opt_l = (Gl2 - 2.0*gxhl*(Gl/Hl) + Gl*Gl*Hl2/(Hl*Hl)) / (Hl*(i+1));
                     local_opt_r = (Gr2 - 2.0*gxhr*(Gr/Hr) + Gr*Gr*Hr2/(Hr*Hr)) / (Hr*(n_indices-(i+1)));
+                    // Hess
+                    Hl_avg = Hl / n_left;
+                    Hr_avg = Hr / n_right;
                     
                 }
                 
@@ -396,6 +417,25 @@ bool node::split_information(const Tvec<double> &g, const Tvec<double> &h, const
         gum_cdf_mmcir_complement = Tvec<double>::Ones(grid_size) - gum_cdf_mmcir_grid.matrix();
         this->expected_max_S = simpson( gum_cdf_mmcir_complement, grid );
         
+        // 4.5 Average information left
+        this->avg_informtion_left = ind.unaryExpr(ensemble_influence).sum() / n_indices;
+        //double average_ensemble_influence = ind.unaryExpr(ensemble_influence).array().abs().sum() / n_indices;
+        //this->avg_informtion_left = 1.0 - average_ensemble_influence;
+        // Tvec<double> pred_k(n_indices);
+        // for(int i=0; i<n_indices; i++){
+        //     // pred i
+        //     if(X(ind[i],split_feature) <= split_val){
+        //         pred_k[i] = w_l;    
+        //     }else{
+        //         pred_k[i] = w_r;    
+        //     }
+        //     //information_learned += std::abs(pred_trees[ind[i]]) / (std::abs(pred_trees[ind[i]])+std::abs(pred_k[i]));
+        //     information_learned += std::abs(pred_trees[ind[i]]) / 
+        //         std::pow(std::sqrt(std::abs(pred_trees[ind[i]]))+std::sqrt(std::abs(pred_k[i])), 2.0);
+        // }
+        // information_learned = information_learned/n_indices;
+        // this->avg_informtion_left = 1.0 - information_learned*information_learned;
+        
         // 5. Update information in parent node -- reset later if no-split
         this->split_feature = split_feature;
         this->split_value = split_val;
@@ -406,8 +446,8 @@ bool node::split_information(const Tvec<double> &g, const Tvec<double> &h, const
         
         
         // 6. Update split information in child nodes
-        left->createLeaf(w_l, tr_loss_l, local_opt_l, this->CRt, n_left, n_left+n_right, n); // Update createLeaf()
-        right->createLeaf(w_r, tr_loss_r, local_opt_r, this->CRt, n_right, n_left+n_right, n);
+        left->createLeaf(w_l, tr_loss_l, local_opt_l, this->CRt, n_left, n_left+n_right, n, Hl_avg); // Update createLeaf()
+        right->createLeaf(w_r, tr_loss_r, local_opt_r, this->CRt, n_right, n_left+n_right, n, Hr_avg);
         //Rcpp::Rcout << "p_left_CRt: " << left->p_split_CRt << "\n" <<  "p_right_CRt:"  << right->p_split_CRt << std::endl;
         
         // 7. update childs to left right
@@ -423,6 +463,7 @@ bool node::split_information(const Tvec<double> &g, const Tvec<double> &h, const
 void node::split_node(Tvec<double> &g, Tvec<double> &h, Tvec<int> &ind, Tmat<double> &X, Tmat<double> &cir_sim, 
                       node* nptr, int n, 
                       double next_tree_score, bool greedy_complexities, double learning_rate,
+                      Tvec<double> &ensemble_influence,
                       int depth, int maxDepth)
 {
     
@@ -438,9 +479,22 @@ void node::split_node(Tvec<double> &g, Tvec<double> &h, Tvec<int> &ind, Tmat<dou
     }
     */
     
-    //else check split
+    // Information weight
+    //double avg_information_learned = 0.0;
+    //avg_information_learned = ind.unaryExpr(pred_trees).sum() / (ind.unaryExpr(pred_trees).sum() + ind.size()*this->split_value);
+    //double avg_ypred = 0.0;
+    /*
+    for(int i=0; i<ind.size(); i++){
+        //avg_ypred += pred_trees[ind[i]];
+        avg_information_learned += pred_trees[ind[i]] / (pred_trees[ind[i]]+this->split_value);
+    }
+    //avg_ypred = avg_ypred / ind.size();
+    //avg_information_learned = avg_ypred / (avg_ypred + this->split_value);
+    this->avg_informtion_left = 1.0 - avg_information_learned/ind.size();
+     */
+    
     // Calculate split information
-    bool any_split = nptr->split_information(g, h, ind, X, cir_sim, n);
+    bool any_split = nptr->split_information(g, h, ind, X, ensemble_influence, cir_sim, n);
     
     // Check if a split happened
     if(!any_split){
@@ -507,11 +561,13 @@ void node::split_node(Tvec<double> &g, Tvec<double> &h, Tvec<int> &ind, Tmat<dou
     // Run recursively on left
     split_node(g, h, ind_left, X, cir_sim, nptr->left, n, 
                next_tree_score, greedy_complexities, learning_rate, 
+               ensemble_influence,
                depth+1, maxDepth);
     
     // Run recursively on right 
     split_node(g, h, ind_right, X, cir_sim, nptr->right, n, 
                next_tree_score, greedy_complexities, learning_rate, 
+               ensemble_influence,
                depth+1, maxDepth);
     
     /*

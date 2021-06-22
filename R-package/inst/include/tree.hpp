@@ -21,6 +21,7 @@ public:
 
     node* getRoot();
     void train(Tvec<double> &g, Tvec<double> &h, Tmat<double> &X, Tmat<double> &cir_sim,
+               Tvec<double> &ensemble_influence,
                bool greedy_complexities, double learning_rate, int maxDepth=1);
     double predict_obs(Tvec<double> &x);
     Tvec<double> predict_data(Tmat<double> &X);
@@ -34,6 +35,10 @@ public:
     bool deSerialize(GBTREE* tptr,  std::ifstream& f, int& lineNum);
     void importance(Tvec<double> &importance_vector, double learning_rate);
     
+    double selfInfluence(double g, double h, Tvec<double> &x);
+    Tvec<double> predict_data_cvn(Tvec<double> &g, Tvec<double> &h, Tmat<double> &X);
+    Tvec<double> residualInfluence(Tvec<double> &g, Tvec<double> &h, Tmat<double> &X);
+    Tvec<double> residualScore(Tvec<double> &g, Tvec<double> &h, Tmat<double> &X);
 };
 
 
@@ -109,6 +114,7 @@ node* GBTREE::getRoot(){
 
 
 void GBTREE::train(Tvec<double> &g, Tvec<double> &h, Tmat<double> &X, Tmat<double> &cir_sim,
+                   Tvec<double> &ensemble_influence,
                    bool greedy_complexities, double learning_rate, int maxDepth)
 {
     // Check if root exists 
@@ -126,7 +132,7 @@ void GBTREE::train(Tvec<double> &g, Tvec<double> &h, Tmat<double> &X, Tmat<doubl
         double local_optimism = (G2 - 2.0*gxh*(G/H) + G*G*H2/(H*H)) / (H*n);
         
         node* root_ptr = new node;
-        root_ptr->createLeaf(-G/H, -G*G/(2*H*n), local_optimism, local_optimism, n, n, n);
+        root_ptr->createLeaf(-G/H, -G*G/(2*H*n), local_optimism, local_optimism, n, n, n, H/n);
         root = root_ptr;
         //root = root->createLeaf(-G/H, -G*G/(2*H*n), local_optimism, local_optimism, n, n, n);
     }
@@ -135,8 +141,90 @@ void GBTREE::train(Tvec<double> &g, Tvec<double> &h, Tmat<double> &X, Tmat<doubl
     Tvec<int> ind(n);
     std::iota(ind.data(), ind.data()+ind.size(), 0);
     
-    root->split_node(g, h, ind, X, cir_sim, root, n, 0.0, greedy_complexities, learning_rate, 0, maxDepth);
+    root->split_node(g, h, ind, X, cir_sim, root, n, 0.0, greedy_complexities, learning_rate, ensemble_influence, 0, maxDepth);
     
+}
+
+double GBTREE::selfInfluence(double g, double h, Tvec<double> &x){
+    // LIC/TIC * Grad loss_i / average hessian in Node
+    // LIC: sum path-node-reductions * p(q_t|x_i)
+    // TIC: local-optimism * p(q_t|x_i)
+    node* current = this->root;
+    double profile_bias = 0.0;
+    double influence = 0.0;
+    double TIC = 0.0;
+    double LIC = 0.0;
+    double w_t = 0.0;
+    double hess = 0.0;
+    int leaf_obs = 0;
+    if(current == NULL){
+        return 0;
+    }
+    while(current != NULL){
+        // get val from splitting
+        if(current->left==NULL && current->right ==NULL){
+            // Get contribution at leaf?
+            //profile_bias = profile_bias * current->prob_node 
+            TIC = current->prob_node * current->local_optimism;
+            LIC = LIC * current->prob_node;
+            w_t = current->node_prediction;
+            hess = current->hess;
+            leaf_obs = current->obs_in_node;
+            break;
+        }
+        else{
+            profile_bias += current->expected_max_S;
+            LIC += current->CRt / (current->prob_node);
+            // Follow path in tree
+            if(x[current->split_feature]<=current->split_value){
+                current = current->left;    
+            }else{
+                current = current->right;    
+            }
+        }
+    }
+    influence = -profile_bias * (g + h*w_t) / hess / leaf_obs;
+    //influence = -std::max(LIC/TIC, 1.0) * (g + h*w_t) / hess / leaf_obs;
+    //influence = -(g + h*w_t) / (hess * leaf_obs);
+    if(std::isnan(influence)){
+        Rcpp::Rcout << 
+            "TIC: " << TIC << " - LIC: " << LIC << " - w_t: " << w_t << " - hess: " << hess << std::endl;
+    }
+    return influence;
+}
+
+Tvec<double> GBTREE::predict_data_cvn(Tvec<double> &g, Tvec<double> &h, Tmat<double> &X){
+    // pred - 1/n In(y_i, pred_i)
+    int n = X.rows();
+    int m = X.cols();
+    Tvec<double> x(m);
+    Tvec<double> pred = predict_data(X);
+    for(int i=0; i<n; i++){
+        x = X.row(i);
+        pred[i] -= selfInfluence(g[i], h[i], x); // Should be n_t?
+    }
+    return pred;
+}
+
+Tvec<double> GBTREE::residualInfluence(Tvec<double> &g, Tvec<double> &h, Tmat<double> &X){
+    int n = X.rows();
+    int m = X.cols();
+    Tvec<double> x(m), residual_influence(n);
+    for(int i=0; i<n; i++){
+        x = X.row(i);
+        residual_influence[i] = selfInfluence(g[i], h[i], x); // Should be n_t?
+    }
+    return residual_influence;
+}
+
+Tvec<double> GBTREE::residualScore(Tvec<double> &g, Tvec<double> &h, Tmat<double> &X){
+    int n = X.rows();
+    Tvec<double> tree_pred = predict_data(X);
+    Tvec<double> score(n);
+    for(int i=0; i<n; i++){
+        score[i] = g[i]+h[i]*tree_pred[i];
+    }
+    return score;
 }
 
 double GBTREE::predict_obs(Tvec<double> &x){
@@ -167,7 +255,8 @@ double GBTREE::predict_obs(Tvec<double> &x){
 Tvec<double> GBTREE::predict_data(Tmat<double> &X){
     
     int n = X.rows();
-    Tvec<double> res(n), x(n);
+    int m = X.cols();
+    Tvec<double> res(n), x(m);
     
     for(int i=0; i<n; i++){
         x = X.row(i);
@@ -306,7 +395,7 @@ double GBTREE::getTreeOptimism(){
              of predecssor */
             else { 
                 pre->right = NULL; 
-                tree_optimism += current->CRt; // current->split_point_optimism;
+                tree_optimism += current->CRt * std::max(std::min(current->avg_informtion_left, 1.0), 0.0); // current->split_point_optimism;
                 current = current->right; 
             } /* End of if condition pre->right == NULL */
         } /* End of if condition current->left == NULL*/

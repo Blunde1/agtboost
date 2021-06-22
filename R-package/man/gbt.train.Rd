@@ -4,10 +4,21 @@
 \alias{gbt.train}
 \title{aGTBoost Training.}
 \usage{
-gbt.train(y, x, learning_rate = 0.01, loss_function = "mse",
-  nrounds = 50000, verbose = 0, gsub_compare,
-  algorithm = "global_subset", previous_pred = NULL, weights = NULL,
-  force_continued_learning = FALSE, ...)
+gbt.train(
+  y,
+  x,
+  learning_rate = 0.01,
+  loss_function = "mse",
+  nrounds = 50000,
+  verbose = 0,
+  gsub_compare,
+  algorithm = "global_subset",
+  previous_pred = NULL,
+  weights = NULL,
+  force_continued_learning = FALSE,
+  influence_adjustment = TRUE,
+  ...
+)
 }
 \arguments{
 \item{y}{response vector for training. Must correspond to the design matrix \code{x}.}

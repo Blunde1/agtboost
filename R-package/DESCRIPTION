@@ -19,6 +19,6 @@ Depends: R (>= 3.6.0)
 Imports: methods, Rcpp (>= 1.0.1)
 LinkingTo: Rcpp, RcppEigen
 RcppModules: aGTBModule
-RoxygenNote: 6.1.1
+RoxygenNote: 7.1.1
 Suggests: 
     testthat

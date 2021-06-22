@@ -1,4 +1,3 @@
-
 /*
  * agtboost: Adaptive and automatic gradient tree boosting computations.
  * Berent Lunde
@@ -6,7 +5,6 @@
  */
 
 #include "agtboost.hpp"
-
 
 
 // ---------------- ENSEMBLE ----------------
@@ -135,21 +133,67 @@ double ENSEMBLE::initial_prediction(Tvec<double> &y, std::string loss_function, 
     return pred;
 }
 
+void ensemble_influence_update(Tvec<double> &ensemble_influence, Tvec<double> &residual_influence, Tvec<double>& ensemble_influence_fraction, double learning_rate){
+    int n = ensemble_influence.size();
+    for(int i=0; i<n; i++){
+        ensemble_influence[i] += learning_rate*ensemble_influence_fraction[i]*residual_influence[i];    
+    }
+}
+
+void ensembleInfluenceFractionUpdate(Tvec<double> &ensemble_influence_fraction, Tvec<double> &residual_influence, 
+                                     Tvec<double> &g, Tvec<double> &h, Tvec<double> &tree_pred, double learning_rate){
+    int n = ensemble_influence_fraction.size();
+    double residual;
+    for(int i=0; i<n; i++){
+        residual = -g[i]/h[i] - tree_pred[i];
+        if(residual!=0){
+            // Bound: relative self-influence is bounded by 1
+            ensemble_influence_fraction[i] *= std::max(1.0-learning_rate, residual / (residual + learning_rate*residual_influence[i]));
+        }
+        //Rcpp::Rcout<< "R: " << residual << " | Infl: " << residual_influence[i] << " | Scaling: " << (residual + learning_rate*residual_influence[i]) / residual << std::endl;
+    }
+}
+
+Tvec<double> ensembleInfluenceFraction(Tvec<double> &y, Tvec<double> &ensemble_influence, double y0){
+    // Write as update function
+    int n = y.size();
+    double residual_original;
+    Tvec<double> ensemble_influence_fraction(n);
+    for(int i=0; i<n; i++){
+        //Rcpp::Rcout<< "Y: " << y[i] << " - R: "<< y[i] - y0 << " - Infl: " << ensemble_influence[i] << std::endl;
+        residual_original = y[i] - y0;
+        ensemble_influence_fraction[i] = (residual_original + ensemble_influence[i]) / residual_original; 
+    }
+    return ensemble_influence_fraction;
+}
+
+// double gbtree_criterion(Tvec<double> &ensemble_influence, ){
+//     // score * influence
+//     double gbtree_optimism = 0.0;
+//     return gbtree_optimism;
+// }
+
 
 void ENSEMBLE::train(Tvec<double> &y, Tmat<double> &X, int verbose, bool greedy_complexities, 
-                     bool force_continued_learning, Tvec<double> &w){
+                     bool force_continued_learning, Tvec<double> &w, bool influence_adjustment){
     // Set init -- mean
+    influence_adjustment = false;
     int MAXITER = nrounds;
     int n = y.size(); 
     double EPS = 1E-9;
     double expected_loss;
     double learning_rate_set = this->learning_rate;
-    Tvec<double> pred(n), g(n), h(n);
+    Tvec<double> pred(n), pred_tree(n), g(n), h(n), ensemble_influence(n), ensemble_influence_fraction(n), residual_influence(n);
+    //Tvec<double> pred_cvn(n)
+    //pred_cvn.setZero();
+    ensemble_influence.setZero();
+    ensemble_influence_fraction.setOnes();
     
-    // MSE -- FIX FOR OTHER LOSS FUNCTIONS
+    // Initial unscaled prediction, f^{(0)}
     this->initialPred = this->initial_prediction(y, loss_function, w); //y.sum()/n;
     pred.setConstant(this->initialPred);
     this->initial_score = loss(y, pred, loss_function, w, this); //(y - pred).squaredNorm() / n;
+    //pred_cvn.setConstant(this->initialPred);
     
     // Prepare cir matrix
     // PARAMETERS FOR CIR CONTROL: Choose nsim and nobs by user
@@ -159,13 +203,24 @@ void ENSEMBLE::train(Tvec<double> &y, Tmat<double> &X, int verbose, bool greedy_
     // First tree
     g = dloss(y, pred, loss_function, this) * w;
     h = ddloss(y, pred, loss_function, this) * w;
-    //Rcpp::Rcout << g.array()/h.array() << std::endl;
-    
 
     this->first_tree = new GBTREE;
-    this->first_tree->train(g, h, X, cir_sim, greedy_complexities, learning_rate_set);
+    this->first_tree->train(g, h, X, cir_sim, ensemble_influence_fraction, greedy_complexities, learning_rate_set);
     GBTREE* current_tree = this->first_tree;
-    pred = pred + learning_rate * (current_tree->predict_data(X)); // POSSIBLY SCALED
+    pred_tree = current_tree->predict_data(X);
+    pred = pred + learning_rate * pred_tree; // POSSIBLY SCALED
+    //pred_cvn = pred_cvn + learning_rate * (current_tree->predict_data_cvn(g, h, X));
+    //pred_trees = pred_trees + learning_rate * (current_tree->predict_data(X));
+    residual_influence = current_tree->residualInfluence(g,h,X);
+    ensemble_influence_update(ensemble_influence, residual_influence, ensemble_influence_fraction, learning_rate);
+    ensembleInfluenceFractionUpdate(ensemble_influence_fraction, residual_influence, g, h, pred_tree, learning_rate);
+    //ensemble_influence_fraction = ensembleInfluenceFraction(y, ensemble_influence, this->initialPred);
+    
+    // Print
+    //Rcpp::Rcout << "pred: " << pred << std::endl;
+    //Rcpp::Rcout << "cvn-pred: " << pred_cvn << std::endl;
+    
+    //pred_trees = pred_trees + learning_rate * (current_tree->predict_data(X));
     expected_loss = (current_tree->getTreeScore()) * (-2)*learning_rate_set*(learning_rate_set/2 - 1) + 
         learning_rate_set * current_tree->getTreeOptimism();
         //learning_rate_set * current_tree->getFeatureMapOptimism();
@@ -176,6 +231,8 @@ void ENSEMBLE::train(Tvec<double> &y, Tmat<double> &X, int verbose, bool greedy_
             "  |  n-leaves: " << current_tree->getNumLeaves() <<
             "  |  tr loss: " << loss(y, pred, loss_function, w, this) <<
             "  |  gen loss: " << this->estimate_generalization_loss(1) << 
+            "  |  ensemble-influence: " << ensemble_influence_fraction.sum()/n << 
+            "  |  residual-influence: " << (current_tree->residualInfluence(g,h,X)).array().abs().sum()/n <<
              std::endl;
     }
     
@@ -187,17 +244,22 @@ void ENSEMBLE::train(Tvec<double> &y, Tmat<double> &X, int verbose, bool greedy_
         
         // TRAINING
         GBTREE* new_tree = new GBTREE();
-        g = dloss(y, pred, loss_function, this) * w;
-        h = ddloss(y, pred, loss_function, this) * w;
+        if(influence_adjustment){
+            //g = dloss(y, pred_cvn, loss_function, this) * w;
+            //h = ddloss(y, pred_cvn, loss_function, this) * w;
+        }else{
+            g = dloss(y, pred, loss_function, this) * w;
+            h = ddloss(y, pred, loss_function, this) * w;
+        }
         
         // Check perfect fit
-        if(((g.array())/h.array()).matrix().maxCoeff() < 1e-12){
+        if(((g.array())/h.array()).matrix().maxCoeff() < EPS){
             // Every perfect step is below tresh
             break;
         }
         
         
-        new_tree->train(g, h, X, cir_sim, greedy_complexities, learning_rate_set);
+        new_tree->train(g, h, X, cir_sim, ensemble_influence_fraction, greedy_complexities, learning_rate_set);
         
         // EXPECTED LOSS
         expected_loss = (new_tree->getTreeScore()) * (-2)*learning_rate_set*(learning_rate_set/2 - 1) + 
@@ -205,7 +267,10 @@ void ENSEMBLE::train(Tvec<double> &y, Tmat<double> &X, int verbose, bool greedy_
             //1.0*learning_rate_set * new_tree->getFeatureMapOptimism();
 
         // Update preds -- if should not be updated for last iter, it does not matter much computationally
-        pred = pred + learning_rate * (new_tree->predict_data(X));
+        pred_tree = new_tree->predict_data(X);
+        pred = pred + learning_rate * pred_tree;
+        //pred_cvn = pred_cvn + learning_rate* (new_tree->predict_data_cvn(g, h, X));
+        //pred_trees = pred_trees + learning_rate * (new_tree->predict_data(X));
             
         // iter: i | num leaves: T | iter train loss: itl | iter generalization loss: igl | mod train loss: mtl | mod gen loss: mgl "\n"
         if(verbose>0){
@@ -216,6 +281,8 @@ void ENSEMBLE::train(Tvec<double> &y, Tmat<double> &X, int verbose, bool greedy_
                         "  |  n-leaves: " << new_tree->getNumLeaves() << 
                         "  |  tr loss: " << loss(y, pred, loss_function, w, this) <<
                         "  |  gen loss: " << this->estimate_generalization_loss(i-1) + expected_loss << 
+                        "  |  ensemble-influence: " << ensemble_influence_fraction.array().abs().sum()/n << 
+                        "  |  residual-influence: " << (new_tree->residualInfluence(g,h,X)).array().abs().sum()/n <<
                         std::endl;
                 
             }
@@ -237,90 +304,11 @@ void ENSEMBLE::train(Tvec<double> &y, Tmat<double> &X, int verbose, bool greedy_
         current_tree->next_tree = new_tree;
         current_tree = new_tree;
         
-    }
-}
-
-void ENSEMBLE::train_from_preds(Tvec<double> &pred, Tvec<double> &y, Tmat<double> &X, int verbose, bool greedy_complexities, Tvec<double> &w){
-    // Set init -- mean
-    int MAXITER = nrounds;
-    int n = y.size(); 
-    double EPS = 1E-9;
-    double expected_loss;
-    double learning_rate_set = this->learning_rate;
-    Tvec<double> g(n), h(n);
-    
-    // Initial prediction
-    g = dloss(y, pred, loss_function, this)*w;
-    h = ddloss(y, pred, loss_function, this)*w;
-    this->initialPred = - g.sum() / h.sum();
-    pred = pred.array() + this->initialPred;
-    this->initial_score = loss(y, pred, loss_function, w, this); //(y - pred).squaredNorm() / n;
-    
-    // Prepare cir matrix
-    Tmat<double> cir_sim = cir_sim_mat(100, 100);
-    
-    // First tree
-    g = dloss(y, pred, loss_function, this)*w;
-    h = ddloss(y, pred, loss_function, this)*w;
-    this->first_tree = new GBTREE;
-    this->first_tree->train(g, h, X, cir_sim, greedy_complexities, learning_rate_set);
-    GBTREE* current_tree = this->first_tree;
-    pred = pred + learning_rate * (current_tree->predict_data(X)); // POSSIBLY SCALED
-    expected_loss = (current_tree->getTreeScore()) * (-2)*learning_rate_set*(learning_rate_set/2 - 1) + 
-        learning_rate_set * current_tree->getTreeOptimism();
-    
-    if(verbose>0){
-        Rcpp::Rcout  <<
-            std::setprecision(4) <<
-                "it: " << 1 << 
-                    "  |  n-leaves: " << current_tree->getNumLeaves() <<
-                        "  |  tr loss: " << loss(y, pred, loss_function, w, this) <<
-                            "  |  gen loss: " << this->estimate_generalization_loss(1) << 
-                                std::endl;
-    }
-    
-    
-    
-    for(int i=2; i<(MAXITER+1); i++){
-        
-        // check for interrupt every iterations
-        if (i % 1 == 0)
-            Rcpp::checkUserInterrupt();
-        
-        // TRAINING
-        GBTREE* new_tree = new GBTREE();
-        g = dloss(y, pred, loss_function, this)*w;
-        h = ddloss(y, pred, loss_function, this)*w;
-        new_tree->train(g, h, X, cir_sim, greedy_complexities, learning_rate_set);
-        
-        // EXPECTED LOSS
-        expected_loss = (new_tree->getTreeScore()) * (-2)*learning_rate_set*(learning_rate_set/2 - 1) + 
-            learning_rate_set * new_tree->getTreeOptimism();
-        
-        // Update preds -- if should not be updated for last iter, it does not matter much computationally
-        pred = pred + learning_rate * (current_tree->predict_data(X));
-        
-        // iter: i | num leaves: T | iter train loss: itl | iter generalization loss: igl | mod train loss: mtl | mod gen loss: mgl "\n"
-        if(verbose>0){
-            if(i % verbose == 0){
-                Rcpp::Rcout  <<
-                    std::setprecision(4) <<
-                        "it: " << i << 
-                            "  |  n-leaves: " << current_tree->getNumLeaves() << 
-                                "  |  tr loss: " << loss(y, pred, loss_function, w, this) <<
-                                    "  |  gen loss: " << this->estimate_generalization_loss(i-1) + expected_loss << 
-                                        std::endl;
-                
-            }
-        }
-        
-        
-        if(expected_loss < EPS){ // && NUM_BINTREE_CONSECUTIVE < MAX_NUM_BINTREE_CONSECUTIVE){
-            current_tree->next_tree = new_tree;
-            current_tree = new_tree;
-        }else{
-            break;
-        }
+        // Update influence
+        residual_influence = new_tree->residualInfluence(g,h,X);
+        ensemble_influence_update(ensemble_influence, residual_influence, ensemble_influence_fraction, learning_rate);
+        ensembleInfluenceFractionUpdate(ensemble_influence_fraction, residual_influence, g, h, pred_tree, learning_rate);
+        //ensemble_influence_fraction = ensembleInfluenceFraction(y, ensemble_influence, this->initialPred);
     }
 }
 
@@ -476,146 +464,6 @@ Tvec<double> ENSEMBLE::convergence(Tvec<double> &y, Tmat<double> &X){
 }
 
 
-// --- GBT_COUNT_AUTO ----
-void GBT_COUNT_AUTO::set_param(Rcpp::List par_list){
-    this->param = par_list;
-    this->learning_rate = par_list["learning_rate"];
-    this->extra_param = par_list["extra_param"]; // Starting value
-}
-Rcpp::List GBT_COUNT_AUTO::get_param(){
-    return this->param;
-}
-GBT_COUNT_AUTO::GBT_COUNT_AUTO(){
-    this->count_mod = NULL;
-}
-ENSEMBLE* GBT_COUNT_AUTO::get_count_mod(){
-    return this->count_mod;
-}
-
-double GBT_COUNT_AUTO::get_overdispersion(){
-    return this->count_mod->get_extra_param();
-}
-
-std::string GBT_COUNT_AUTO::get_model_name(){
-    std::string count_loss = this->count_mod->get_loss_function();
-    if(count_loss == "poisson"){
-        return "poisson";
-    }else if(count_loss == "negbinom"){
-        return "negbinom";
-    }else{
-        return "unknown";
-    }
-}
-
-void GBT_COUNT_AUTO::train(Tvec<double> &y, Tmat<double> &X, int verbose, bool greedy_complexities)
-{
-    /*
-     * 1. Train Poisson model
-     * 2. Learn overdispersion
-     * 2.1 If overdispersion large, return Poisson model
-     * 3. Train negbinom model
-     * 4. Compare relative AIC of models
-     * 5. Return and set count model as model with best AIC
-     */
-    
-    
-    
-    
-    // Variables
-    double log_factorial;
-    double MAX_DISPERSION = 1e9;
-    int n =y.size();
-    
-    // --- 1.0 Poisson ---
-    ENSEMBLE* mod_pois = new ENSEMBLE;
-    mod_pois->set_param(param["nrounds"], param["learning_rate"], param["extra_param"], "poisson");
-    /*
-    mod_pois->set_param(
-            Rcpp::List::create(
-                Named("learning_rate") = param["learning_rate"],
-                                              Named("loss_function") = "poisson",
-                                              Named("nrounds") = param["nrounds"],
-                                                                      Named("extra_param") = param["extra_param"]
-            )
-    );
-    */
-    // Training
-    Tvec<double> weights = Tvec<double>::Ones(n); // This is unnecessary -- CLEANUP! --> fix ENSEMBLE->train()
-    mod_pois->train(y, X, verbose, greedy_complexities, false, weights);
-
-    // ---- 2.0 Learn overdispersion ----
-    // Predictions on ynz
-    Tvec<double> y_pred_pois = mod_pois->predict(X); // log intensity  
-    double dispersion = learn_dispersion(y, y_pred_pois);
-    
-    // ---- 2.1 Check dispersion -----
-    if(dispersion<MAX_DISPERSION)
-    {
-        // --- 3.1 Train negbinom ----
-        ENSEMBLE* mod_nbinom = new ENSEMBLE;
-        mod_nbinom->set_param(param["nrounds"], param["learning_rate"], dispersion, "negbinom");
-        /*
-        mod_nbinom->set_param(
-                Rcpp::List::create(
-                    Named("learning_rate") = param["learning_rate"],
-                                                  Named("loss_function") = "negbinom",
-                                                  Named("nrounds") = param["nrounds"],
-                                                                          Named("extra_param") = dispersion
-                )
-        );
-         */
-        mod_nbinom->train(y, X, verbose, greedy_complexities, false, weights);
-        
-        // ---- 4. Compare relative AIC of models ----
-        Tvec<double> y_pred_nbinom = mod_nbinom->predict(X); // log mean
-        dispersion = learn_dispersion(y, y_pred_nbinom, dispersion);
-        mod_nbinom->extra_param = dispersion;
-        
-        // Needs to compare on full likelihood!
-        double nll_pois=0.0, nll_nbinom=0.0;
-        for(int i=0; i<y.size(); i++)
-        {
-            // poisson
-            log_factorial = 0;
-            for(int j=0; j<y[i]; j++){ // also works when y=0-->log_factorial=0, R would have failed...
-                log_factorial += log(j+1.0);
-            }
-            nll_pois -= y[i]*y_pred_pois[i] - exp(y_pred_pois[i]) - log_factorial;
-            
-            // negative binomial
-            nll_nbinom += y[i]*log(dispersion) - y[i]*y_pred_nbinom[i] + 
-                (y[i]+dispersion)*log(1.0+exp(y_pred_nbinom[i])/dispersion) - 
-                R::lgammafn(y[i]+dispersion) + R::lgammafn(y[i]+1.0) + R::lgammafn(dispersion);
-        }
-        
-        double poisson_aic = nll_pois / y.size();
-        double nbinom_aic = (nll_nbinom + 1.0) / y.size();
-        
-        Rcpp::Rcout << "Relative AIC Poisson: " << poisson_aic << "\n" << 
-            "Relative AIC nbinom: " << nbinom_aic << std::endl;
-        if(poisson_aic <= nbinom_aic){
-            Rcpp::Rcout << "Choosing Poisson model " << std::endl;
-            this->count_mod = mod_pois;
-        }else{
-            Rcpp::Rcout << "Choosing nbinom model " << std::endl;
-            this->count_mod = mod_nbinom;
-        }
-        
-    }else{
-        // Return with Poisson
-        Rcpp::Rcout << "Dispersion too high: Choosing Poisson model " << std::endl;
-        this->count_mod = mod_pois;
-    }
-    
-}
-
-Tvec<double> GBT_COUNT_AUTO::predict(Tmat<double> &X)
-{
-    return this->count_mod->predict(X);
-}
-
-
-
 // Expose the classes
 RCPP_MODULE(aGTBModule) {
     using namespace Rcpp;
@@ -630,7 +478,7 @@ RCPP_MODULE(aGTBModule) {
         .method("get_extra_param", &ENSEMBLE::get_extra_param)
         .method("get_loss_function", &ENSEMBLE::get_loss_function)
         .method("train", &ENSEMBLE::train)
-        .method("train_from_preds", &ENSEMBLE::train_from_preds)
+        //.method("train_from_preds", &ENSEMBLE::train_from_preds)
         .method("predict", &ENSEMBLE::predict)
         .method("predict2", &ENSEMBLE::predict2)
         .method("estimate_generalization_loss", &ENSEMBLE::estimate_generalization_loss)
@@ -640,15 +488,5 @@ RCPP_MODULE(aGTBModule) {
         .method("load_model", &ENSEMBLE::load_model)
         .method("importance", &ENSEMBLE::importance)
         .method("convergence", &ENSEMBLE::convergence)
-    ;
-    
-    class_<GBT_COUNT_AUTO>("GBT_COUNT_AUTO")
-        .default_constructor("Default constructor")
-        .method("set_param", &GBT_COUNT_AUTO::set_param)
-        .method("get_param", &GBT_COUNT_AUTO::get_param)
-        .method("train", &GBT_COUNT_AUTO::train)
-        .method("predict", &GBT_COUNT_AUTO::predict)
-        .method("get_overdispersion", &GBT_COUNT_AUTO::get_overdispersion)
-        .method("get_model_name", &GBT_COUNT_AUTO::get_model_name)
     ;
 }

@@ -88,6 +88,7 @@ gbt.train <- function(y, x, learning_rate = 0.01,
                       previous_pred=NULL,
                       weights = NULL,
                       force_continued_learning=FALSE,
+                      influence_adjustment = TRUE,
                       ...){
     
     # Deprecated messages
@@ -266,7 +267,7 @@ gbt.train <- function(y, x, learning_rate = 0.01,
         if(is.null(previous_pred)){
             
             # train from scratch
-            mod$train(y,x, verbose, gsub_compare, force_continued_learning, weights)   
+            mod$train(y,x, verbose, gsub_compare, force_continued_learning, weights, influence_adjustment)   
         }else{
             
             # train from previous predictions
