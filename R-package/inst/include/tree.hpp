@@ -31,7 +31,7 @@ public:
     int getNumLeaves();
     void print_tree(int type);
     void serialize(GBTREE* tptr, std::ofstream& f);
-    bool deSerialize(GBTREE* tptr,  std::ifstream& f, int& lineNum);
+    bool deSerialize(GBTREE* tptr,  std::ifstream& f);
     void importance(Tvec<double> &importance_vector, double learning_rate);
     
 };
@@ -55,38 +55,17 @@ void GBTREE::serialize(GBTREE *tptr, std::ofstream& f)
     serialize(tptr->next_tree, f);
 }
 
-bool GBTREE::deSerialize(GBTREE *tptr, std::ifstream& f, int& lineNum)
+bool GBTREE::deSerialize(GBTREE *tptr, std::ifstream& f)
 {
-    
-    int MARKER = -1;
-    
-    // Start at beginning
-    f.seekg(0, std::ios::beg);
-    
-    // Run until line lineNum is found
-    std::string stemp;
-    for(int i=0; i<= lineNum; i++)
-    {
-        if(!std::getline(f,stemp)){
-            tptr = NULL;
-            return false;
-        }
-    }
-    
-    // Check stemp for MARKER
-    std::istringstream istemp(stemp);
-    int val;
-    istemp >> val;
-    if(val == MARKER){ 
+    tptr->root = new node;
+    const bool success = tptr->root->deSerialize(tptr->root, f);
+    if (!success) {
         tptr = NULL;
         return false;
     }
 
-    // If not MARKER, deserialize root node (unincremented lineNum)
-    tptr->root = new node;
-    tptr->root->deSerialize(tptr->root, f, lineNum); // lineNum passed by reference and incremented
     GBTREE* new_tree = new GBTREE;
-    bool new_tree_exist = deSerialize(new_tree, f, lineNum);
+    bool new_tree_exist = deSerialize(new_tree, f);
     if(new_tree_exist)
     {
         tptr->next_tree = new_tree;
