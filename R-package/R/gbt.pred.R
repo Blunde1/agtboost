@@ -72,12 +72,9 @@ predict.Rcpp_ENSEMBLE <- function(object, newdata, ...){
     if(length(error_messages)>0)
         stop(error_messages)
     
-    # predict
-    pred <- object$predict(newdata)
-    res <- NULL
-    
     # Check if transformation of input
     # Get and check input
+    intercept <- rep(0, nrow(newdata))
     input_list <- list(...)
     type <- ""
     if(length(input_list)>0){
@@ -86,11 +83,18 @@ predict.Rcpp_ENSEMBLE <- function(object, newdata, ...){
             if(!(type %in% c("response", "link_response"))){
                 warning(paste0("Ignoring unknown input type: ", type))
                 type <- ""
+            }else{
+                warning(paste0("Ignoring unknown input: ", names(input_list)))
             }
-        }else{
-            warning(paste0("Ignoring unknown input: ", names(input_list)))
+        }
+        if("intercept" %in% names(input_list)){
+            intercept <- input_list$intercept
         }
     }
+    
+    # predict
+    pred <- object$predict(newdata, intercept)
+    res <- NULL
     
     if(type %in% c("", "response")){
         
@@ -123,10 +127,8 @@ predict.Rcpp_ENSEMBLE <- function(object, newdata, ...){
         }
     }else if(type == "link_response"){
         # predict response on log (link) level
-        res <- object$predict(newdata)
+        res <- pred
     }
-    
-    
     return(res)
 } 
 
