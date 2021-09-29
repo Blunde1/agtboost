@@ -35,9 +35,9 @@ public:
     
     double initial_prediction(Tvec<double> &y, std::string loss_function, Tvec<double> &w);
     void train(Tvec<double> &y, Tmat<double> &X, int verbose, bool greedy_complexities,
-               bool force_continued_learning, Tvec<double> &w);
+               bool force_continued_learning, Tvec<double> &w, Tvec<double> &intercept);
     void train_from_preds(Tvec<double> &pred, Tvec<double> &y, Tmat<double> &X, int verbose, bool greedy_complexities, Tvec<double> &w);
-    Tvec<double> predict(Tmat<double> &X);
+    Tvec<double> predict(Tmat<double> &X, Tvec<double> &intercept);
     Tvec<double> predict2(Tmat<double> &X, int num_trees);
     double estimate_generalization_loss(int num_trees);
     int get_num_trees();
