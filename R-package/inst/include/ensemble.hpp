@@ -48,6 +48,10 @@ public:
     void load_model(std::string filepath);
     Tvec<double> importance(int ncols);
     Tvec<double> convergence(Tvec<double> &y, Tmat<double> &X);
+    
+    Tvec<int> get_tree_depths();
+    double get_max_node_optimism();
+    double get_min_hessian_weights();
 };
 
 
