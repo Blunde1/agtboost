@@ -27,6 +27,8 @@ public:
     //double split_point_optimism; // C(\hat{s}) = C(t|q)*p(q(x)=t)*(E[S_max]-1)
     double CRt; // p(q(x)=t) * C(t|q) * E[S_max]
     double p_split_CRt; // p(split(left,right) | q(x)=t) * CRt, p(split(left,right) | q(x)=t) \approx nl/nt for left node
+    double g_sum_in_node;
+    double h_sum_in_node;
     
     node* left;
     node* right;
@@ -35,7 +37,8 @@ public:
     //     int obs_in_node, int obs_in_parent, int obs_tot);
     
     void createLeaf(double node_prediction, double node_tr_loss, double local_optimism, double CRt,
-                     int obs_in_node, int obs_in_parent, int obs_tot);
+                     int obs_in_node, int obs_in_parent, int obs_tot, 
+                     double _g_sum_in_node, double _h_sum_in_node);
     
     node* getLeft();
     node* getRight();
@@ -159,7 +162,8 @@ bool node::deSerialize(node *nptr, std::ifstream& f)
 }
 
 void node::createLeaf(double node_prediction, double node_tr_loss, double local_optimism, double CRt,
-                       int obs_in_node, int obs_in_parent, int obs_tot)
+                       int obs_in_node, int obs_in_parent, int obs_tot,
+                       double _g_sum_in_node, double _h_sum_in_node)
 {
     //node* n = new node;
     this->node_prediction = node_prediction;
@@ -169,6 +173,8 @@ void node::createLeaf(double node_prediction, double node_tr_loss, double local_
     double prob_split_complement = 1.0 - (double)obs_in_node / obs_in_parent; // if left: p(right, not left), oposite for right
     this->p_split_CRt = prob_split_complement * CRt;
     this->obs_in_node = obs_in_node;
+    this->g_sum_in_node = _g_sum_in_node;
+    this->h_sum_in_node = _h_sum_in_node;
     this->left = NULL;
     this->right = NULL;
     
@@ -237,6 +243,7 @@ bool node::split_information(const Tvec<double> &g, const Tvec<double> &h, const
     
     int split_feature =0, n_indices = ind.size(), n_left = 0, n_right = 0, n_features = X.cols(), n_sim = cir_sim.rows();
     double split_val=0.0, observed_reduction=0.0, split_score=0.0, w_l=0.0, w_r=0.0, tr_loss_l=0.0, tr_loss_r=0.0;
+    double Gl_final, Gr_final, Hl_final, Hr_final;
     
     // Return value
     bool any_split = false;
@@ -331,7 +338,11 @@ bool node::split_information(const Tvec<double> &g, const Tvec<double> &h, const
                     // Eq. 25 in paper
                     local_opt_l = (Gl2 - 2.0*gxhl*(Gl/Hl) + Gl*Gl*Hl2/(Hl*Hl)) / (Hl*(i+1));
                     local_opt_r = (Gr2 - 2.0*gxhr*(Gr/Hr) + Gr*Gr*Hr2/(Hr*Hr)) / (Hr*(n_indices-(i+1)));
-                    
+                    // Store more information
+                    Gl_final = Gl;
+                    Gr_final = Gr;
+                    Hl_final = Hl;
+                    Hr_final = Hr;
                 }
                 
             }
@@ -394,8 +405,10 @@ bool node::split_information(const Tvec<double> &g, const Tvec<double> &h, const
         
         
         // 6. Update split information in child nodes
-        left->createLeaf(w_l, tr_loss_l, local_opt_l, this->CRt, n_left, n_left+n_right, n); // Update createLeaf()
-        right->createLeaf(w_r, tr_loss_r, local_opt_r, this->CRt, n_right, n_left+n_right, n);
+        left->createLeaf(w_l, tr_loss_l, local_opt_l, this->CRt, 
+                         n_left, n_left+n_right, n, Gl_final, Hl_final); // Update createLeaf()
+        right->createLeaf(w_r, tr_loss_r, local_opt_r, this->CRt,
+                          n_right, n_left+n_right, n, Gr_final, Hr_final);
         //Rcpp::Rcout << "p_left_CRt: " << left->p_split_CRt << "\n" <<  "p_right_CRt:"  << right->p_split_CRt << std::endl;
         
         // 7. update childs to left right

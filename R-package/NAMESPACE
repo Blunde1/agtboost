@@ -2,6 +2,7 @@
 
 S3method(predict,Rcpp_ENSEMBLE)
 S3method(predict,Rcpp_GBT_COUNT_AUTO)
+export(gbt.complexity)
 export(gbt.convergence)
 export(gbt.importance)
 export(gbt.ksval)

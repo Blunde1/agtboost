@@ -468,6 +468,70 @@ Tvec<double> ENSEMBLE::convergence(Tvec<double> &y, Tmat<double> &X){
     return loss_val;
 }
 
+Tvec<int> ENSEMBLE::get_tree_depths(){
+    // Return vector of ints with individual tree-depths
+    int number_of_trees = this->get_num_trees();
+    Tvec<int> tree_depths(number_of_trees);
+    GBTREE* current = this->first_tree;
+    
+    for(int i=0; i<number_of_trees; i++){
+        // Check if NULL ptr
+        if(current == NULL)
+        {
+            break;
+        }
+        // get tree depth
+        tree_depths[i] = current->get_tree_depth();
+        // Update to next tree
+        current = current->next_tree;
+    }
+    return tree_depths;
+}
+
+double ENSEMBLE::get_max_node_optimism(){
+    // Return the minimum loss-reduction in ensemble
+    double max_node_optimism = 0.0;
+    double tree_max_node_optimism;
+    int number_of_trees = this->get_num_trees();
+    GBTREE* current = this->first_tree;
+    for(int i=0; i<number_of_trees; i++){
+        // Check if NULL ptr
+        if(current == NULL)
+        {
+            break;
+        }
+        // get minimum loss reduction in tree
+        tree_max_node_optimism = current->get_tree_max_optimism();
+        if(tree_max_node_optimism > max_node_optimism){
+            max_node_optimism = tree_max_node_optimism;
+        }
+        // Update to next tree
+        current = current->next_tree;
+    }
+    return max_node_optimism;
+}
+
+double ENSEMBLE::get_min_hessian_weights(){
+    double min_hess_weight = R_PosInf;
+    double tree_min_hess_weight;
+    int number_of_trees = this->get_num_trees();
+    GBTREE* current = this->first_tree;
+    for(int i=0; i<number_of_trees; i++){
+        // Check if NULL ptr
+        if(current == NULL)
+        {
+            break;
+        }
+        // get minimum loss reduction in tree
+        tree_min_hess_weight = current->get_tree_min_hess_sum();
+        if(tree_min_hess_weight < min_hess_weight){
+            min_hess_weight = tree_min_hess_weight;
+        }
+        // Update to next tree
+        current = current->next_tree;
+    }
+    return min_hess_weight;
+}
 
 // --- GBT_COUNT_AUTO ----
 void GBT_COUNT_AUTO::set_param(Rcpp::List par_list){
@@ -633,6 +697,10 @@ RCPP_MODULE(aGTBModule) {
         .method("load_model", &ENSEMBLE::load_model)
         .method("importance", &ENSEMBLE::importance)
         .method("convergence", &ENSEMBLE::convergence)
+        // get for complexity methods
+        .method("get_tree_depths", &ENSEMBLE::get_tree_depths)
+        .method("get_max_node_optimism", &ENSEMBLE::get_max_node_optimism)
+        .method("get_min_hessian_weights", &ENSEMBLE::get_min_hessian_weights)
     ;
     
     class_<GBT_COUNT_AUTO>("GBT_COUNT_AUTO")

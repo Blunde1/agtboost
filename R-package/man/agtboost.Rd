@@ -3,7 +3,6 @@
 \docType{package}
 \name{agtboost}
 \alias{agtboost}
-\alias{agtboost-package}
 \title{Adaptive and automatic gradient boosting computations.}
 \description{
 Adaptive and Automatic Gradient Boosting Computations
