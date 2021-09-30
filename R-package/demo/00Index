@@ -6,3 +6,4 @@ poisson-regression                Simple poisson regression
 stock-market-classification       Performance under (almost) complete noise
 save-load-model                   Store/load a model to/from a txt file
 gbt-complexity                    Get xgb and lgbm parameters from agtboost model
+offset-example                    Illustrate offset as exposure in Poisson regression

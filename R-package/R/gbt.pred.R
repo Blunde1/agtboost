@@ -74,7 +74,7 @@ predict.Rcpp_ENSEMBLE <- function(object, newdata, ...){
     
     # Check if transformation of input
     # Get and check input
-    intercept <- rep(0, nrow(newdata))
+    offset <- rep(0, nrow(newdata))
     input_list <- list(...)
     type <- ""
     if(length(input_list)>0){
@@ -87,13 +87,13 @@ predict.Rcpp_ENSEMBLE <- function(object, newdata, ...){
                 warning(paste0("Ignoring unknown input: ", names(input_list)))
             }
         }
-        if("intercept" %in% names(input_list)){
-            intercept <- input_list$intercept
+        if("offset" %in% names(input_list)){
+            offset <- input_list$offset
         }
     }
     
     # predict
-    pred <- object$predict(newdata, intercept)
+    pred <- object$predict(newdata, offset)
     res <- NULL
     
     if(type %in% c("", "response")){
