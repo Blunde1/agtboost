@@ -130,7 +130,8 @@ double ENSEMBLE::initial_prediction(Tvec<double> &y, std::string loss_function, 
 
 
 void ENSEMBLE::train(Tvec<double> &y, Tmat<double> &X, int verbose, bool greedy_complexities, 
-                     bool force_continued_learning, Tvec<double> &w, Tvec<double> &intercept){
+                     bool force_continued_learning, Tvec<double> &w, Tvec<double> &offset,
+                     bool has_offset){
     // Set init -- mean
     int MAXITER = nrounds;
     int n = y.size(); 
@@ -140,10 +141,14 @@ void ENSEMBLE::train(Tvec<double> &y, Tmat<double> &X, int verbose, bool greedy_
     Tvec<double> pred(n), g(n), h(n);
     
     // MSE -- FIX FOR OTHER LOSS FUNCTIONS
-    this->initialPred = this->initial_prediction(y, loss_function, w); //y.sum()/n;
+    if(has_offset){
+        this->initialPred = 0.0;
+    }else{
+        this->initialPred = this->initial_prediction(y, loss_function, w); //y.sum()/n;
+    }
     pred.setConstant(this->initialPred);
+    pred += offset;
     this->initial_score = loss(y, pred, loss_function, w, this); //(y - pred).squaredNorm() / n;
-    pred += intercept;
     
     // Prepare cir matrix
     // PARAMETERS FOR CIR CONTROL: Choose nsim and nobs by user
@@ -338,11 +343,11 @@ Tvec<double> ENSEMBLE::importance(int ncols)
     return importance_vec_percent;
 }
 
-Tvec<double> ENSEMBLE::predict(Tmat<double> &X, Tvec<double> &intercept){
+Tvec<double> ENSEMBLE::predict(Tmat<double> &X, Tvec<double> &offset){
     int n = X.rows();
     Tvec<double> pred(n);
     pred.setConstant(this->initialPred);
-    pred += intercept;
+    pred += offset;
     GBTREE* current = this->first_tree;
     while(current != NULL){
         pred = pred + (this->learning_rate) * (current->predict_data(X));
@@ -600,12 +605,12 @@ void GBT_COUNT_AUTO::train(Tvec<double> &y, Tmat<double> &X, int verbose, bool g
     */
     // Training
     Tvec<double> weights = Tvec<double>::Ones(n); // This is unnecessary -- CLEANUP! --> fix ENSEMBLE->train()
-    Tvec<double> intercept = Tvec<double>::Zero(n);
-    mod_pois->train(y, X, verbose, greedy_complexities, false, weights, intercept);
+    Tvec<double> offset = Tvec<double>::Zero(n);
+    mod_pois->train(y, X, verbose, greedy_complexities, false, weights, offset, false);
 
     // ---- 2.0 Learn overdispersion ----
     // Predictions on ynz
-    Tvec<double> y_pred_pois = mod_pois->predict(X, intercept); // log intensity  
+    Tvec<double> y_pred_pois = mod_pois->predict(X, offset); // log intensity  
     double dispersion = learn_dispersion(y, y_pred_pois);
     
     // ---- 2.1 Check dispersion -----
@@ -624,10 +629,10 @@ void GBT_COUNT_AUTO::train(Tvec<double> &y, Tmat<double> &X, int verbose, bool g
                 )
         );
          */
-        mod_nbinom->train(y, X, verbose, greedy_complexities, false, weights, intercept);
+        mod_nbinom->train(y, X, verbose, greedy_complexities, false, weights, offset, false);
         
         // ---- 4. Compare relative AIC of models ----
-        Tvec<double> y_pred_nbinom = mod_nbinom->predict(X, intercept); // log mean
+        Tvec<double> y_pred_nbinom = mod_nbinom->predict(X, offset); // log mean
         dispersion = learn_dispersion(y, y_pred_nbinom, dispersion);
         mod_nbinom->extra_param = dispersion;
         
@@ -672,8 +677,8 @@ void GBT_COUNT_AUTO::train(Tvec<double> &y, Tmat<double> &X, int verbose, bool g
 Tvec<double> GBT_COUNT_AUTO::predict(Tmat<double> &X)
 {
     int n = X.rows();
-    Tvec<double> intercept = Tvec<double>::Zero(n);
-    return this->count_mod->predict(X, intercept);
+    Tvec<double> offset = Tvec<double>::Zero(n);
+    return this->count_mod->predict(X, offset);
 }
 
 

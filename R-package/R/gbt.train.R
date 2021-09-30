@@ -26,7 +26,7 @@
 #' @param previous_pred prediction vector for training. Boosted training given predictions from another model.
 #' @param weights weights vector for scaling contributions of individual observations. Default \code{NULL} (the unit vector).
 #' @param force_continued_learning Boolean: \code{FALSE} (default) stops at information stopping criterion, \code{TRUE} stops at \code{nround} iterations.
-#' @param intercept add intercept to the model \code(g(mu) = intercept + F(x)).
+#' @param offset add offset to the model \code(g(mu) = offset + F(x)).
 #' @param ... additional parameters passed.
 #'   \itemize{
 #'   \item if loss_function is 'negbinom', dispersion must be provided in \code{...}
@@ -89,7 +89,7 @@ gbt.train <- function(y, x, learning_rate = 0.01,
                       previous_pred=NULL,
                       weights = NULL,
                       force_continued_learning=FALSE,
-                      intercept = NULL,
+                      offset = NULL,
                       ...){
     
     # Deprecated messages
@@ -237,9 +237,9 @@ gbt.train <- function(y, x, learning_rate = 0.01,
     if(is.null(weights))
         weights = rep(1,nrow(x))
     
-    # intercept
-    if(is.null(intercept))
-        intercept = rep(0, nrow(x))
+    # offset
+    if(is.null(offset))
+        offset = rep(0, nrow(x))
     
     param <- list("learning_rate" = learning_rate, 
                   "loss_function" = loss_function, 
@@ -270,10 +270,9 @@ gbt.train <- function(y, x, learning_rate = 0.01,
         
         # train ensemble
         if(is.null(previous_pred)){
-            
             # train from scratch
             mod$train(y,x, verbose, gsub_compare, force_continued_learning, 
-                      weights, intercept)   
+                      weights, offset, !all(offset==0))   
         }else{
             
             # train from previous predictions
