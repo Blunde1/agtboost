@@ -118,15 +118,19 @@ gbt.model.complexity <- function(model){
 #' @rdname gbt.complexity
 #' @export
 gbt.complexity <- function(model, type){
+    
+    # This is still experimental
+    message("Experimental feature")
+    message("Best results are obtained using agtboost algorithm global-subset")
+    
     # Setup or get agtboost implicit parameters/complexity measures
     model_complexity <- gbt.model.complexity(model)
+    
     
     # Transform parameters/complexity into library-specific parameters
     attach(model_complexity)
     if(type=="xgboost"){
       # Transform agtboost parameters/complexity measures to xgboost parameters
-      warning("Experimental feature")
-      message("Best results are obtained using agtboost algorithm global-subset")
       parameters = list(
         # ensemble param
         "base_score" = initial_prediction,
@@ -148,8 +152,6 @@ gbt.complexity <- function(model, type){
       )
     }else if(type=="lightgbm"){
       # Transform agtboost parameters/complexity measures to lightgbm parameters
-      warning("Experimental feature under rapid development")
-      warning("LightGBM parameters will not produce a good LGBM model object")
       parameters = list(
         # ensemble param
         "init_score" = initial_prediction,
