@@ -29,11 +29,14 @@ library(lightgbm)
 colnames(xtr) <- colnames(xte) <- c("x1")
 lgb_param <- gbt.complexity(model, type="lightgbm")
 dtrain_lgb <- lgb.Dataset(data = xtr, label=ytr)
-setinfo(dtrain_lgb, "init_score", rep(lgb_param$init_score, dtrain_lgb$dim()[1]))
+# Optional, train from predictions
+#lightgbm::set_field(dtrain_lgb, "init_score", rep(lgb_param$init_score, dtrain_lgb$dim()[1]))
 lgb_model <- lgb.train(data=dtrain_lgb, 
                        params=lgb_param, 
                        nrounds=lgb_param$nrounds,
                        obj=lgb_param$objective,
-                       verbose=2)
+                       verbose=1)
 lgb_pred <- predict(lgb_model, xte)
 points(xte, lgb_pred, col=4)
+# Optional if trained from predictions
+# points(xte, lgb_param$init_score+lgb_pred, col=4)

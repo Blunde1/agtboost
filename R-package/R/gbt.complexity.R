@@ -105,14 +105,17 @@ gbt.model.complexity <- function(model){
 #' 
 #' @examples
 #' \donttest{
-#' ## Load data
-#' data(caravan.train, package = "agtboost")
-#' train <- caravan.train
-#' mod <- gbt.train(train$y, train$x, loss_function = "logloss", verbose=10)
-#' feature_names <- colnames(train$x)
-#' imp <- gbt.importance(feature_names, mod)
-#' imp
-#' }
+#' set.seed(123)
+#' library(agtboost)
+#' n <- 10000
+#' xtr <- as.matrix(runif(n, 0, 4))
+#' ytr <- rnorm(n, xtr, 1)
+#' xte <- as.matrix(runif(n, 0, 4))
+#' yte <- rnorm(n, xte, 1)
+#' model <- gbt.train(ytr, xtr, learning_rate = 0.1)
+#' gbt.complexity(model, type="xgboost")
+#' gbt.complexity(model, type="lightgbm)
+#' ## See demo(topic="gbt-complexity", package="agtboost")
 #' 
 #' @importFrom graphics barplot mtext par
 #' @rdname gbt.complexity
