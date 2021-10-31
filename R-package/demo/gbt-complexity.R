@@ -1,4 +1,5 @@
 ## Example illustrating gbt.complexity
+set.seed(123)
 library(agtboost)
 n <- 10000
 xtr <- as.matrix(runif(n, 0, 4))
@@ -25,10 +26,14 @@ points(xte, xgb_pred, col=3)
 
 # lightgbm
 library(lightgbm)
+colnames(xtr) <- colnames(xte) <- c("x1")
 lgb_param <- gbt.complexity(model, type="lightgbm")
-dtrain_lgb <- lgb.Dataset(data = xtr, label = xte)
-dtest_lgb <- lgb.Dataset(data=xte)
-lgb_model <- lgb.train(data=dtrain_lgb, params=lgb_param, nrounds=lgb_param$nrounds)
+dtrain_lgb <- lgb.Dataset(data = xtr, label=ytr)
+setinfo(dtrain_lgb, "init_score", rep(lgb_param$init_score, dtrain_lgb$dim()[1]))
+lgb_model <- lgb.train(data=dtrain_lgb, 
+                       params=lgb_param, 
+                       nrounds=lgb_param$nrounds,
+                       obj=lgb_param$objective,
+                       verbose=2)
 lgb_pred <- predict(lgb_model, xte)
 points(xte, lgb_pred, col=4)
-
