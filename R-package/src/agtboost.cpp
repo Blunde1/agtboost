@@ -129,18 +129,35 @@ double ENSEMBLE::initial_prediction(Tvec<double> &y, std::string loss_function, 
 }
 
 
+void verbose_output(int verbose, int iteration, int nleaves, double tr_loss, double gen_loss){
+    // Print output-information to user
+    if(verbose>0){
+        if(iteration % verbose == 0){
+            Rcpp::Rcout  <<
+                std::setprecision(4) <<
+                    "it: " << iteration << 
+                        "  |  n-leaves: " << nleaves << 
+                            "  |  tr loss: " << tr_loss <<
+                                "  |  gen loss: " << gen_loss << 
+                                    std::endl;
+        }
+    }
+}
+                
+
 void ENSEMBLE::train(Tvec<double> &y, Tmat<double> &X, int verbose, bool greedy_complexities, 
                      bool force_continued_learning, Tvec<double> &w, Tvec<double> &offset,
                      bool has_offset){
-    // Set init -- mean
+    // Set initials and declare variables
     int MAXITER = nrounds;
     int n = y.size(); 
     double EPS = 1E-9;
     double expected_loss;
     double learning_rate_set = this->learning_rate;
     Tvec<double> pred(n), g(n), h(n);
+    Tmat<double> cir_sim = cir_sim_mat(100, 100); // nsim=100, nobs=100
     
-    // MSE -- FIX FOR OTHER LOSS FUNCTIONS
+    // Initial constant prediction: arg min l(y,constant)
     if(has_offset){
         this->initialPred = 0.0;
     }else{
@@ -150,88 +167,60 @@ void ENSEMBLE::train(Tvec<double> &y, Tmat<double> &X, int verbose, bool greedy_
     pred += offset;
     this->initial_score = loss(y, pred, loss_function, w, this); //(y - pred).squaredNorm() / n;
     
-    // Prepare cir matrix
-    // PARAMETERS FOR CIR CONTROL: Choose nsim and nobs by user
-    // Default to nsim=100 nobs=100
-    Tmat<double> cir_sim = cir_sim_mat(100, 100);
-    
     // First tree
     g = dloss(y, pred, loss_function, this) * w;
     h = ddloss(y, pred, loss_function, this) * w;
-    //Rcpp::Rcout << g.array()/h.array() << std::endl;
-    
-
     this->first_tree = new GBTREE;
     this->first_tree->train(g, h, X, cir_sim, greedy_complexities, learning_rate_set);
     GBTREE* current_tree = this->first_tree;
     pred = pred + learning_rate * (current_tree->predict_data(X)); // POSSIBLY SCALED
     expected_loss = (current_tree->getTreeScore()) * (-2)*learning_rate_set*(learning_rate_set/2 - 1) + 
         learning_rate_set * current_tree->getTreeOptimism();
-        //learning_rate_set * current_tree->getFeatureMapOptimism();
-    if(verbose>0){
-        Rcpp::Rcout  <<
-            std::setprecision(4) <<
-            "it: " << 1 << 
-            "  |  n-leaves: " << current_tree->getNumLeaves() <<
-            "  |  tr loss: " << loss(y, pred, loss_function, w, this) <<
-            "  |  gen loss: " << this->estimate_generalization_loss(1) << 
-             std::endl;
-    }
+    verbose_output(
+        verbose,
+        1,
+        current_tree->getNumLeaves(),
+        loss(y, pred, loss_function, w, this),
+        this->estimate_generalization_loss(1)
+    );
     
+    // Consecutive trees
     for(int i=2; i<(MAXITER+1); i++){
-        
-        // check for interrupt every iterations
+        // check for user-interruption at every iteration
         if (i % 1 == 0)
             Rcpp::checkUserInterrupt();
-        
-        // TRAINING
-        GBTREE* new_tree = new GBTREE();
+        // Calculate gradients
         g = dloss(y, pred, loss_function, this) * w;
         h = ddloss(y, pred, loss_function, this) * w;
-        
-        // Check perfect fit
+        // Check for perfect fit
         if(((g.array())/h.array()).matrix().maxCoeff() < 1e-12){
             // Every perfect step is below tresh
             break;
         }
-        
-        
+        // Train a new tree
+        GBTREE* new_tree = new GBTREE();
         new_tree->train(g, h, X, cir_sim, greedy_complexities, learning_rate_set);
-        
-        // EXPECTED LOSS
+        // Calculate expected generalization loss for tree
         expected_loss = (new_tree->getTreeScore()) * (-2)*learning_rate_set*(learning_rate_set/2 - 1) + 
             learning_rate_set * new_tree->getTreeOptimism();
-            //1.0*learning_rate_set * new_tree->getFeatureMapOptimism();
-
-        // Update preds -- if should not be updated for last iter, it does not matter much computationally
+        // Update ensemble-predictions
         pred = pred + learning_rate * (new_tree->predict_data(X));
-            
-        // iter: i | num leaves: T | iter train loss: itl | iter generalization loss: igl | mod train loss: mtl | mod gen loss: mgl "\n"
-        if(verbose>0){
-            if(i % verbose == 0){
-                Rcpp::Rcout  <<
-                    std::setprecision(4) <<
-                        "it: " << i << 
-                        "  |  n-leaves: " << new_tree->getNumLeaves() << 
-                        "  |  tr loss: " << loss(y, pred, loss_function, w, this) <<
-                        "  |  gen loss: " << this->estimate_generalization_loss(i-1) + expected_loss << 
-                        std::endl;
-                
-            }
-        }
-        
-        // Stopping criteria 
-        // Check for continued learning
+        // Optionally output information to user
+        verbose_output(
+            verbose,
+            i,
+            new_tree->getNumLeaves(),
+            loss(y, pred, loss_function, w, this),
+            this->estimate_generalization_loss(i-1) + expected_loss
+        );
+        // Stopping criteria
         if(!force_continued_learning){
-            
-            // No forced learning
             // Check criterion
             if(expected_loss > EPS){
                 break;
             }
             
         }
-        
         // Passed criterion or force passed: Update ensemble
         current_tree->next_tree = new_tree;
         current_tree = new_tree;
