@@ -21,7 +21,7 @@ yte <- rpois(n, xte) # test for z=1
 
 par(mfrow=c(1,2))
 plot(xte, yte)
-plot(xtr*ztr, yte)
+plot(xtr*ztr, ytr)
 par(mfrow=c(1,1))
 
 agtb <- gbt.train(ytr, xtr, loss_function = "poisson", offset=log(ztr), verbose=100)
