@@ -510,5 +510,16 @@ double GBTREE::get_tree_min_hess_sum(){
 }
 
 
+double tree_expected_test_reduction(GBTREE* tree, double learning_rate){
+    // This employs the gb-approximation to the loss
+    double train_loss_reduction = tree->getTreeScore();
+    double optimism = tree->getTreeOptimism();
+    double scaled_expected_test_reduction = 
+        (-2.0) * learning_rate*(learning_rate/2.0 - 1.0) * train_loss_reduction + // Scaled observed training loss
+        learning_rate * optimism;
+    return scaled_expected_test_reduction;
+}
+
+
 
 #endif

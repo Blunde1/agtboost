@@ -144,16 +144,24 @@ void verbose_output(int verbose, int iteration, int nleaves, double tr_loss, dou
     }
 }
                 
-
-void ENSEMBLE::train(Tvec<double> &y, Tmat<double> &X, int verbose, bool greedy_complexities, 
-                     bool force_continued_learning, Tvec<double> &w, Tvec<double> &offset,
-                     bool has_offset){
+                
+void ENSEMBLE::train(
+        Tvec<double> &y, 
+        Tmat<double> &X, 
+        int verbose, 
+        bool greedy_complexities, 
+        bool force_continued_learning, // Default: False
+        Tvec<double> &w, Tvec<double> &offset, // Defaults to a zero-vector
+        bool has_offset // Should be removed
+    ){
     // Set initials and declare variables
     int MAXITER = nrounds;
     int n = y.size(); 
     double EPS = 1E-9;
     double expected_loss;
-    double learning_rate_set = this->learning_rate;
+    double ensemble_training_loss;
+    double ensemble_approx_training_loss;
+    double ensemble_optimism;
     Tvec<double> pred(n), g(n), h(n);
     Tmat<double> cir_sim = cir_sim_mat(100, 100); // nsim=100, nobs=100
     
@@ -165,17 +173,16 @@ void ENSEMBLE::train(Tvec<double> &y, Tmat<double> &X, int verbose, bool greedy_
     }
     pred.setConstant(this->initialPred);
     pred += offset;
-    this->initial_score = loss(y, pred, loss_function, w, this); //(y - pred).squaredNorm() / n;
+    this->initial_score = loss(y, pred, loss_function, w, this);
     
     // First tree
     g = dloss(y, pred, loss_function, this) * w;
     h = ddloss(y, pred, loss_function, this) * w;
     this->first_tree = new GBTREE;
-    this->first_tree->train(g, h, X, cir_sim, greedy_complexities, learning_rate_set);
+    this->first_tree->train(g, h, X, cir_sim, greedy_complexities, learning_rate);
     GBTREE* current_tree = this->first_tree;
     pred = pred + learning_rate * (current_tree->predict_data(X)); // POSSIBLY SCALED
-    expected_loss = (current_tree->getTreeScore()) * (-2)*learning_rate_set*(learning_rate_set/2 - 1) + 
-        learning_rate_set * current_tree->getTreeOptimism();
+    expected_loss = tree_expected_test_reduction(current_tree, learning_rate);
     verbose_output(
         verbose,
         1,
@@ -199,19 +206,24 @@ void ENSEMBLE::train(Tvec<double> &y, Tmat<double> &X, int verbose, bool greedy_
         }
         // Train a new tree
         GBTREE* new_tree = new GBTREE();
-        new_tree->train(g, h, X, cir_sim, greedy_complexities, learning_rate_set);
-        // Calculate expected generalization loss for tree
-        expected_loss = (new_tree->getTreeScore()) * (-2)*learning_rate_set*(learning_rate_set/2 - 1) + 
-            learning_rate_set * new_tree->getTreeOptimism();
+        new_tree->train(g, h, X, cir_sim, greedy_complexities, learning_rate);
         // Update ensemble-predictions
         pred = pred + learning_rate * (new_tree->predict_data(X));
+        // Calculate expected generalization loss for tree
+        expected_loss = tree_expected_test_reduction(new_tree, learning_rate);
+        // Update ensemble training loss and ensemble optimism for iteration k-1
+        ensemble_training_loss = loss(y, pred, loss_function, w, this);
+        ensemble_approx_training_loss = this->estimate_training_loss(i-1) + 
+            new_tree->getTreeScore() * (-2)*learning_rate*(learning_rate/2 - 1);
+        ensemble_optimism = this->estimate_optimism(i-1) + 
+            learning_rate * new_tree->getTreeOptimism();
         // Optionally output information to user
         verbose_output(
             verbose,
             i,
             new_tree->getNumLeaves(),
-            loss(y, pred, loss_function, w, this),
-            this->estimate_generalization_loss(i-1) + expected_loss
+            ensemble_training_loss,
+            ensemble_training_loss + ensemble_optimism + expected_loss
         );
         // Stopping criteria
         if(!force_continued_learning){
@@ -224,7 +236,10 @@ void ENSEMBLE::train(Tvec<double> &y, Tmat<double> &X, int verbose, bool greedy_
         // Passed criterion or force passed: Update ensemble
         current_tree->next_tree = new_tree;
         current_tree = new_tree;
-        
+        // Check for non-linearity
+        if(std::abs(ensemble_training_loss-ensemble_approx_training_loss)>1E-5){
+            Rcpp::stop("Error: Loss-function deviating from gradient boosting approximation. Try smaller learning_rate.");
+        }
     }
 }
 
@@ -371,14 +386,65 @@ Tvec<double> ENSEMBLE::predict2(Tmat<double> &X, int num_trees){
     return pred;
 }
 
+
+double ENSEMBLE::estimate_optimism(int num_trees){
+    // Return optimism approximated from 2'nd order GB loss-approximation
+    // And assuming no-influence / influence adjustment
+    double optimism = 0.0;
+    int tree_num = 1;
+    GBTREE* current = this->first_tree;
+    if(num_trees<1){
+        while(current != NULL){
+            optimism += current->getTreeOptimism();
+            current = current->next_tree;
+        }
+    }else{
+        while(current != NULL){
+            optimism += current->getTreeOptimism();
+            current = current->next_tree;
+            tree_num++;
+            if(tree_num > num_trees) break;
+        }
+    }
+    optimism = learning_rate * optimism;
+    return optimism;
+    
+}
+
+
+double ENSEMBLE::estimate_training_loss(int num_trees){
+    // Return training loss approximated from 2'nd order GB loss-approximation
+    double training_loss = 0.0;
+    int tree_num = 1;
+    double total_observed_reduction = 0.0;
+    GBTREE* current = this->first_tree;
+    if(num_trees<1){
+        while(current != NULL){
+            total_observed_reduction += current->getTreeScore();
+            current = current->next_tree;
+        }
+    }else{
+        while(current != NULL){
+            total_observed_reduction += current->getTreeScore();
+            current = current->next_tree;
+            tree_num++;
+            if(tree_num > num_trees) break;
+        }
+    }
+    training_loss = 
+        this->initial_score + 
+        total_observed_reduction * 
+        (-2)*learning_rate*(learning_rate/2 - 1);
+    return training_loss;
+}
+
+
 double ENSEMBLE::estimate_generalization_loss(int num_trees){
     
     int tree_num = 1;
     double total_observed_reduction = 0.0;
     double total_optimism = 0.0;
-    double learning_rate = this->learning_rate;
     GBTREE* current = this->first_tree;
-    
     if(num_trees<1){
         while(current != NULL){
             total_observed_reduction += current->getTreeScore();
@@ -394,10 +460,8 @@ double ENSEMBLE::estimate_generalization_loss(int num_trees){
             if(tree_num > num_trees) break;
         }
     }
-    //std::cout<< (this->initial_score) << std::endl;
     return (this->initial_score) + total_observed_reduction * (-2)*learning_rate*(learning_rate/2 - 1) + 
         learning_rate * total_optimism;
-    
 }
 
 int ENSEMBLE::get_num_trees(){
