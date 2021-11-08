@@ -7,6 +7,48 @@
 
 // ----------- LOSS --------------
 namespace loss_functions {
+
+
+    double link_function(double pred_observed, std::string loss_function){
+        // Returns g(mu)
+        double pred_transformed=0.0;
+        if(loss_function=="mse"){
+            pred_transformed = pred_observed;
+        }else if(loss_function=="logloss"){
+            pred_transformed = log(pred_observed) - log(1 - pred_observed);
+        }else if(loss_function=="poisson"){
+            pred_transformed = log(pred_observed);
+        }else if(loss_function=="gamma::neginv"){
+            pred_transformed = - 1.0 / pred_observed;
+        }else if(loss_function=="gamma::log"){
+            pred_transformed = log(pred_observed);
+        }else if(loss_function=="negbinom"){
+            pred_transformed = log(pred_observed);
+        }
+        return pred_transformed;
+    }
+
+
+    double inverse_link_function(double pred_transformed, std::string loss_function){
+        // Returns g^{-1}(pred)
+        double pred_observed = 0.0;
+        if(loss_function=="mse"){
+            pred_observed = pred_transformed;
+        }else if(loss_function=="logloss"){
+            pred_observed = 1.0 / (1.0+exp(-pred_transformed));
+        }else if(loss_function=="poisson"){
+            pred_observed = exp(pred_transformed);
+        }else if(loss_function=="gamma::neginv"){
+            pred_observed = -1.0 / pred_transformed;;
+        }else if(loss_function=="gamma::log"){
+            pred_observed = exp(pred_transformed);
+        }else if(loss_function=="negbinom"){
+            pred_observed = exp(pred_transformed);
+        }
+        return pred_observed;
+    }
+
+
     double loss(
             Tvec<double> &y, 
             Tvec<double> &pred, 

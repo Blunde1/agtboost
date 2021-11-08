@@ -11,6 +11,7 @@
 
 #include <iostream>
 #include <fstream>
+#include <functional>
 
 // Internal
 #include "cir.hpp"
@@ -21,6 +22,7 @@
 #include "optimization.hpp"
 #include "loss_functions.hpp"
 #include "gbt_count_auto.hpp"
+#include "initial_prediction.hpp"
 
 
 #endif // __GMGTB_HPP_INCLUDED__

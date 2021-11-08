@@ -159,7 +159,17 @@ Tvec<double> ENSEMBLE::dloss(Tvec<double> &y, Tvec<double> &pred){
 Tvec<double> ENSEMBLE::ddloss(Tvec<double> &y, Tvec<double> &pred){
     return loss_functions::ddloss(y, pred, loss_function, extra_param);
 }
-                
+
+
+double ENSEMBLE::link_function(double pred_observed){
+    return loss_functions::link_function(pred_observed, loss_function);
+}
+
+
+double ENSEMBLE::inverse_link_function(double pred){
+    return loss_functions::inverse_link_function(pred, loss_function);
+}
+
                 
 void ENSEMBLE::train(
         Tvec<double> &y, 
@@ -170,6 +180,8 @@ void ENSEMBLE::train(
         Tvec<double> &w, Tvec<double> &offset, // Defaults to a zero-vector
         bool has_offset // Should be removed
     ){
+    using namespace std::placeholders;
+    
     // Set initials and declare variables
     int MAXITER = nrounds;
     int n = y.size(); 
@@ -182,11 +194,15 @@ void ENSEMBLE::train(
     Tmat<double> cir_sim = cir_sim_mat(100, 100); // nsim=100, nobs=100
     
     // Initial constant prediction: arg min l(y,constant)
-    if(has_offset){
-        this->initialPred = 0.0;
-    }else{
-        this->initialPred = this->initial_prediction(y, loss_function, w); //y.sum()/n;
-    }
+    this->initialPred = learn_initial_prediction(
+        y, 
+        offset, 
+        std::bind(&ENSEMBLE::dloss, this, _1, _2),
+        std::bind(&ENSEMBLE::ddloss, this, _1, _2),
+        std::bind(&ENSEMBLE::link_function, this, _1),
+        std::bind(&ENSEMBLE::inverse_link_function, this, _1),
+        verbose
+        );
     pred.setConstant(this->initialPred);
     pred += offset;
     this->initial_score = loss_functions::loss(y, pred, loss_function, w, extra_param);
