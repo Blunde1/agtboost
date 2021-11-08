@@ -33,6 +33,10 @@ public:
     double get_extra_param();
     std::string get_loss_function();
     
+    double loss(Tvec<double> &y, Tvec<double> &pred, Tvec<double> &w);
+    Tvec<double> dloss(Tvec<double> &y, Tvec<double> &pred);
+    Tvec<double> ddloss(Tvec<double> &y, Tvec<double> &pred);
+    
     double initial_prediction(Tvec<double> &y, std::string loss_function, Tvec<double> &w);
     void train(Tvec<double> &y, Tmat<double> &X, int verbose, bool greedy_complexities,
                bool force_continued_learning, Tvec<double> &w, Tvec<double> &offset,
