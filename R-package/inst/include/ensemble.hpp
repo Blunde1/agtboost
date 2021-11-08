@@ -36,6 +36,8 @@ public:
     double loss(Tvec<double> &y, Tvec<double> &pred, Tvec<double> &w);
     Tvec<double> dloss(Tvec<double> &y, Tvec<double> &pred);
     Tvec<double> ddloss(Tvec<double> &y, Tvec<double> &pred);
+    double link_function(double pred_observed);
+    double inverse_link_function(double pred);
     
     double initial_prediction(Tvec<double> &y, std::string loss_function, Tvec<double> &w);
     void train(Tvec<double> &y, Tmat<double> &X, int verbose, bool greedy_complexities,
