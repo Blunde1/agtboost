@@ -20,3 +20,4 @@ agtboost 0.9.2 (2021-11-01)
 - Obtain XGBoost and LightGBM hyperparameters from gbt.complexity().
 - Include attribute "offset" in gbt.train() and predict().
 - Throw error when gb-loss-approximation deviates from true loss. Suggest lower learning_rate.
+- Solves $\arg\min_\eta \sum_i l(y_i, g^{-1}(offset_i+\eta))$ numerically instead of simple average to obtain initial prediction
