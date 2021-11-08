@@ -6,7 +6,14 @@
 #include "external_rcpp.hpp"
 
 // ----------- LOSS --------------
-double loss(Tvec<double> &y, Tvec<double> &pred, std::string loss_type, Tvec<double> &w, ENSEMBLE* ens_ptr){
+double loss(
+        Tvec<double> &y, 
+        Tvec<double> &pred, 
+        std::string loss_type, 
+        Tvec<double> &w, 
+        double extra_param=0.0
+){
+    // Evaluates the loss function at pred
     int n = y.size();
     double res = 0;
     
@@ -38,7 +45,7 @@ double loss(Tvec<double> &y, Tvec<double> &pred, std::string loss_type, Tvec<dou
             res += y[i]*w[i]*exp(-pred[i]) + pred[i];
         }
     }else if(loss_type=="negbinom"){
-        double dispersion = ens_ptr -> extra_param;
+        double dispersion = extra_param;
         for(int i=0; i<n; i++){
             // log-link, mu=exp(pred[i])
             res += -y[i]*pred[i] + (y[i]*dispersion)*log(1.0+exp(pred[i])/dispersion); // Keep only relevant part
@@ -75,8 +82,13 @@ double loss(Tvec<double> &y, Tvec<double> &pred, std::string loss_type, Tvec<dou
 }
 
 
-Tvec<double> dloss(Tvec<double> &y, Tvec<double> &pred, std::string loss_type, ENSEMBLE* ens_ptr){
-    
+Tvec<double> dloss(
+        Tvec<double> &y, 
+        Tvec<double> &pred, 
+        std::string loss_type, 
+        double extra_param=0.0
+){
+    // Returns the first order derivative of the loss function at pred
     int n = y.size();
     Tvec<double> g(n);
     
@@ -107,7 +119,7 @@ Tvec<double> dloss(Tvec<double> &y, Tvec<double> &pred, std::string loss_type, E
         }
     }else if(loss_type == "negbinom"){
         // NEGATIVE BINOMIAL, LOG LINK
-        double dispersion = ens_ptr->extra_param;
+        double dispersion = extra_param;
         for(int i=0; i<n; i++){
             g[i] = -y[i] + (y[i]+dispersion)*exp(pred[i]) / (dispersion + exp(pred[i]));
         }
@@ -143,7 +155,13 @@ Tvec<double> dloss(Tvec<double> &y, Tvec<double> &pred, std::string loss_type, E
 }
 
 
-Tvec<double> ddloss(Tvec<double> &y, Tvec<double> &pred, std::string loss_type, ENSEMBLE* ens_ptr){
+Tvec<double> ddloss(
+        Tvec<double> &y, 
+        Tvec<double> &pred, 
+        std::string loss_type, 
+        double extra_param=0.0
+){
+    // Returns the second order derivative of the loss function at pred
     int n = y.size();
     Tvec<double> h(n);
     
@@ -174,7 +192,7 @@ Tvec<double> ddloss(Tvec<double> &y, Tvec<double> &pred, std::string loss_type, 
         }
     }else if( loss_type == "negbinom" ){
         // NEGATIVE BINOMIAL, LOG LINK
-        double dispersion = ens_ptr->extra_param;
+        double dispersion = extra_param;
         for(int i=0; i<n; i++){
             h[i] = (y[i]+dispersion)*dispersion*exp(pred[i]) / 
                 ( (dispersion + exp(pred[i]))*(dispersion + exp(pred[i])) );
@@ -216,5 +234,6 @@ Tvec<double> ddloss(Tvec<double> &y, Tvec<double> &pred, std::string loss_type, 
     
     return h;    
 }
+
 
 #endif
