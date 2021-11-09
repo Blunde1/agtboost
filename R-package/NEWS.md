@@ -1,8 +1,14 @@
 ------------------------------------------------------------------------
-agtboost 0.9.0 (2020-08-12)
+agtboost 0.9.2 (2021-11-12)
 ------------------------------------------------------------------------
 
-- Initial release.
+- Patch fixing slow gbt.save() functionality.
+- Obtain XGBoost and LightGBM hyperparameters from gbt.complexity().
+- Include attribute "offset" in gbt.train() and predict().
+- Throw error when gb-loss-approximation deviates from true loss. Suggest lower learning_rate.
+- Solves $\arg\min_\eta \sum_i l(y_i, g^{-1}(offset_i+\eta))$ numerically instead of simple average to obtain initial prediction
+- Deprecate warnings for zero-inflation
+- Decrease package size drastically by stripping debugging information 
 
 ------------------------------------------------------------------------
 agtboost 0.9.1 (2020-10-04)
@@ -13,11 +19,7 @@ agtboost 0.9.1 (2020-10-04)
 - Checked with rhub::check_with_sanitizers() and rhub::check_on_solaris()
 
 ------------------------------------------------------------------------
-agtboost 0.9.2 (2021-11-01)
+agtboost 0.9.0 (2020-08-12)
 ------------------------------------------------------------------------
 
-- Patch fixing slow gbt.save() functionality.
-- Obtain XGBoost and LightGBM hyperparameters from gbt.complexity().
-- Include attribute "offset" in gbt.train() and predict().
-- Throw error when gb-loss-approximation deviates from true loss. Suggest lower learning_rate.
-- Solves $\arg\min_\eta \sum_i l(y_i, g^{-1}(offset_i+\eta))$ numerically instead of simple average to obtain initial prediction
+- Initial release.

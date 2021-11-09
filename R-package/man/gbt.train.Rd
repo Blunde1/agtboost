@@ -16,6 +16,7 @@ gbt.train(
   previous_pred = NULL,
   weights = NULL,
   force_continued_learning = FALSE,
+  offset = NULL,
   ...
 )
 }
@@ -54,6 +55,8 @@ gbt.train(
 \item{weights}{weights vector for scaling contributions of individual observations. Default \code{NULL} (the unit vector).}
 
 \item{force_continued_learning}{Boolean: \code{FALSE} (default) stops at information stopping criterion, \code{TRUE} stops at \code{nround} iterations.}
+
+\item{offset}{add offset to the model g(mu) = offset + F(x).}
 
 \item{...}{additional parameters passed.
 \itemize{
