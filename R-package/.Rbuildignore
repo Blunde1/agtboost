@@ -2,4 +2,5 @@
 ^\.Rproj\.user$
 ^\.travis\.yml$
 ^NEWS\.md$          # A news file written in Markdown
+^cran-comments\.md$
 ^LICENSE

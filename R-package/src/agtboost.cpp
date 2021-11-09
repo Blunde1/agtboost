@@ -177,8 +177,7 @@ void ENSEMBLE::train(
         int verbose, 
         bool greedy_complexities, 
         bool force_continued_learning, // Default: False
-        Tvec<double> &w, Tvec<double> &offset, // Defaults to a zero-vector
-        bool has_offset // Should be removed
+        Tvec<double> &w, Tvec<double> &offset // Defaults to a zero-vector
     ){
     using namespace std::placeholders;
     
@@ -691,7 +690,7 @@ void GBT_COUNT_AUTO::train(Tvec<double> &y, Tmat<double> &X, int verbose, bool g
     // Training
     Tvec<double> weights = Tvec<double>::Ones(n); // This is unnecessary -- CLEANUP! --> fix ENSEMBLE->train()
     Tvec<double> offset = Tvec<double>::Zero(n);
-    mod_pois->train(y, X, verbose, greedy_complexities, false, weights, offset, false);
+    mod_pois->train(y, X, verbose, greedy_complexities, false, weights, offset);
 
     // ---- 2.0 Learn overdispersion ----
     // Predictions on ynz
@@ -714,7 +713,7 @@ void GBT_COUNT_AUTO::train(Tvec<double> &y, Tmat<double> &X, int verbose, bool g
                 )
         );
          */
-        mod_nbinom->train(y, X, verbose, greedy_complexities, false, weights, offset, false);
+        mod_nbinom->train(y, X, verbose, greedy_complexities, false, weights, offset);
         
         // ---- 4. Compare relative AIC of models ----
         Tvec<double> y_pred_nbinom = mod_nbinom->predict(X, offset); // log mean

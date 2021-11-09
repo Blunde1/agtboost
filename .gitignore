@@ -84,3 +84,5 @@ rsconnect/
 *.html
 
 *.zip
+
+.DS_Store
