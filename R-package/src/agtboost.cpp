@@ -269,7 +269,7 @@ void ENSEMBLE::train(
         current_tree = new_tree;
         // Check for non-linearity
         if(std::abs(ensemble_training_loss-ensemble_approx_training_loss)>1E-5){
-            Rcpp::warning("Error: Loss-function deviating from gradient boosting approximation. Try smaller learning_rate.");
+            Rcpp::warning("Warning: Loss-function deviating from gradient boosting approximation. Try smaller learning_rate.");
         }
     }
 }
