@@ -1,8 +1,8 @@
 Package: agtboost
 Type: Package
 Title: Adaptive and Automatic Gradient Boosting Computations
-Version: 0.9.2
-Date: 2021-11-09
+Version: 0.9.3
+Date: 2021-11-23
 Author: Berent Ånund Strømnes Lunde
 Maintainer: Berent Ånund Strømnes Lunde <lundeberent@gmail.com>
 Description: Fast and automatic gradient tree boosting designed
