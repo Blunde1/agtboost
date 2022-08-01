@@ -8,6 +8,16 @@
 // ----------- LOSS --------------
 namespace loss_functions {
 
+    enum LossFunction 
+    {
+        MSE,
+        LOGLOSS,
+        POISSON,
+        GAMMANEGINV,
+        GAMMALOG,
+        NEGBINOM
+    };
+
 
     double link_function(double pred_observed, std::string loss_function){
         // Returns g(mu)
