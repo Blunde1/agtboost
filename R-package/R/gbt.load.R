@@ -23,7 +23,12 @@ gbt.load <- function(file)
 {
     # check valid file path
     
-    mod <- new(ENSEMBLE)
-    mod$load_model(file)
-    return(mod)
+    if (grepl("rds$", file)) {
+        mod <- readRDS(file)
+        mod
+    } else {
+        mod <- new(ENSEMBLE)
+        mod$load_model(file)
+        mod
+    }
 }

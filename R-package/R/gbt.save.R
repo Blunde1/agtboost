@@ -47,7 +47,9 @@ gbt.save <- function(gbt_model, file)
     if(length(error_messages)>0)
         stop(error_messages)
     
-    # Store model in file
-    gbt_model$save_model(file)
-    
+    ## Store model in file
+    if (grepl("rds$", file))
+        saveRDS(gbt_model, file)
+    else
+        gbt_model$save_model(file)
 }
