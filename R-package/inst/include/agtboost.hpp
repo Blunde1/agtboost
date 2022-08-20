@@ -20,7 +20,7 @@
 #include "tree.hpp"
 #include "ensemble.hpp"
 #include "optimization.hpp"
-#include "loss_functions.hpp"
+//#include "loss_functions.hpp"
 #include "gbt_count_auto.hpp"
 #include "initial_prediction.hpp"
 
