@@ -100,15 +100,24 @@ predict.Rcpp_ENSEMBLE <- function(object, newdata, ...){
         
         # This is default: Predict g^{-1}(preds)
         # Get link function
+        # Mock loss_function enum
+        LossFunction <- list(
+            MSE = 0L, 
+            LOGLOSS = 1L,
+            POISSON = 2L,
+            GAMMANEGINV = 3L,
+            GAMMALOG = 4L,
+            NEGBINOM = 5L
+        )
         loss_fun_type <- object$get_loss_function()
         link_type = ""
-        if(loss_fun_type %in% c("mse")){
+        if(loss_fun_type %in% c(LossFunction$MSE)){
             link_type = "identity"
-        }else if(loss_fun_type %in% c("logloss")){
+        }else if(loss_fun_type %in% c(LossFunction$LOGLOSS)){
             link_type = "logit"
-        }else if(loss_fun_type %in% c("poisson", "gamma::log", "negbinom")){
+        }else if(loss_fun_type %in% c(LossFunction$POISSON, LossFunction$GAMMALOG, LossFunction$NEGBINOM)){
             link_type = "log"
-        }else if(loss_fun_type %in% c("gamma::neginv")){
+        }else if(loss_fun_type %in% c(LossFunction$GAMMANEGINV)){
             link_type = "neginv"
         }else{
             # if no match

@@ -5,6 +5,10 @@
  * 07.09.2019
  */
 
+#include "loss_functions.hpp"
+//using LossFunction = loss_functions::LossFunction;
+RCPP_EXPOSED_ENUM_NODECL(LossFunction)
+
 #include "agtboost.hpp"
 
 // ---------------- ENSEMBLE ----------------
@@ -13,7 +17,7 @@ ENSEMBLE::ENSEMBLE(){
     this->nrounds = 5000;
     this->learning_rate=0.01;
     this->extra_param = 0.0;
-    this->loss_function = "mse";
+    this->loss_function = MSE;
 }
 
 ENSEMBLE::ENSEMBLE(double learning_rate_){
@@ -21,10 +25,10 @@ ENSEMBLE::ENSEMBLE(double learning_rate_){
     this->nrounds = 5000;
     this->learning_rate=learning_rate_;
     this->extra_param = 0.0;
-    this->loss_function = "mse";
+    this->loss_function = MSE;
 }
 
-void ENSEMBLE::set_param(int nrounds_, double learning_rate_, double extra_param_, std::string loss_function_)
+void ENSEMBLE::set_param(int nrounds_, double learning_rate_, double extra_param_, LossFunction loss_function_)
 {
     this->nrounds = nrounds_;
     this->learning_rate = learning_rate_;
@@ -44,7 +48,7 @@ double ENSEMBLE::get_extra_param(){
     return this->extra_param;
 }
 
-std::string ENSEMBLE::get_loss_function(){
+LossFunction ENSEMBLE::get_loss_function(){
     return this->loss_function;
 }
 
@@ -103,28 +107,31 @@ void ENSEMBLE::load_model(std::string filepath)
     f.close();
 }
  
-double ENSEMBLE::initial_prediction(Tvec<double> &y, std::string loss_function, Tvec<double> &w){
+double ENSEMBLE::initial_prediction(Tvec<double> &y, Tvec<double> &w){
     
     double pred=0;
     double pred_g_transform = y.sum()/w.sum(); // should be optim given weights...
-    
-    if(loss_function=="mse"){
+    switch(loss_function)
+    {
+    case MSE:
         pred = pred_g_transform;
-    }else if(loss_function=="logloss"){
-        //double pred_g_transform = (y*w).sum()/n; // naive probability
+        break;
+    case LOGLOSS:
         pred = log(pred_g_transform) - log(1 - pred_g_transform);
-    }else if(loss_function=="poisson"){
-        //double pred_g_transform = (y*w).sum()/n; // naive intensity
+        break;
+    case POISSON:
         pred = log(pred_g_transform);
-    }else if(loss_function=="gamma::neginv"){
-        //double pred_g_transform = (y*w).sum()/n;
+        break;
+    case GAMMANEGINV:
         pred = - 1.0 / pred_g_transform;
-    }else if(loss_function=="gamma::log"){
+        break;
+    case GAMMALOG:
         pred = log(pred_g_transform);
-    }else if(loss_function=="negbinom"){
+        break;
+    case NEGBINOM:
         pred = log(pred_g_transform);
+        break;
     }
-    
     return pred;
 }
 
@@ -535,7 +542,7 @@ Tvec<double> ENSEMBLE::convergence(Tvec<double> &y, Tmat<double> &X){
     w.setOnes();
     
     // After each update (tree), compute loss
-    loss_val[0] = loss_functions::loss(y, pred, this->loss_function, w, extra_param);
+    loss_val[0] = loss_functions::loss(y, pred, loss_function, w, extra_param);
     
     GBTREE* current = this->first_tree;
     for(int k=1; k<(K+1); k++)
@@ -544,7 +551,7 @@ Tvec<double> ENSEMBLE::convergence(Tvec<double> &y, Tmat<double> &X){
         pred = pred + (this->learning_rate) * (current->predict_data(X));
         
         // Compute loss
-        loss_val[k] = loss_functions::loss(y, pred, this->loss_function, w, extra_param);
+        loss_val[k] = loss_functions::loss(y, pred, loss_function, w, extra_param);
         
         // Update to next tree
         current = current->next_tree;
@@ -644,6 +651,7 @@ double GBT_COUNT_AUTO::get_overdispersion(){
     return this->count_mod->get_extra_param();
 }
 
+/*
 std::string GBT_COUNT_AUTO::get_model_name(){
     std::string count_loss = this->count_mod->get_loss_function();
     if(count_loss == "poisson"){
@@ -654,6 +662,7 @@ std::string GBT_COUNT_AUTO::get_model_name(){
         return "unknown";
     }
 }
+ */
 
 void GBT_COUNT_AUTO::train(Tvec<double> &y, Tmat<double> &X, int verbose, bool greedy_complexities)
 {
@@ -676,7 +685,7 @@ void GBT_COUNT_AUTO::train(Tvec<double> &y, Tmat<double> &X, int verbose, bool g
     
     // --- 1.0 Poisson ---
     ENSEMBLE* mod_pois = new ENSEMBLE;
-    mod_pois->set_param(param["nrounds"], param["learning_rate"], param["extra_param"], "poisson");
+    mod_pois->set_param(param["nrounds"], param["learning_rate"], param["extra_param"], POISSON);
     /*
     mod_pois->set_param(
             Rcpp::List::create(
@@ -702,7 +711,7 @@ void GBT_COUNT_AUTO::train(Tvec<double> &y, Tmat<double> &X, int verbose, bool g
     {
         // --- 3.1 Train negbinom ----
         ENSEMBLE* mod_nbinom = new ENSEMBLE;
-        mod_nbinom->set_param(param["nrounds"], param["learning_rate"], dispersion, "negbinom");
+        mod_nbinom->set_param(param["nrounds"], param["learning_rate"], dispersion, NEGBINOM);
         /*
         mod_nbinom->set_param(
                 Rcpp::List::create(
@@ -804,6 +813,6 @@ RCPP_MODULE(aGTBModule) {
         .method("train", &GBT_COUNT_AUTO::train)
         .method("predict", &GBT_COUNT_AUTO::predict)
         .method("get_overdispersion", &GBT_COUNT_AUTO::get_overdispersion)
-        .method("get_model_name", &GBT_COUNT_AUTO::get_model_name)
+        //.method("get_model_name", &GBT_COUNT_AUTO::get_model_name)
     ;
 }

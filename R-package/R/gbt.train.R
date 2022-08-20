@@ -259,6 +259,26 @@ gbt.train <- function(y, x, learning_rate = 0.01,
     #     mod$train(y,x, verbose, gsub_compare)   
     #     
     # }else 
+    
+    # Mock loss_function enum
+    LossFunction <- list(
+        MSE = 0L, 
+        LOGLOSS = 1L,
+        POISSON = 2L,
+        GAMMANEGINV = 3L,
+        GAMMALOG = 4L,
+        NEGBINOM = 5L
+        )
+    loss_function_enum = switch(  
+        loss_function,  
+        "mse" = LossFunction$MSE, 
+        "logloss" = LossFunction$LOGLOSS, 
+        "poisson" = LossFunction$POISSON, 
+        "gamma::neginv" = LossFunction$GAMMANEGINV, 
+        "gamma::log" = LossFunction$GAMMALOG, 
+        "negbinom" = LossFunction$NEGBINOM
+    )
+    
     if(loss_function %in% c("count::auto")){
         mod <- new(GBT_COUNT_AUTO)
         mod$set_param(param)
@@ -267,7 +287,7 @@ gbt.train <- function(y, x, learning_rate = 0.01,
     }else{
         # create agtboost ensemble object
         mod <- new(ENSEMBLE)
-        mod$set_param(nrounds, learning_rate, extra_param, loss_function)
+        mod$set_param(nrounds, learning_rate, extra_param, loss_function_enum)
         
         # train ensemble
         if(is.null(previous_pred)){

@@ -5,6 +5,7 @@
 
 
 #include "tree.hpp"
+#include "loss_functions.hpp"
 
 
 // -- TRY WITHOUT EXPORT //' @export ENSEMBLE
@@ -16,7 +17,7 @@ public:
     double learning_rate;
     double initial_score;
     double extra_param; // Needed for certain distributions s.a. negative binomial, typically a dispersion param
-    std::string loss_function;
+    LossFunction loss_function;
     GBTREE* first_tree;
     //Rcpp::List param;
     
@@ -26,7 +27,7 @@ public:
     ENSEMBLE(double learning_rate_);
     
     // Getters and setters
-    void set_param(int nrounds_, double learning_rate_, double extra_param_, std::string loss_function_);
+    void set_param(int nrounds_, double learning_rate_, double extra_param_, LossFunction loss_function_);
     
     int get_nrounds();
     
@@ -34,7 +35,7 @@ public:
     
     double get_extra_param();
     
-    std::string get_loss_function();
+    LossFunction get_loss_function();
     
     // Loss-related functions
     double loss(Tvec<double> &y, Tvec<double> &pred, Tvec<double> &w);
@@ -47,7 +48,7 @@ public:
     
     double inverse_link_function(double pred);
     
-    double initial_prediction(Tvec<double> &y, std::string loss_function, Tvec<double> &w);
+    double initial_prediction(Tvec<double> &y, Tvec<double> &w);
     
     // Training and prediction
     void train(

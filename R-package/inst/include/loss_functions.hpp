@@ -5,45 +5,92 @@
 
 #include "external_rcpp.hpp"
 
+
+// Define enum class for loss functions
+enum LossFunction 
+{
+    MSE, // Gaussian distribution with identity-link (mean squared error)
+    LOGLOSS, // Bernoulli distribution with logit-link
+    POISSON, // Poisson distribution with log-link
+    GAMMANEGINV, // Gamma distribution with negative-inverse link
+    GAMMALOG, // Gamma dsitribution with log-link
+    NEGBINOM // Negative binomial distribution with log-link
+};
+// Define stream operators for enum class
+// https://stackoverflow.com/questions/21691354/enum-serialization-c
+std::istream& operator >> (std::istream& in, LossFunction& loss_function)
+{
+    unsigned u = 0;
+    in >> u;
+    //TODO: check that u is a valid LossFunction value
+    loss_function = static_cast<LossFunction>(u);
+    return in;
+}
+
+std::ostream& operator << (std::ostream& out, LossFunction loss_function)
+{
+    //TODO: check that loss_function is a valid LossFunction value
+    unsigned u = loss_function;
+    out << u;
+    return out;
+}
+
+
 // ----------- LOSS --------------
 namespace loss_functions {
 
 
-    double link_function(double pred_observed, std::string loss_function){
+    double link_function(double pred_observed, LossFunction loss_function){
         // Returns g(mu)
         double pred_transformed=0.0;
-        if(loss_function=="mse"){
+        switch(loss_function)
+        {
+        case MSE:
             pred_transformed = pred_observed;
-        }else if(loss_function=="logloss"){
+            break;
+        case LOGLOSS:
             pred_transformed = log(pred_observed) - log(1 - pred_observed);
-        }else if(loss_function=="poisson"){
+            break;
+        case POISSON:
             pred_transformed = log(pred_observed);
-        }else if(loss_function=="gamma::neginv"){
+            break;
+        case GAMMANEGINV:
             pred_transformed = - 1.0 / pred_observed;
-        }else if(loss_function=="gamma::log"){
+            break;
+        case GAMMALOG:
             pred_transformed = log(pred_observed);
-        }else if(loss_function=="negbinom"){
+            break;
+        case NEGBINOM:
             pred_transformed = log(pred_observed);
+            break;
         }
         return pred_transformed;
     }
 
 
-    double inverse_link_function(double pred_transformed, std::string loss_function){
+    double inverse_link_function(double pred_transformed, LossFunction loss_function){
         // Returns g^{-1}(pred)
         double pred_observed = 0.0;
-        if(loss_function=="mse"){
+        switch(loss_function)
+        {
+        case MSE:
             pred_observed = pred_transformed;
-        }else if(loss_function=="logloss"){
+            break;
+        case LOGLOSS:
             pred_observed = 1.0 / (1.0+exp(-pred_transformed));
-        }else if(loss_function=="poisson"){
+            break;
+        case POISSON:
             pred_observed = exp(pred_transformed);
-        }else if(loss_function=="gamma::neginv"){
-            pred_observed = -1.0 / pred_transformed;;
-        }else if(loss_function=="gamma::log"){
+            break;
+        case GAMMANEGINV:
+            pred_observed = -1.0 / pred_transformed;
+            break;
+        case GAMMALOG:
             pred_observed = exp(pred_transformed);
-        }else if(loss_function=="negbinom"){
+            break;
+        case NEGBINOM:
             pred_observed = exp(pred_transformed);
+            break;
         }
         return pred_observed;
     }
@@ -52,74 +99,49 @@ namespace loss_functions {
     double loss(
             Tvec<double> &y, 
             Tvec<double> &pred, 
-            std::string loss_type, 
+            LossFunction loss_function, 
             Tvec<double> &w, 
             double extra_param=0.0
     ){
         // Evaluates the loss function at pred
         int n = y.size();
         double res = 0;
-        
-        if(loss_type=="mse"){
-            // MSE
+        switch(loss_function)
+        {
+        case MSE:
             for(int i=0; i<n; i++){
                 res += pow(y[i]*w[i]-pred[i],2);
             }
-            
-        }else if(loss_type=="logloss"){
-            // LOGLOSS
+            break;
+        case LOGLOSS:
             for(int i=0; i<n; i++){
                 res += y[i]*w[i]*log(1.0+exp(-pred[i])) + (1.0-y[i]*w[i])*log(1.0 + exp(pred[i]));
             }
-        }else if(loss_type=="poisson"){
-            // POISSON
+            break;
+        case POISSON:
             for(int i=0; i<n; i++){
                 res += exp(pred[i]) - y[i]*w[i]*pred[i]; // skip normalizing factor log(y!)
             }
-        }else if(loss_type=="gamma::neginv"){
-            // GAMMA::NEGINV
+            break;
+        case GAMMANEGINV:
             // shape=1, only relevant part of negative log-likelihood
             for(int i=0; i<n; i++){
                 res += -y[i]*w[i]*pred[i] - log(-pred[i]);
             }
-        }else if(loss_type=="gamma::log"){
-            // GAMMA::LOG
+            break;
+        case GAMMALOG:
             for(int i=0; i<n; i++){
                 res += y[i]*w[i]*exp(-pred[i]) + pred[i];
             }
-        }else if(loss_type=="negbinom"){
+            break;
+        case NEGBINOM:
             double dispersion = extra_param;
             for(int i=0; i<n; i++){
                 // log-link, mu=exp(pred[i])
                 res += -y[i]*pred[i] + (y[i]*dispersion)*log(1.0+exp(pred[i])/dispersion); // Keep only relevant part
             }
+            break;
         }
-        // else if(loss_type=="poisson::zip"){
-        //     // POISSON COND Y>0, LOG LINK
-        //     for(int i=0; i<n; i++){
-        //         res += exp(pred[i]) - y[i]*pred[i] + log(1.0-exp(-exp(pred[i]))); // Last is conditional p(y>0)
-        //     }
-        // }else if(loss_type=="zero_inflation"){
-        //     // ZERO-INFLATION PROBABILITY MIX
-        //     Tvec<double> lprob_weights = ens_ptr->param["log_prob_weights"];
-        //     for(int i=0; i<n; i++){
-        //         if(y[i] > 0){
-        //             // avoid comparing equality to zero...
-        //             res += pred[i] + log(1.0+exp(-pred[i])) - lprob_weights[i]; // Weight is log probability weight!!
-        //         }else{
-        //             // get y[i] == 0
-        //             res += -log(1.0/(1.0+exp(-pred[i])) + (1.0 - 1.0/(1.0+exp(-pred[i])))*exp(lprob_weights[i]) );
-        //         }
-        //     }
-        // }else if(loss_type=="negbinom::zinb"){
-        //     // NEGBINOM COND Y>0, LOG LINK
-        //     double dispersion = ens_ptr -> extra_param;
-        //     for(int i=0; i<n; i++){
-        //         res += -y[i]*pred[i] + (y[i]*dispersion)*log(1.0+exp(pred[i])/dispersion) + 
-        //             log(1.0-(exp(-dispersion*log(1.0+exp(pred[i])/dispersion)))); // Last is conditional p(y>0)
-        //     }
-        // }
-        
         return res/n;
         
     }
@@ -128,72 +150,46 @@ namespace loss_functions {
     Tvec<double> dloss(
             Tvec<double> &y, 
             Tvec<double> &pred, 
-            std::string loss_type, 
+            LossFunction loss_function,
             double extra_param=0.0
     ){
         // Returns the first order derivative of the loss function at pred
         int n = y.size();
         Tvec<double> g(n);
-        
-        if(loss_type == "mse"){
-            // MSE
+        switch(loss_function)
+        {
+        case MSE:
             for(int i=0; i<n; i++){
                 g[i] = -2*(y[i]-pred[i]);
             }
-        }else if(loss_type == "logloss"){
-            // LOGLOSS
+            break;
+        case LOGLOSS:
             for(int i=0; i<n; i++){
                 g[i] = ( exp(pred[i]) * (1.0-y[i]) - y[i] ) / ( 1.0 + exp(pred[i]) );
             }
-        }else if(loss_type == "poisson"){
-            // POISSON REG
+            break;
+        case POISSON:
             for(int i=0; i<n; i++){
                 g[i] = exp(pred[i]) - y[i];
             }
-        }else if(loss_type == "gamma::neginv"){
-            // GAMMA::NEGINV
+            break;
+        case GAMMANEGINV:
             for(int i=0; i<n; i++){
                 g[i] = -(y[i]+1.0/pred[i]);
             }
-        }else if(loss_type == "gamma::log"){
-            // GAMMA::LOG
+            break;
+        case GAMMALOG:
             for(int i=0; i<n; i++){
                 g[i] = -y[i]*exp(-pred[i]) + 1.0;
             }
-        }else if(loss_type == "negbinom"){
-            // NEGATIVE BINOMIAL, LOG LINK
+            break;
+        case NEGBINOM:
             double dispersion = extra_param;
             for(int i=0; i<n; i++){
                 g[i] = -y[i] + (y[i]+dispersion)*exp(pred[i]) / (dispersion + exp(pred[i]));
             }
+            break;
         }
-        // else if(loss_type == "poisson::zip"){
-        //     // POISSON COND Y>0, LOG LINK
-        //     for(int i=0; i<n; i++){
-        //         g[i] = exp(pred[i]) - y[i] + exp(pred[i])/(exp(exp(pred[i]))-1.0);
-        //     }
-        // }else if(loss_type=="zero_inflation"){
-        //     // ZERO-INFLATION PROBABILITY MIX
-        //     Tvec<double> lprob_weights = ens_ptr->param["log_prob_weights"];
-        //     for(int i=0; i<n; i++){
-        //         if(y[i] > 0){
-        //             // avoid comparing equality to zero...
-        //             g[i] = exp(pred[i]) / (exp(pred[i]) + 1.0);
-        //         }else{
-        //             // get y[i] == 0
-        //             g[i] = (exp(lprob_weights[i])-1.0)*exp(pred[i]) / ( (exp(pred[i])+1.0)*(exp(lprob_weights[i])+exp(pred[i])) );
-        //         }
-        //     }
-        // }else if(loss_type=="negbinom::zinb"){
-        //     // NEGBINOM COND Y>0, LOG LINK
-        //     double dispersion = ens_ptr -> extra_param;
-        //     for(int i=0; i<n; i++){
-        //         g[i] = -y[i] + (y[i]+dispersion)*exp(pred[i]) / (dispersion + exp(pred[i])) + 
-        //             dispersion*exp(pred[i]) / 
-        //             ( (dispersion+exp(pred[i]))*( exp(dispersion*(log(dispersion+exp(pred[i]))-log(dispersion))) -1.0 ));
-        //     }
-        // }
-        
         return g;
     }
     
@@ -201,80 +197,47 @@ namespace loss_functions {
     Tvec<double> ddloss(
             Tvec<double> &y, 
             Tvec<double> &pred, 
-            std::string loss_type, 
+            LossFunction loss_function,
             double extra_param=0.0
     ){
         // Returns the second order derivative of the loss function at pred
         int n = y.size();
         Tvec<double> h(n);
-        
-        if( loss_type == "mse" ){
-            // MSE
+        switch(loss_function)
+        {
+        case MSE:
             for(int i=0; i<n; i++){
                 h[i] = 2.0;
             }
-        }else if(loss_type == "logloss"){
-            // LOGLOSS
+            break;
+        case LOGLOSS:
             for(int i=0; i<n; i++){
                 h[i] = exp(pred[i]) / ( (exp(pred[i])+1.0)*(exp(pred[i])+1.0) ) ;
             }
-        }else if(loss_type == "poisson"){
-            // POISSON REG
+            break;
+        case POISSON:
             for(int i=0; i<n; i++){
                 h[i] = exp(pred[i]);
             }
-        }else if(loss_type == "gamma::neginv"){
-            // GAMMA::NEGINV
+            break;
+        case GAMMANEGINV:
             for(int i=0; i<n; i++){
                 h[i] = 1.0/(pred[i]*pred[i]);
             }
-        }else if(loss_type == "gamma::log"){
-            // GAMMA::LOG
+            break;
+        case GAMMALOG:
             for(int i=0; i<n; i++){
                 h[i] = y[i] * exp(-pred[i]);
             }
-        }else if( loss_type == "negbinom" ){
-            // NEGATIVE BINOMIAL, LOG LINK
+            break;
+        case NEGBINOM:
             double dispersion = extra_param;
             for(int i=0; i<n; i++){
                 h[i] = (y[i]+dispersion)*dispersion*exp(pred[i]) / 
                     ( (dispersion + exp(pred[i]))*(dispersion + exp(pred[i])) );
             }
+            break;
         }
-        // else if(loss_type == "poisson::zip"){
-        //     // POISSON COND Y>0, LOG LINK
-        //     for(int i=0; i<n; i++){
-        //         h[i] = exp(pred[i]) + 
-        //             exp(pred[i])*(exp(exp(pred[i]))-exp(pred[i]+exp(pred[i]))-1.0) / 
-        //             ( (exp(exp(pred[i]))-1.0)*(exp(exp(pred[i]))-1.0) );
-        //     }
-        // }else if(loss_type=="zero_inflation"){
-        //     // ZERO-INFLATION PROBABILITY MIX
-        //     Tvec<double> lprob_weights = ens_ptr->param["log_prob_weights"];
-        //     for(int i=0; i<n; i++){
-        //         if(y[i] > 0){
-        //             // avoid comparing equality to zero...
-        //             h[i] = exp(pred[i]) / ((exp(pred[i]) + 1.0)*(exp(pred[i]) + 1.0));
-        //         }else{
-        //             // get y[i] == 0
-        //             h[i] = -(exp(lprob_weights[i])-1.0)*exp(pred[i])*(exp(2.0*pred[i])-exp(lprob_weights[i])) / 
-        //                 ( (exp(pred[i])+1.0)*(exp(pred[i])+1.0)*(exp(lprob_weights[i])+exp(pred[i]))*(exp(lprob_weights[i])+exp(pred[i])) );
-        //         }
-        //     }
-        // }else if(loss_type=="negbinom::zinb"){
-        //     // NEGBINOM COND Y>0, LOG LINK
-        //     double dispersion = ens_ptr -> extra_param;
-        //     for(int i=0; i<n; i++){
-        //         h[i] = (y[i]+dispersion)*dispersion*exp(pred[i]) / 
-        //             ( (dispersion + exp(pred[i]))*(dispersion + exp(pred[i])) ) - 
-        //             // d^2/dx^2 log(p(y>0))
-        //             -dispersion*dispersion*exp(pred[i])*
-        //             ((exp(pred[i])-1.0)*exp(dispersion*(log(dispersion+exp(pred[i]))-log(dispersion))) +1.0 ) / 
-        //             (exp(2.0*log(dispersion+exp(pred[i]))) * 
-        //              pow(exp(dispersion*(log(dispersion+exp(pred[i]))-log(dispersion))) - 1.0, 2.0 )  );
-        //     }
-        // }
-        
         return h;    
     }
 }
