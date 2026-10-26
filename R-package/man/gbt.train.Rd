@@ -52,7 +52,7 @@ gbt.train(
 
 \item{previous_pred}{prediction vector for training. Boosted training given predictions from another model.}
 
-\item{weights}{weights vector for scaling contributions of individual observations. Default \code{NULL} (the unit vector).}
+\item{weights}{weights vector for scaling contributions of individual observations. Rescaled to mean one, so only relative weights matter. Default \code{NULL} (the unit vector).}
 
 \item{force_continued_learning}{Boolean: \code{FALSE} (default) stops at information stopping criterion, \code{TRUE} stops at \code{nround} iterations.}
 

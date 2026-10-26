@@ -63,35 +63,35 @@ namespace loss_functions {
         if(loss_type=="mse"){
             // MSE
             for(int i=0; i<n; i++){
-                res += pow(y[i]*w[i]-pred[i],2);
+                res += w[i] * pow(y[i]-pred[i],2);
             }
             
         }else if(loss_type=="logloss"){
             // LOGLOSS
             for(int i=0; i<n; i++){
-                res += y[i]*w[i]*log(1.0+exp(-pred[i])) + (1.0-y[i]*w[i])*log(1.0 + exp(pred[i]));
+                res += w[i] * ( y[i]*log(1.0+exp(-pred[i])) + (1.0-y[i])*log(1.0 + exp(pred[i])) );
             }
         }else if(loss_type=="poisson"){
             // POISSON
             for(int i=0; i<n; i++){
-                res += exp(pred[i]) - y[i]*w[i]*pred[i]; // skip normalizing factor log(y!)
+                res += w[i] * ( exp(pred[i]) - y[i]*pred[i] ); // skip normalizing factor log(y!)
             }
         }else if(loss_type=="gamma::neginv"){
             // GAMMA::NEGINV
             // shape=1, only relevant part of negative log-likelihood
             for(int i=0; i<n; i++){
-                res += -y[i]*w[i]*pred[i] - log(-pred[i]);
+                res += w[i] * ( -y[i]*pred[i] - log(-pred[i]) );
             }
         }else if(loss_type=="gamma::log"){
             // GAMMA::LOG
             for(int i=0; i<n; i++){
-                res += y[i]*w[i]*exp(-pred[i]) + pred[i];
+                res += w[i] * ( y[i]*exp(-pred[i]) + pred[i] );
             }
         }else if(loss_type=="negbinom"){
             double dispersion = extra_param;
             for(int i=0; i<n; i++){
                 // log-link, mu=exp(pred[i])
-                res += -y[i]*pred[i] + (y[i]*dispersion)*log(1.0+exp(pred[i])/dispersion); // Keep only relevant part
+                res += w[i] * ( -y[i]*pred[i] + (y[i]+dispersion)*log(1.0+exp(pred[i])/dispersion) ); // Keep only relevant part
             }
         }
         // else if(loss_type=="poisson::zip"){

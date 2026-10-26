@@ -106,7 +106,7 @@ void ENSEMBLE::load_model(std::string filepath)
 double ENSEMBLE::initial_prediction(Tvec<double> &y, std::string loss_function, Tvec<double> &w){
     
     double pred=0;
-    double pred_g_transform = y.sum()/w.sum(); // should be optim given weights...
+    double pred_g_transform = y.cwiseProduct(w).sum()/w.sum();
     
     if(loss_function=="mse"){
         pred = pred_g_transform;
@@ -200,6 +200,7 @@ void ENSEMBLE::train(
         std::bind(&ENSEMBLE::ddloss, this, _1, _2),
         std::bind(&ENSEMBLE::link_function, this, _1),
         std::bind(&ENSEMBLE::inverse_link_function, this, _1),
+        w,
         verbose
         );
     pred.setConstant(this->initialPred);
@@ -207,8 +208,8 @@ void ENSEMBLE::train(
     this->initial_score = loss_functions::loss(y, pred, loss_function, w, extra_param);
     
     // First tree
-    g = dloss(y, pred) * w;
-    h = ddloss(y, pred) * w;
+    g = dloss(y, pred).cwiseProduct(w);
+    h = ddloss(y, pred).cwiseProduct(w);
     this->first_tree = new GBTREE;
     this->first_tree->train(g, h, X, cir_sim, greedy_complexities, learning_rate);
     GBTREE* current_tree = this->first_tree;
@@ -228,8 +229,8 @@ void ENSEMBLE::train(
         if (i % 1 == 0)
             Rcpp::checkUserInterrupt();
         // Calculate gradients
-        g = dloss(y, pred) * w;
-        h = ddloss(y, pred) * w;
+        g = dloss(y, pred).cwiseProduct(w);
+        h = ddloss(y, pred).cwiseProduct(w);
         // Check for perfect fit
         if(((g.array())/h.array()).matrix().maxCoeff() < 1e-12){
             // Every perfect step is below tresh
@@ -284,8 +285,8 @@ void ENSEMBLE::train_from_preds(Tvec<double> &pred, Tvec<double> &y, Tmat<double
     Tvec<double> g(n), h(n);
     
     // Initial prediction
-    g = loss_functions::dloss(y, pred, loss_function, extra_param)*w;
-    h = loss_functions::ddloss(y, pred, loss_function, extra_param)*w;
+    g = loss_functions::dloss(y, pred, loss_function, extra_param).cwiseProduct(w);
+    h = loss_functions::ddloss(y, pred, loss_function, extra_param).cwiseProduct(w);
     this->initialPred = - g.sum() / h.sum();
     pred = pred.array() + this->initialPred;
     this->initial_score = loss_functions::loss(y, pred, loss_function, w, extra_param); //(y - pred).squaredNorm() / n;
@@ -294,8 +295,8 @@ void ENSEMBLE::train_from_preds(Tvec<double> &pred, Tvec<double> &y, Tmat<double
     Tmat<double> cir_sim = cir_sim_mat(100, 100);
     
     // First tree
-    g = loss_functions::dloss(y, pred, loss_function, extra_param)*w;
-    h = loss_functions::ddloss(y, pred, loss_function, extra_param)*w;
+    g = loss_functions::dloss(y, pred, loss_function, extra_param).cwiseProduct(w);
+    h = loss_functions::ddloss(y, pred, loss_function, extra_param).cwiseProduct(w);
     this->first_tree = new GBTREE;
     this->first_tree->train(g, h, X, cir_sim, greedy_complexities, learning_rate_set);
     GBTREE* current_tree = this->first_tree;
@@ -323,8 +324,8 @@ void ENSEMBLE::train_from_preds(Tvec<double> &pred, Tvec<double> &y, Tmat<double
         
         // TRAINING
         GBTREE* new_tree = new GBTREE();
-        g = loss_functions::dloss(y, pred, loss_function, extra_param)*w;
-        h = loss_functions::ddloss(y, pred, loss_function, extra_param)*w;
+        g = loss_functions::dloss(y, pred, loss_function, extra_param).cwiseProduct(w);
+        h = loss_functions::ddloss(y, pred, loss_function, extra_param).cwiseProduct(w);
         new_tree->train(g, h, X, cir_sim, greedy_complexities, learning_rate_set);
         
         // EXPECTED LOSS

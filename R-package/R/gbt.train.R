@@ -24,7 +24,7 @@
 #'   \item \code{global_subset} function-change to target maximized reduction in generalization loss for individual datapoints
 #'   }
 #' @param previous_pred prediction vector for training. Boosted training given predictions from another model.
-#' @param weights weights vector for scaling contributions of individual observations. Default \code{NULL} (the unit vector).
+#' @param weights weights vector for scaling contributions of individual observations. Rescaled to mean one, so only relative weights matter. Default \code{NULL} (the unit vector).
 #' @param force_continued_learning Boolean: \code{FALSE} (default) stops at information stopping criterion, \code{TRUE} stops at \code{nround} iterations.
 #' @param offset add offset to the model g(mu) = offset + F(x).
 #' @param ... additional parameters passed.
@@ -121,6 +121,8 @@ gbt.train <- function(y, x, learning_rate = 0.01,
         "prev_pred_length" = "\n Error: previous_pred must correspond to length of y",
         "force_continued" = "\n Error: force_continued_learning must be of type logical with length 1",
         "negbinom"= "\n Error: if loss_function is 'negbinom', dispersion must be provided in ...",
+        "weights" = "\n Error: weights must be a numeric vector of finite, non-negative values, not all zero, with length equal to the number of rows in x",
+        "weights_count_auto" = "\n Error: weights are not supported for loss_function 'count::auto'",
         "algorithm" = "\n Error: algorithm must be a valid algorithm. See documentation for valid arguments \n"
     )
     # Check y, x
@@ -229,6 +231,17 @@ gbt.train <- function(y, x, learning_rate = 0.01,
         error_messages <- c(error_messages, error_messages_type["algorithm"])
     }
     
+    # weights
+    if(!is.null(weights)){
+        if(!is.numeric(weights) || length(weights) != nrow(x) ||
+           any(!is.finite(weights)) || any(weights < 0) || sum(weights) == 0){
+            error_messages <- c(error_messages, error_messages_type["weights"])
+        }
+        if(loss_function %in% c("count::auto")){
+            error_messages <- c(error_messages, error_messages_type["weights_count_auto"])
+        }
+    }
+    
     # Any error messages?
     if(length(error_messages)>0)
         stop(error_messages)
@@ -237,6 +250,9 @@ gbt.train <- function(y, x, learning_rate = 0.01,
     # Weights vector?
     if(is.null(weights))
         weights = rep(1,nrow(x))
+    # The fit does not depend on the scale of the weights, but the training
+    # loss and its non-linearity check do: use the scale of unit weights
+    weights = weights / mean(weights)
     
     # offset
     if(is.null(offset))

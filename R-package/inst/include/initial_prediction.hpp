@@ -14,6 +14,7 @@ double learn_initial_prediction(
         std::function<Tvec<double> (Tvec<double>&,Tvec<double>&)> ddloss,
         std::function<double (double)> link_function,
         std::function<double (double)> inverse_link_function,
+        Tvec<double>& w,
         int verbose
     ){
     // Newton opt settings
@@ -22,14 +23,13 @@ double learn_initial_prediction(
     double step=0.0;
     int niter = 50; // Max iterations
     // Data specific settings
-    int n = y.size();
-    double y_average = y.sum() / n;
+    double y_average = y.cwiseProduct(w).sum() / w.sum();
     double initial_prediction = link_function(y_average);
     Tvec<double> pred = offset.array() + initial_prediction;
     // Iterate until optimal starting point found
     for(int i=0; i<niter; i++){
         // Gradient descent
-        step = - step_length * dloss(y, pred).sum() / ddloss(y, pred).sum();
+        step = - step_length * dloss(y, pred).cwiseProduct(w).sum() / ddloss(y, pred).cwiseProduct(w).sum();
         initial_prediction += step;
         pred = pred.array() + step;
         // Check precision
