@@ -57,11 +57,13 @@ void ENSEMBLE::serialize(ENSEMBLE *eptr, std::ofstream& f)
         return;
     }
     
-    f << std::fixed << eptr->nrounds << "\n";
-    f << std::fixed << eptr->learning_rate << "\n";
-    f << std::fixed << eptr->extra_param << "\n";
-    f << std::fixed << eptr->initialPred << "\n";
-    f << std::fixed << eptr->initial_score << "\n";
+    // Enough significant digits for every double to survive the round trip
+    f << std::setprecision(std::numeric_limits<double>::max_digits10);
+    f << eptr->nrounds << "\n";
+    f << eptr->learning_rate << "\n";
+    f << eptr->extra_param << "\n";
+    f << eptr->initialPred << "\n";
+    f << eptr->initial_score << "\n";
     f << eptr->loss_function << "\n";
     
     eptr->first_tree->serialize(eptr->first_tree, f);
@@ -259,7 +261,9 @@ void ENSEMBLE::train(
         // Stopping criteria
         if(!force_continued_learning){
             // Check criterion
-            if(expected_loss > EPS){
+            // A tree with a single leaf means no split is possible (every
+            // feature is constant); boosting would otherwise never stop
+            if(expected_loss > EPS || new_tree->getNumLeaves() == 1){
                 break;
             }
             
@@ -349,7 +353,7 @@ void ENSEMBLE::train_from_preds(Tvec<double> &pred, Tvec<double> &y, Tmat<double
         }
         
         
-        if(expected_loss < EPS){ // && NUM_BINTREE_CONSECUTIVE < MAX_NUM_BINTREE_CONSECUTIVE){
+        if(expected_loss < EPS && new_tree->getNumLeaves() > 1){ // && NUM_BINTREE_CONSECUTIVE < MAX_NUM_BINTREE_CONSECUTIVE){
             current_tree->next_tree = new_tree;
             current_tree = new_tree;
         }else{

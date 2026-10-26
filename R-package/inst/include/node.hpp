@@ -91,16 +91,16 @@ void node::serialize(node* nptr, std::ofstream& f)
     }
     
     // Else, store information on node
-    f << std::fixed << nptr->split_feature << " ";
-    f << std::fixed << nptr->obs_in_node << " ";
-    f << std::fixed << nptr->split_value << " ";
-    f << std::fixed << nptr->node_prediction << " ";
-    f << std::fixed << nptr->node_tr_loss << " ";
-    f << std::fixed << nptr->prob_node << " ";
-    f << std::fixed << nptr->local_optimism << " ";
-    f << std::fixed << nptr->expected_max_S << " ";
-    f << std::fixed << nptr->CRt << " ";
-    f << std::fixed << nptr->p_split_CRt << "\n";
+    f << nptr->split_feature << " ";
+    f << nptr->obs_in_node << " ";
+    f << nptr->split_value << " ";
+    f << nptr->node_prediction << " ";
+    f << nptr->node_tr_loss << " ";
+    f << nptr->prob_node << " ";
+    f << nptr->local_optimism << " ";
+    f << nptr->expected_max_S << " ";
+    f << nptr->CRt << " ";
+    f << nptr->p_split_CRt << "\n";
 
     // Recurrence
     serialize(nptr->left, f);

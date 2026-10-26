@@ -211,7 +211,7 @@ gbt.train <- function(y, x, learning_rate = 0.01,
         input_list <- list(...)
         dispersion <- input_list$dispersion
         if(is.null(dispersion) || !is.numeric(dispersion) || length(dispersion)>1){
-            error_messages <- c(error_messages, error_messages["negbinom"])
+            error_messages <- c(error_messages, error_messages_type["negbinom"])
         }
         extra_param <- dispersion
     }else{

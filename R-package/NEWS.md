@@ -1,4 +1,12 @@
 ------------------------------------------------------------------------
+agtboost development version
+------------------------------------------------------------------------
+
+- `gbt.train()` with `loss_function = "negbinom"` and no `dispersion` now raises the intended error message, instead of a C++ error (#61).
+- `gbt.save()` writes models with full double precision. Values were written with six decimal places, so a reloaded model could predict differently from the fitted one (#61). Files saved by earlier versions still load.
+- Boosting stops when no split is possible because every feature is constant, instead of running to `nrounds` (#61).
+
+------------------------------------------------------------------------
 agtboost 0.9.2 (2021-11-12)
 ------------------------------------------------------------------------
 
